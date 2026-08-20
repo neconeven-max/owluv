@@ -71,7 +71,8 @@
       vOkNotesBig:'✓ Nema skrivenog sadržaja',
       vOkNotesSub:'Nisu pronađeni skriveni sadržaj ni zamke. Ima nekoliko napomena u nalazima niže, vrijedi ih pogledati.',
       footerBy:'Alat SOVA WEB',
-      footer:'OwlUV v4.1 · open source alat · radi potpuno lokalno, bez slanja podataka'
+      tagline:'Skener skrivenog teksta i AI zamki',
+      footer:'OwlUV v4.2 · open source alat · radi potpuno lokalno, bez slanja podataka'
     },
     en:{
       eyebrow:'Text and document inspection tool', intro:'Paste text or drop in a file: an assignment, job description or CV. The scanner reveals invisible characters, text hidden via color or font size, and phrases designed to mislead AI. Everything runs in your browser, nothing is sent anywhere.',
@@ -139,7 +140,8 @@
       vOkNotesBig:'✓ No hidden content',
       vOkNotesSub:'No hidden content and no traps were found. There are a few notes in the findings below, worth a look.',
       footerBy:'A SOVA WEB tool',
-      footer:'OwlUV v4.1 · open source tool · runs fully locally, no data sent'
+      tagline:'Hidden text scanner for AI traps',
+      footer:'OwlUV v4.2 · open source tool · runs fully locally, no data sent'
     },
     de:{
       eyebrow:'Werkzeug zur Text- und Dokumentprüfung', intro:'Text einfügen oder Datei ablegen: Aufgabe, Stellenbeschreibung oder Lebenslauf. Der Scanner zeigt unsichtbare Zeichen, per Farbe oder Schriftgröße versteckten Text und Phrasen, die eine KI in die Irre führen sollen. Alles läuft im Browser, nichts wird gesendet.',
@@ -207,7 +209,8 @@
       vOkNotesBig:'✓ Kein versteckter Inhalt',
       vOkNotesSub:'Es wurden weder versteckte Inhalte noch Fallen gefunden. Unten in den Befunden stehen einige Hinweise, die einen Blick wert sind.',
       footerBy:'Ein Werkzeug von SOVA WEB',
-      footer:'OwlUV v4.1 · Open-Source-Werkzeug · läuft vollständig lokal, keine Datenübertragung'
+      tagline:'Scanner für versteckten Text und KI-Fallen',
+      footer:'OwlUV v4.2 · Open-Source-Werkzeug · läuft vollständig lokal, keine Datenübertragung'
     },
     fr:{
       eyebrow:'Outil de vérification de textes et documents', intro:"Collez un texte ou déposez un fichier : devoir, offre d'emploi ou CV. Le scanner révèle les caractères invisibles, le texte masqué par la couleur ou la taille de police, et les phrases conçues pour induire une IA en erreur. Tout se passe dans votre navigateur, rien n'est envoyé.",
@@ -275,7 +278,8 @@
       vOkNotesBig:'✓ Aucun contenu masqué',
       vOkNotesSub:"Aucun contenu masqué ni piège n'a été trouvé. Quelques remarques figurent dans les résultats ci-dessous, elles valent un coup d'oeil.",
       footerBy:'Un outil SOVA WEB',
-      footer:'OwlUV v4.1 · outil open source · fonctionne entièrement en local, aucune donnée envoyée'
+      tagline:'Scanner de texte masqué et de pièges pour IA',
+      footer:'OwlUV v4.2 · outil open source · fonctionne entièrement en local, aucune donnée envoyée'
     },
     es:{
       eyebrow:'Herramienta de verificación de textos y documentos', intro:'Pega un texto o suelta un archivo: una tarea, una oferta de empleo o un CV. El escáner revela caracteres invisibles, texto oculto por color o tamaño de fuente y frases diseñadas para engañar a una IA. Todo se procesa en tu navegador, no se envía nada.',
@@ -343,7 +347,8 @@
       vOkNotesBig:'✓ Sin contenido oculto',
       vOkNotesSub:'No se ha encontrado contenido oculto ni trampas. Hay algunas observaciones en los resultados de abajo, merece la pena mirarlas.',
       footerBy:'Una herramienta de SOVA WEB',
-      footer:'OwlUV v4.1 · herramienta de código abierto · funciona totalmente en local, sin enviar datos'
+      tagline:'Escáner de texto oculto y trampas para IA',
+      footer:'OwlUV v4.2 · herramienta de código abierto · funciona totalmente en local, sin enviar datos'
     },
     it:{
       eyebrow:'Strumento di verifica di testi e documenti', intro:'Incolla un testo o trascina un file: un compito, un annuncio di lavoro o un CV. Lo scanner rivela caratteri invisibili, testo nascosto tramite colore o dimensione del carattere e frasi pensate per ingannare una IA. Tutto viene elaborato nel browser, nulla viene inviato.',
@@ -411,7 +416,8 @@
       vOkNotesBig:'✓ Nessun contenuto nascosto',
       vOkNotesSub:'Non sono stati trovati contenuti nascosti né trappole. Ci sono alcune note nei risultati qui sotto, vale la pena guardarle.',
       footerBy:'Uno strumento SOVA WEB',
-      footer:'OwlUV v4.1 · strumento open source · funziona interamente in locale, nessun dato inviato'
+      tagline:'Scanner di testo nascosto e trappole per IA',
+      footer:'OwlUV v4.2 · strumento open source · funziona interamente in locale, nessun dato inviato'
     }
   };
 })();
