@@ -61,6 +61,32 @@
 
   const esc=s=>s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 
+  // ============ TEHNICKE OZNAKE IZ MEDUSPREMNIKA ============
+  // Kad se sadrzaj kopira iz Worda (i iz drugih izvora) i zalijepi, sam sustav
+  // u medduspremnik ubaci sluzbene oznake pocetka i kraja odabira, kao HTML
+  // komentare. One nisu skriveni sadrzaj nego tehnika prijenosa, pa bi ih
+  // prijava kao nalaz pretvorila u laznu uzbunu.
+  // VAZNO: HTML komentari opcenito OSTAJU nalaz, jer se u njima stvarno kriju
+  // poruke. Ovdje se preskacu iskljucivo dolje popisane, poznate oznake.
+  const CLIP_MARKERS=[
+    /^start\s*fragment$/i,   /^end\s*fragment$/i,      // Windows i macOS CF_HTML
+    /^start\s*selection$/i,  /^end\s*selection$/i,     // isti zapis, granice odabira
+    /^start\s*html$/i,       /^end\s*html$/i,          // zaglavlje CF_HTML-a
+    /^startfragment:\d+$/i,  /^endfragment:\d+$/i      // varijanta s brojem znaka
+  ];
+  // Wordovi uvjetni komentari: <!--[if gte mso 9]> ... <![endif]-->
+  const MSO_COND=/^\[if[\s!][^\]]*\][\s\S]*$/i;
+  const MSO_ENDIF=/^<!\[endif\]$|^\[endif\]$/i;
+  function isClipMarker(text){
+    const c=String(text||'').trim();
+    if(!c) return true;
+    if(CLIP_MARKERS.some(re=>re.test(c))) return true;
+    if(MSO_ENDIF.test(c)) return true;
+    // uvjetni komentar se priznaje kao tehnicki samo u punom obliku [if ...] ... [endif]
+    if(MSO_COND.test(c)&&/\[endif\]\s*$/i.test(c)) return true;
+    return false;
+  }
+
   // ============ CISCENJE ZALIJEPLJENOG HTML-a ============
   const DROP='script,style,link,meta,iframe,object,embed,img,svg,video,audio,form,input,button,noscript';
   const OK_TAGS=new Set(['p','div','span','h1','h2','h3','h4','h5','h6','b','strong','i','em','u','s','br','hr',
@@ -151,34 +177,60 @@
     }
     return m;
   }
+  // Pomijesana pisma i duge crtice dosad su se prijavljivale u nalazima, ali se
+  // u desnom panelu nisu nigdje vidjele, pa nalaz nije imao kamo skociti.
+  // Pravilo prepoznavanja je isto kao prije, mijenja se samo prikaz: oznaka je
+  // namjerno tanka i siva da se ne natjece s ljubicastim i crvenim oznakama,
+  // jer duge crtice znaju biti ceste i u sasvim normalnom tekstu.
+  const isMixedWord = w => /[a-zA-Z]/.test(w)&&/[\u0400-\u04FF\u0370-\u03FF]/.test(w);
+  const isDashCp = cp => cp===0x2014||cp===0x2013||cp===0x2015;
+  function markMixed(txt){
+    const m=new Uint8Array(txt.length);
+    const re=/\S+/g; let x;
+    while((x=re.exec(txt))!==null){
+      if(isMixedWord(x[0])) for(let i=x.index;i<x.index+x[0].length;i++) m[i]=1;
+    }
+    return m;
+  }
   function renderText(txt){
-    const pm=markPhrases(txt);
-    let out='',idx=0,inMark=false;
+    const pm=markPhrases(txt), mm=markMixed(txt);
+    let out='',idx=0,inMark=false,inMix=false;
     for(const ch of txt){
-      const want=pm[idx]===1;
-      if(want&&!inMark){out+='<mark class="phrase">';inMark=true;}
-      if(!want&&inMark){out+='</mark>';inMark=false;}
+      const wantP=pm[idx]===1;
+      const wantM=!wantP&&mm[idx]===1;   // crvena oznaka fraze ima prednost
+      if(inMix&&!wantM){out+='</span>';inMix=false;}
+      if(inMark&&!wantP){out+='</mark>';inMark=false;}
+      if(wantP&&!inMark){out+='<mark class="phrase">';inMark=true;}
+      if(wantM&&!inMix){out+='<span class="mixmark">';inMix=true;}
       const cp=ch.codePointAt(0);
       if(INVISIBLE[cp]) out+='<span class="chip" data-l="U+'+cp.toString(16).toUpperCase().padStart(4,'0')+'"></span>';
       else if(isTag(cp)){const a=cp-0xE0000;out+='<span class="chip" data-l="TAG'+(a>=0x20&&a<=0x7E?':'+esc(String.fromCharCode(a)):'')+'"></span>';}
       else if(isVariation(cp)) out+='<span class="chip" data-l="VS"></span>';
       else if(isOddSpace(cp)) out+='<span class="chip" data-l="SP"></span>';
+      else if(isDashCp(cp)) out+='<span class="dashmark">'+esc(ch)+'</span>';
       else out+=esc(ch);
       idx+=ch.length;
     }
+    if(inMix) out+='</span>';
     if(inMark) out+='</mark>';
     return out;
   }
 
   // ============ GRADNJA DESNOG PANELA ============
   const VOID=new Set(['br','hr']);
-  function build(node,insideRevealed,hiddenOut){
+  // preRead: neobavezna mapa vec izracunatih razloga skrivenosti (Map ili WeakMap).
+  // Sluzi zato da se provjera boja i velicina fonta moze izvrsiti kao zaseban,
+  // stvarni korak prije gradnje prikaza (vidi tijek provjere u js/app.js).
+  // Bez nje se ponasa tocno kao prije.
+  function build(node,insideRevealed,hiddenOut,preRead){
+    const reasonsOf = el => (preRead&&preRead.has(el)) ? preRead.get(el) : hiddenReasons(el);
     let out='';
     node.childNodes.forEach(ch=>{
       if(ch.nodeType===3){ out+=renderText(ch.nodeValue); return; }
       if(ch.nodeType===8){
         const c=(ch.nodeValue||'').trim();
-        if(c.length>3){
+        // tehnicke oznake koje sustav sam ubaci pri kopiranju nisu nalaz
+        if(c.length>3&&!isClipMarker(c)){
           hiddenOut.push({t:c,reasons:['comment']});
           out+='<span class="revealed"><span class="bugmark"></span>'+renderText(c)+'<span class="bugmark"></span></span>';
         }
@@ -188,28 +240,32 @@
       let tag=ch.tagName.toLowerCase();
       if(!OK_TAGS.has(tag)) tag='span';
       if(VOID.has(tag)){ out+='<'+tag+'>'; return; }
-      const reasons=insideRevealed?[]:hiddenReasons(ch);
+      const reasons=insideRevealed?[]:reasonsOf(ch);
       const isHidden=reasons.length>0;
       if(isHidden){
         const t=(ch.textContent||'').trim();
         if(t) hiddenOut.push({t,reasons});
       }
-      const inner=build(ch,insideRevealed||isHidden,hiddenOut);
+      const inner=build(ch,insideRevealed||isHidden,hiddenOut,preRead);
       // vlastite uv- klase (aneks, okviri) prenosimo da desni panel izgleda isto
       const cls=(ch.getAttribute&&ch.getAttribute('class'))||'';
       const uvCls=cls.split(/\s+/).filter(c=>/^uv-/.test(c)).join(' ');
+      // oznaka odjeljka aneksa: po njoj nalaz zna kamo skociti u desnom panelu
+      const ax=(ch.getAttribute&&ch.getAttribute('data-uv-annex'))||'';
+      const axAttr=ax?' data-uv-annex="'+esc(ax)+'"':'';
       if(isHidden){
-        out+='<'+tag+' class="revealed'+(uvCls?' '+esc(uvCls):'')+'"><span class="bugmark"></span>'+inner+'<span class="bugmark"></span></'+tag+'>';
+        out+='<'+tag+' class="revealed'+(uvCls?' '+esc(uvCls):'')+'"'+axAttr+'><span class="bugmark"></span>'+inner+'<span class="bugmark"></span></'+tag+'>';
       } else if(insideRevealed){
-        out+='<'+tag+(uvCls?' class="'+esc(uvCls)+'"':'')+'>'+inner+'</'+tag+'>';
+        out+='<'+tag+(uvCls?' class="'+esc(uvCls)+'"':'')+axAttr+'>'+inner+'</'+tag+'>';
       } else {
         const st=ch.getAttribute('style');
-        out+='<'+tag+(uvCls?' class="'+esc(uvCls)+'"':'')+(st?' style="'+esc(st)+'"':'')+'>'+inner+'</'+tag+'>';
+        out+='<'+tag+(uvCls?' class="'+esc(uvCls)+'"':'')+axAttr+(st?' style="'+esc(st)+'"':'')+'>'+inner+'</'+tag+'>';
       }
     });
     return out;
   }
 
   OwlUV.detect={PHRASES,INVISIBLE,isVariation,isTag,isOddSpace,DASHES,esc,
-    sanitize,plainToHtml,nearWhite,hiddenReasons,markPhrases,renderText,build,OK_TAGS};
+    sanitize,plainToHtml,nearWhite,hiddenReasons,markPhrases,markMixed,renderText,build,OK_TAGS,
+    isClipMarker,isMixedWord};
 })();
