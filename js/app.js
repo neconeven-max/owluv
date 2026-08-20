@@ -28,6 +28,8 @@
   let lastCleaned='', lastVisibleText=null, hasScanned=false;
   let loaded=null;         // {name,size,source,docx?} - trenutno ucitana datoteka
   let lastFindings=[];     // za skok s nalaza na mjesto u desnom panelu
+  let hitPos=[];           // na kojoj je pojavi svaki nalaz, -1 = jos nigdje
+  const MANY_HITS=50;      // iznad toliko pojava uz brojac ide kratka napomena
   let pasteTimer=null;
 
   // razlozi skrivenosti dolaze iz jezgre kao kljucevi, ovdje se prevode
@@ -222,7 +224,8 @@
       // duge crtice
       DASHES.lastIndex=0;
       const dashCount=(text.match(DASHES)||[]).length;
-      if(dashCount) g.dash.push({sev:'info',title:t.fDashTitle(dashCount),why:t.fDashWhy,anchor:'.dashmark'});
+      if(dashCount) g.dash.push({sev:'info',title:t.fDashTitle(dashCount),why:t.fDashWhy,
+        anchor:'.dashmark',manyKey:'dash'});
     }});
 
     // --- korak: pregled svojstava dokumenta ---
@@ -310,14 +313,34 @@
   }
 
   // ============ NALAZI ============
+  // Nalaz obicno ima vise pojava u tekstu. Umjesto da se sve izlistaju - popis
+  // od sto stavki nitko ne cita i samo rasteze stranicu - kroz njih se ide
+  // klikom, kao kod trazenja rijeci u pregledniku: svaki klik vodi na sljedecu,
+  // nakon zadnje se vraca na prvu, a brojac pokazuje na kojoj si od koliko.
+  function hitsOf(f){ return f&&f.anchor?Array.from(viz.querySelectorAll(f.anchor)):[]; }
+
   function renderFindings(findings){
     lastFindings=findings;
+    hitPos=findings.map(()=>-1);          // jos se nije skocilo ni na jednu
     const t=T();
     findCount.textContent=t.nFind(findings.length);
     if(!findings.length){ findingsEl.innerHTML='<div class="empty">'+esc(t.findingsNone)+'</div>'; return; }
     findingsEl.innerHTML=findings.map((f,i)=>{
       // kliknabilno je samo ono sto stvarno ima mjesto u desnom panelu
-      const can=!!(f.anchor&&viz.querySelector(f.anchor));
+      const n=hitsOf(f).length;
+      const can=n>0;
+      // brojac i strelice samo kad ima vise od jedne pojave
+      const nav=(n>1)
+        ? '<span class="hits">'+
+            '<button type="button" class="hitbtn" data-nav="-1" title="'+esc(t.hitPrev)+'" aria-label="'+esc(t.hitPrev)+'">\u2039</button>'+
+            '<span class="hitn" title="'+esc(t.hitOf(1,n))+'">1/'+n+'</span>'+
+            '<button type="button" class="hitbtn" data-nav="1" title="'+esc(t.hitNext)+'" aria-label="'+esc(t.hitNext)+'">\u203A</button>'+
+          '</span>'
+        : '';
+      // kad pojava ima jako puno, uz brojac ide kratka napomena zasto
+      const many=(n>MANY_HITS)
+        ? '<div class="many">'+esc((f.manyKey==='dash'?t.manyDashNote:t.manyNote)(n))+'</div>'
+        : '';
       const body=(f.items&&f.items.length)
         ? '<div class="items">'+f.items.map(it=>
             '<div class="item"><span class="q">'+esc(it.q)+'</span>'+
@@ -325,27 +348,44 @@
         : (f.detail?'<div class="detail">'+esc(f.detail)+'</div>':'');
       // oznaka "nema mjesta u tekstu" crta se kao pseudoelement naslova, pa
       // atribut mora stajati na naslovu - attr() cita element na kojem visi
-      return '<div class="finding '+f.sev+(can?' jump':' noloc')+'" data-i="'+i+'"'+
+      // kad postoji brojac sa strelicama, strelica iza naslova bi bila visak
+      return '<div class="finding '+f.sev+(can?' jump':' noloc')+(nav?' hasnav':'')+'" data-i="'+i+'"'+
              (can?' title="'+esc(t.jumpTip)+'"':'')+'>'+
-             '<h3'+(can?'':' data-noloc="'+esc(t.noLoc)+'"')+'>'+esc(f.title)+'</h3>'+
-             '<div class="why">'+esc(f.why)+'</div>'+body+'</div>';
+             '<div class="fhead"><h3'+(can?'':' data-noloc="'+esc(t.noLoc)+'"')+'>'+esc(f.title)+'</h3>'+nav+'</div>'+
+             '<div class="why">'+esc(f.why)+'</div>'+many+body+'</div>';
     }).join('');
   }
 
-  // klik na nalaz pomice desni panel na prvo mjesto tog nalaza i nakratko ga istakne
-  function jumpTo(sel){
-    const el=viz.querySelector(sel);
+  // pomak na sljedecu (dir=1) ili prethodnu (dir=-1) pojavu tog nalaza
+  function stepHit(i,dir){
+    const f=lastFindings[i];
+    const list=hitsOf(f);
+    if(!list.length) return false;
+    const n=list.length, cur=hitPos[i];
+    const pos=(cur===undefined||cur<0) ? (dir>0?0:n-1) : ((cur+dir)%n+n)%n;
+    hitPos[i]=pos;
+    jumpToEl(list[pos]);
+    const card=findingsEl.querySelector('.finding[data-i="'+i+'"]');
+    const box=card&&card.querySelector('.hitn');
+    if(box){ box.textContent=(pos+1)+'/'+n; box.title=T().hitOf(pos+1,n); }
+    return true;
+  }
+
+  // skok na jednu odredenu pojavu: kratko jace zasvijetli, pa ostane tanko
+  // oznacena dok se ne skoci dalje, da se vidi na kojoj si tocno
+  function jumpToEl(el){
     if(!el) return false;
     const r=el.getBoundingClientRect(), rv=viz.getBoundingClientRect();
     viz.scrollTop+=(r.top-rv.top)-Math.max(40,Math.round(viz.clientHeight/3));
     const panel=viz.closest?viz.closest('.panel'):null;
     if(panel&&panel.scrollIntoView) panel.scrollIntoView({block:'nearest'});
-    viz.querySelectorAll('.uv-jump').forEach(x=>x.classList.remove('uv-jump'));
+    viz.querySelectorAll('.uv-jump,.uv-current').forEach(x=>x.classList.remove('uv-jump','uv-current'));
     void el.offsetWidth;
-    el.classList.add('uv-jump');
+    el.classList.add('uv-jump','uv-current');
     setTimeout(()=>el.classList.remove('uv-jump'),1300);
     return true;
   }
+  function jumpTo(sel){ return jumpToEl(viz.querySelector(sel)); }
 
   // ============ DATOTEKE ============
   function showFileInfo(){
@@ -472,10 +512,18 @@
   });
 
   findingsEl.addEventListener('click',e=>{
-    const card=e.target.closest&&e.target.closest('.finding.jump');
+    if(!e.target.closest) return;
+    // strelica se hvata prva i tu staje, da klik ne okine i skok cijele kartice
+    const nav=e.target.closest('.hitbtn');
+    if(nav){
+      e.preventDefault(); e.stopPropagation();
+      const c=nav.closest('.finding');
+      if(c) stepHit(+c.getAttribute('data-i'),+nav.getAttribute('data-nav'));
+      return;
+    }
+    const card=e.target.closest('.finding.jump');
     if(!card) return;
-    const f=lastFindings[+card.getAttribute('data-i')];
-    if(f&&f.anchor) jumpTo(f.anchor);
+    stepHit(+card.getAttribute('data-i'),1);
   });
 
   F.wireDropzone(dropZone,handleFile,on=>dropZone.classList.toggle('dragging',on));
@@ -519,6 +567,11 @@
     scan:scan,
     reset:resetAll,
     jump:jumpTo,
+    clickFinding(i){ const c=findingsEl.querySelectorAll('.finding')[i]; if(c) c.click(); },
+    clickArrow(i,dir){
+      const c=findingsEl.querySelectorAll('.finding')[i]; if(!c) return;
+      const b=c.querySelector('.hitbtn[data-nav="'+dir+'"]'); if(b) b.click();
+    },
     // testna kuka: postavlja pragove prikaza tijeka. Bez argumenata vraca
     // stvarne vrijednosti. Sucelje je nikad ne poziva.
     progressTiming(appear,step){
@@ -545,8 +598,22 @@
         sev:f.className.replace('finding','').replace('jump','').replace('noloc','').trim(),
         jump:f.classList.contains('jump'),
         title:f.querySelector('h3').textContent,
+        hits:(f.querySelector('.hitn')||{textContent:''}).textContent,
+        arrows:f.querySelectorAll('.hitbtn').length,
+        many:(f.querySelector('.many')||{textContent:''}).textContent,
         detail:(f.querySelector('.detail')||f.querySelector('.items')||{textContent:''}).textContent
       })),
+      // koja je pojava trenutno oznacena, ocitano iz samog desnog panela
+      currentHit:(function(){
+        const el=viz.querySelector('.uv-current');
+        if(!el) return null;
+        for(let i=0;i<lastFindings.length;i++){
+          const a=lastFindings[i].anchor; if(!a) continue;
+          const k=Array.from(viz.querySelectorAll(a)).indexOf(el);
+          if(k>=0) return {finding:i,index:k,total:viz.querySelectorAll(a).length};
+        }
+        return null;
+      })(),
       revealed:Array.from(document.querySelectorAll('#viz .revealed')).map(e=>e.textContent.trim()),
       phrases:Array.from(document.querySelectorAll('#viz mark.phrase')).map(e=>e.textContent.trim()),
       dashes:document.querySelectorAll('#viz .dashmark').length,
