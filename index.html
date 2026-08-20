@@ -4,6 +4,10 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>OwlUV</title>
+<!-- Ikone se citaju iz repozitorija, nikad s OneDrivea: alat mora raditi i bez njega. -->
+<link rel="icon" href="assets/sovaweb_favicon.ico" sizes="16x16 32x32">
+<link rel="icon" type="image/png" sizes="512x512" href="assets/sovaweb_favicon_512.png">
+<link rel="apple-touch-icon" href="assets/sovaweb_favicon_512.png">
 <style>
   :root{
     --paper:#F7F9FB; --panel:#FFFFFF; --ink:#14232E; --muted:#5B6B77;
@@ -108,9 +112,8 @@
   .btn.ghost{background:transparent;color:var(--ink)}
   .btn.ghost:hover{background:#EDF2F6}
   .btn.sm{padding:6px 11px;font-size:11px}
-  .btn.reset{margin-left:auto;border-color:var(--line);color:var(--muted);background:transparent}
+  .btn.reset{border-color:var(--line);color:var(--muted);background:transparent}
   .btn.reset:hover{background:#EDF2F6;color:var(--ink);border-color:var(--muted)}
-  @media(max-width:520px){.btn.reset{margin-left:0}}
   .toolbar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;padding:12px 16px;border-top:1px solid var(--line)}
   .verdict{border-radius:10px;padding:16px 18px;margin-bottom:18px;display:none;border:1px solid}
   .verdict .big{font-size:20px;font-weight:800;letter-spacing:-.01em}
@@ -128,13 +131,72 @@
   .finding.info{border-left-color:#2563EB}
   .finding h3{font-size:14px;font-weight:700}
   .finding .why{font-size:12.5px;color:var(--muted);margin-top:3px}
-  .finding .detail{font-family:var(--mono);font-size:12px;margin-top:8px;background:var(--paper);border:1px solid var(--line);border-radius:6px;padding:8px 10px;word-break:break-word;white-space:pre-wrap}
   .empty{padding:26px 16px;color:var(--muted);font-size:13px;text-align:center;font-family:var(--sans)}
   .note{font-size:11.5px;color:var(--muted);padding:10px 16px;border-top:1px solid var(--line);font-family:var(--sans)}
   .note.recon{display:none;background:var(--uv-bg);color:#4C1D95;border-top-color:#D9CBF3}
   .count{font-family:var(--mono);font-size:11px;background:var(--paper);border:1px solid var(--line);border-radius:20px;padding:2px 10px;color:var(--muted)}
   footer{padding:0 24px 40px}
-  footer .wrap{font-size:12px;color:var(--muted)}
+  footer .wrap{font-size:12px;color:var(--muted);display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+  footer .by{display:flex;align-items:center;gap:7px;padding-left:10px;border-left:1px solid var(--line)}
+  footer .by img{height:20px;width:auto;display:block;opacity:.9}
+  footer .by a{color:var(--muted);text-decoration:underline;text-underline-offset:2px}
+  footer .by a:hover{color:var(--uv)}
+  @media(max-width:520px){footer .by{padding-left:0;border-left:0;width:100%}}
+
+  /* ---- tanke, nenametljive oznake: duga crtica i pomijesana pisma ----
+     Namjerno tiho: duge crtice su ceste i u sasvim normalnom tekstu, pa oznaka
+     ne smije konkurirati ljubicastom (skriveno) ni crvenom (fraza). */
+  .dashmark,.mixmark{border-bottom:1px dotted #A9B6C0;padding-bottom:1px}
+  .mixmark{background:rgba(169,182,192,.12);border-radius:2px}
+
+  /* ---- kratko isticanje mjesta na koje je skocio klik na nalaz ---- */
+  .uv-jump{animation:uvJump 1.2s ease-out 1}
+  @keyframes uvJump{
+    0%{background:#FDE68A;box-shadow:0 0 0 4px #FDE68A}
+    70%{background:#FDE68A;box-shadow:0 0 0 4px #FDE68A}
+    100%{background:transparent;box-shadow:0 0 0 4px transparent}
+  }
+
+  /* ---- tijek provjere: stvarni koraci, bez umjetnog cekanja ---- */
+  .progress{display:none;background:var(--panel);border:1px solid var(--line);border-radius:10px;
+            padding:12px 16px;margin-bottom:18px}
+  .progress.on{display:block}
+  .progress .ph{font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin-bottom:8px}
+  .progress ol{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:4px}
+  .progress li{font-size:13px;color:var(--muted);display:flex;align-items:center;gap:8px}
+  .progress li .dot{font-family:var(--mono);font-size:11px;width:14px;text-align:center;color:var(--uv)}
+  .progress li.done{color:var(--ink)}
+  .progress li.now{color:var(--uv);font-weight:700}
+
+  /* ---- puls na crvenoj presudi ----
+     Jedan ciklus 1,6 s (0,6 Hz), najvise tri ciklusa, pa mir. Nikad blizu
+     granice od 3 bljeska u sekundi. Ugasen kad sustav trazi manje animacija. */
+  .verdict.pulse{animation:uvPulse 1.6s ease-in-out 3}
+  @keyframes uvPulse{
+    0%,100%{background:var(--danger-bg);box-shadow:0 0 0 0 rgba(179,38,30,0)}
+    50%{background:#F6D2CF;box-shadow:0 0 0 6px rgba(179,38,30,.16)}
+  }
+  @media(prefers-reduced-motion:reduce){
+    .verdict.pulse{animation:none}
+    .uv-jump{animation:none;background:#FDE68A}
+  }
+
+  /* ---- poruka kad Cmd+V ne donese ni datoteku ni tekst ---- */
+  .note.paste{display:none;background:var(--warn-bg);color:var(--warn);border-top-color:#E8CDA3;font-weight:600}
+  .note.paste.on{display:block}
+
+  /* ---- nalazi: citat u UV boji, opis manjim sivim slovima ispod ---- */
+  .finding.jump{cursor:pointer}
+  .finding.jump:hover{background:#FAFCFE;border-color:var(--muted)}
+  .finding.jump h3::after{content:"\2192";margin-left:6px;color:var(--uv);font-weight:400}
+  .finding.noloc{opacity:.85}
+  .finding.noloc h3::after{content:attr(data-noloc);margin-left:8px;font-family:var(--mono);font-size:10px;
+       font-weight:400;color:var(--muted);border:1px solid var(--line);border-radius:4px;padding:1px 6px;white-space:nowrap}
+  .finding .detail{font-family:var(--mono);font-size:12px;margin-top:8px;background:var(--paper);border:1px solid var(--line);border-radius:6px;padding:8px 10px;word-break:break-word;white-space:pre-wrap}
+  .finding .items{margin-top:8px;display:flex;flex-direction:column;gap:8px}
+  .finding .item{background:var(--paper);border:1px solid var(--line);border-radius:6px;padding:8px 10px}
+  .finding .item .q{font-family:var(--mono);font-size:12px;color:var(--uv);word-break:break-word;white-space:pre-wrap;display:block}
+  .finding .item .n{display:block;margin-top:3px;font-size:11px;color:var(--muted);font-family:var(--sans)}
 </style>
 </head>
 <body>
@@ -159,6 +221,7 @@
 </header>
 <main class="wrap">
   <div id="verdict" class="verdict"><div class="big" id="verdictBig"></div><div class="sub" id="verdictSub"></div></div>
+  <div id="progress" class="progress"><div class="ph" id="progressH"></div><ol id="progressList"></ol></div>
   <div class="grid">
     <section class="panel">
       <div class="panel-h">
@@ -167,6 +230,7 @@
         <span class="hbtns">
           <button class="btn ghost sm" id="pickBtn" data-i18n="pickBtn" data-i18n-title="pickTip"></button>
           <button class="btn ghost sm" id="demoBtn" data-i18n="demoBtn" data-i18n-title="demoTip"></button>
+          <button class="btn ghost sm reset" id="resetBtn" data-i18n="resetBtn" data-i18n-title="resetTip"></button>
         </span>
       </div>
       <div class="dropzone" id="dropZone">
@@ -179,8 +243,8 @@
         <button class="btn" id="scanBtn" data-i18n="scanBtn"></button>
         <button class="btn ghost" id="cleanBtn" data-i18n="cleanBtn"></button>
         <button class="btn ghost" id="visibleBtn" style="display:none" data-i18n="visibleBtn"></button>
-        <button class="btn reset" id="resetBtn" data-i18n="resetBtn" data-i18n-title="resetTip"></button>
       </div>
+      <div class="note paste" id="pasteNote" data-i18n="pasteNothing"></div>
       <div class="note recon" id="reconNote" data-i18n="noteRecon"></div>
       <div class="note" data-i18n="tip"></div>
     </section>
@@ -195,7 +259,14 @@
     <div class="findings" id="findings"></div>
   </section>
 </main>
-<footer><div class="wrap" data-i18n="footer"></div></footer>
+<footer><div class="wrap">
+  <span data-i18n="footer"></span>
+  <span class="by">
+    <img src="assets/sovaweb_logo.svg" alt="SOVA WEB">
+    <span data-i18n="footerBy"></span>
+    <a href="https://sovaweb.net" rel="noopener">sovaweb.net</a>
+  </span>
+</div></footer>
 
 <script src="vendor/fflate/fflate.umd.js"></script>
 <script src="js/i18n.js"></script>

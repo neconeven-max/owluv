@@ -340,20 +340,29 @@
   }
 
   // ---------- nalazi specificni za Word ----------
+  // anchor je mjesto u desnom panelu na koje klik na nalaz skace. Svojstva
+  // dokumenta ga namjerno nemaju: to su podaci o datoteci, a ne mjesto u tekstu,
+  // pa taj nalaz ostaje nekliknabilan i to se u sucelju vidi.
+  const ax = key => '[data-uv-annex="'+key+'"]';
   function findings(r,t){
     const f=[];
     if(r.comments.length) f.push({sev:'warn',title:t.fCommTitle(r.comments.length),why:t.fCommWhy,
-      detail:r.comments.map(c=>(c.author||'?')+': '+strip(c.html)).join('\n')});
+      anchor:ax('comments'),
+      items:r.comments.map(c=>({q:strip(c.html),n:c.author||'?'}))});
     if(r.deleted.length) f.push({sev:'warn',title:t.fDelTitle(r.deleted.length),why:t.fDelWhy,
-      detail:r.deleted.map(d=>'"'+d.slice(0,300)+'"').join('\n')});
+      anchor:ax('deleted'),
+      items:r.deleted.map(d=>({q:d.slice(0,300)}))});
     if(r.boxes.length) f.push({sev:'danger',title:t.fBoxTitle(r.boxes.length),why:t.fBoxWhy,
-      detail:r.boxes.map(b=>'"'+strip(b).slice(0,300)+'"').join('\n')});
+      anchor:ax('textbox'),
+      items:r.boxes.map(b=>({q:strip(b).slice(0,300)}))});
     if(r.headers.length) f.push({sev:'info',title:t.fHeadTitle(r.headers.length),why:t.fHeadWhy,
-      detail:r.headers.map(x=>x.file+': '+strip(x.html)).join('\n')});
+      anchor:ax('headers'),
+      items:r.headers.map(x=>({q:strip(x.html),n:x.file}))});
     if(r.notes.length) f.push({sev:'info',title:t.fNoteTitle(r.notes.length),why:t.fNoteWhy,
-      detail:r.notes.map(x=>strip(x.html)).join('\n')});
+      anchor:ax('notes'),
+      items:r.notes.map(x=>({q:strip(x.html)}))});
     if(r.props.length) f.push({sev:'info',title:t.fPropTitle(r.props.length),why:t.fPropWhy,
-      detail:r.props.map(p=>(t.prop[p.k]||p.k)+': '+p.v).join('\n')});
+      items:r.props.map(p=>({q:p.v,n:t.prop[p.k]||p.k}))});
     return f;
   }
   function strip(html){
