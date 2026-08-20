@@ -249,6 +249,83 @@ window.addEventListener('load',async()=>{
           mx.findings.some(f=>/pomije.anim pismima/i.test(f.title)&&f.jump===true),
           mx.findings.map(f=>f.title+':'+f.jump).join('; '));
 
+    // ============ 5f. TIJEK PROVJERE SE NE POJAVLJUJE NA BRZOJ OBRADI ============
+    log('\nZADATAK 3 - prikaz koraka samo kad obrada stvarno traje');
+    w.OwlUV.app.reset();
+    const tBrzo=Date.now();
+    await w.OwlUV.app.loadFile(await fileFrom('test-cist.docx'));
+    const trajanje=Date.now()-tBrzo;
+    const fp=w.OwlUV.app.state();
+    // Provjerava se PRAVILO, ne brzina stroja: ispod praga se prikaz ne smije
+    // pojaviti, iznad praga se mora. Uski pojas oko samog praga se preskace, jer
+    // je tamo oboje ispravno i provjera bi ovisila o opterecenju stroja.
+    if(trajanje<400){
+      log('  (obrada je trajala '+trajanje+' ms, dakle ispod praga od 500 ms)');
+      check('brza obrada: prikaz koraka nije vidljiv', fp.progressOn===false,
+            'trajanje '+trajanje+' ms');
+      check('brza obrada: prikaz koraka se nije pojavio ni na tren',
+            fp.progressEverShown===false, 'trajanje '+trajanje+' ms');
+      await new Promise(r=>setTimeout(r,900));
+      const fp2=w.OwlUV.app.state();
+      check('brza obrada: prikaz se ne pojavi ni naknadno',
+            fp2.progressEverShown===false&&fp2.progressOn===false,
+            'on='+fp2.progressOn+' ikad='+fp2.progressEverShown);
+    } else if(trajanje>700){
+      log('  (obrada je trajala '+trajanje+' ms, dakle iznad praga - stroj je bio spor)');
+      check('spora obrada: prikaz koraka se pojavio', fp.progressEverShown===true,
+            'trajanje '+trajanje+' ms');
+      check('spora obrada: prag prikaza je i dalje 500 ms',
+            w.OwlUV.app.progressTiming().appear===500);
+      await waitFor(()=>w.OwlUV.app.state().progressOn===false,4000);
+      check('spora obrada: prikaz na kraju sam nestane',
+            w.OwlUV.app.state().progressOn===false);
+    } else {
+      log('  (obrada je trajala '+trajanje+' ms, tocno oko praga - obje su moguce)');
+      check('oko praga: prag prikaza je i dalje 500 ms',
+            w.OwlUV.app.progressTiming().appear===500);
+      check('oko praga: prikaz i stanje se slazu',
+            fp.progressOn===false||fp.progressEverShown===true,
+            'on='+fp.progressOn+' ikad='+fp.progressEverShown);
+      await waitFor(()=>w.OwlUV.app.state().progressOn===false,4000);
+      check('oko praga: prikaz nije ostao visjeti',
+            w.OwlUV.app.state().progressOn===false);
+    }
+
+    // ============ 5f-2. KAD SE PRIKAZ POJAVI, OSTAJE CITLJIV ============
+    // Prag se ovdje spusta namjerno, da provjera mehanike ne ovisi o brzini
+    // stroja. Prag u sucelju je i dalje 500 ms - to pokriva provjera iznad.
+    log('\nZADATAK 3 - kad se prikaz pojavi, ne nestane prerano');
+    const zadano=w.OwlUV.app.progressTiming(0,60).zadano;
+    check('stvarni prag pojavljivanja je 500 ms', zadano.appear===500, String(zadano.appear));
+    check('stvarno zadrzavanje koraka je 650 ms', zadano.step===650, String(zadano.step));
+    w.OwlUV.app.reset();
+    await w.OwlUV.app.loadFile(await fileFrom('test-skriveno.docx'));
+    const sp=w.OwlUV.app.state();
+    check('prikaz koraka se pojavio', sp.progressEverShown===true);
+    check('prikaz je jos vidljiv kad posao zavrsi', sp.progressOn===true, 'on='+sp.progressOn);
+    check('prikaz je nabrojao korake', sp.progressSteps>=1, 'koraka: '+sp.progressSteps);
+    check('rezultat je gotov iako prikaz jos stoji', sp.verdict==='v-danger'&&sp.findings.length>=6,
+          sp.verdict+' / '+sp.findings.length);
+    await waitFor(()=>w.OwlUV.app.state().progressOn===false,4000);
+    check('prikaz na kraju sam nestane', w.OwlUV.app.state().progressOn===false);
+    w.OwlUV.app.progressTiming();   // natrag na stvarne vrijednosti
+    check('pragovi su vraceni na stvarne', w.OwlUV.app.progressTiming().appear===500);
+
+    // ============ 5g. SOVA UZ NAZIV ============
+    log('\nZADATAK 5 - sova uz naziv');
+    const owl=w.document.querySelector('#owlMark img.owl');
+    const beam=w.document.querySelector('#owlMark .beam');
+    check('sova je ucitana iz repozitorija', !!owl&&owl.naturalWidth>0,
+          owl?owl.getAttribute('src')+' w='+owl.naturalWidth:'nema');
+    check('zraka je crtana u stranici, nije slika', !!beam&&beam.tagName!=='IMG');
+    w.OwlUV.app.reset();
+    check('zraka se pokrece pri skeniranju', (()=>{
+      const m=w.document.getElementById('owlMark');
+      m.classList.remove('sweep');
+      w.document.getElementById('scanBtn').click();
+      return m.classList.contains('sweep');
+    })());
+
     // ============ 6. SVIH 6 JEZIKA ============
     log('\nPRAVILO - sucelje na svih 6 jezika');
     w.OwlUV.app.reset();
@@ -263,6 +340,12 @@ window.addEventListener('load',async()=>{
             prazno.map(e=>e.getAttribute('data-i18n')).join(','));
       check(L+': presuda i nalazi prevedeni', st.verdict==='v-danger'&&st.findings.length>=6&&!/undefined/.test(txt),
             st.verdictBig+' | nalaza: '+st.findings.length);
+      check(L+': podnaslov postoji i preveden je',
+            st.tagline.length>8&&!/tagline/.test(st.tagline), st.tagline);
+      check(L+': naslov kartice preglednika nosi podnaslov',
+            /^OwlUV - /.test(st.docTitle)&&st.docTitle.indexOf(st.tagline)>0, st.docTitle);
+      check(L+': opis stranice nosi podnaslov',
+            st.docDesc.indexOf(st.tagline)===0&&st.docDesc.length>60, st.docDesc.slice(0,70));
       const R=w.OwlUV.I18N[L].r;
       check(L+': razlozi skrivenosti prevedeni na ovaj jezik',
             txt.includes(R.wvanish)&&txt.includes(R.white)&&txt.includes(R.wtextbox)&&
@@ -270,6 +353,11 @@ window.addEventListener('load',async()=>{
             'nedostaje: '+[['wvanish',R.wvanish],['white',R.white],['wtextbox',R.wtextbox]]
               .filter(x=>!txt.includes(x[1])).map(x=>x[0]+'="'+x[1]+'"').join(', '));
     }
+    const tags=['hr','en','de','fr','es','it'].map(L=>{w.OwlUV.app.setLang(L);return w.OwlUV.app.state().tagline;});
+    check('podnaslov je razlicit na svakom jeziku', new Set(tags).size===6, tags.join(' | '));
+    w.OwlUV.app.setLang('en');
+    check('engleski podnaslov sadrzi "hidden text scanner"',
+          /hidden text scanner/i.test(w.OwlUV.app.state().tagline), w.OwlUV.app.state().tagline);
     w.OwlUV.app.setLang('hr');
 
     // ============ 7. OBECANJE: NISTA NE IDE VAN ============
