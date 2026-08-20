@@ -80,6 +80,9 @@ Jedna datoteka odjednom. Gumb "Novi tekst" (ili Esc) briše i datoteku.
 Stari `.doc` nije podržan — alat javlja da dokument treba spremiti kao `.docx`.
 PDF još nije podržan — alat to jasno kaže umjesto da se pravi da je pregledao.
 
+Ako tek postavljaš alat na drugom računalu, vidi odjeljak
+[Nastavak rada na drugom stroju](#nastavak-rada-na-drugom-stroju).
+
 ## Struktura mapa
 
 ```
@@ -182,6 +185,90 @@ odjednom. `test-bez-teksta.docx` sadrži samo sliku i nijedno slovo.
 | svih 6 jezika: nalazi i razlozi prevedeni | prošao |
 | nema nijednog vanjskog zahtjeva | prošao |
 
+## Nastavak rada na drugom stroju
+
+Rad se vodi naizmjenično s više računala. Sve je u repozitoriju, pa se na novom
+stroju nastavlja u tri koraka. Naredbe se upisuju u Terminal.
+
+### 1. Provjeri može li stroj do GitHuba
+
+```
+ssh -T git@github.com
+```
+
+- Ako javi **`Hi neconeven-max! You've successfully authenticated`** — sve je u
+  redu, idi na korak 2.
+- Ako javi **`Permission denied (publickey)`** — taj stroj još nema svoju
+  propusnicu za GitHub. Treba upisati njegov javni ključ
+  (`~/.ssh/id_ed25519.pub`) na GitHub račun, u postavkama GitHuba pod
+  *Settings → SSH and GPG keys*. Bez toga preuzimanje neće raditi.
+
+### 2. Preuzmi repozitorij
+
+```
+cd ~
+git clone git@github.com:neconeven-max/owluv.git
+cd owluv
+```
+
+Time nastaje mapa `~/owluv` sa svime. Ako mapa već postoji od prije, umjesto
+preuzimanja povuci najnovije stanje:
+
+```
+cd ~/owluv
+git pull
+```
+
+### 3. Pokreni alat
+
+Otvori datoteku `index.html` dvoklikom, ili iz Terminala:
+
+```
+open index.html
+```
+
+To je sve. Nema instalacije i nema pokretanja poslužitelja — alat je obična
+stranica koja radi iz mape na disku. Radi i bez interneta.
+
+### Pokretanje testa
+
+Test provjerava da alat i dalje pronalazi sve zamke. Vrijedi ga pokrenuti prije
+i poslije svake veće izmjene.
+
+```
+node test/pokreni-test.js
+```
+
+Ispisat će popis provjera i na kraju **`REZULTAT: PROSAO`** ili **`PAO`**.
+Traje otprilike pola minute.
+
+Za test su potrebne dvije stvari koje alat sam **ne** treba:
+- **Node.js** — provjeri s `node -v`
+- **Google Chrome** — test ga pokreće bez vidljivog prozora
+
+Ako Chrome nije na uobičajenom mjestu, može mu se reći gdje je:
+
+```
+CHROME="/putanja/do/chrome" node test/pokreni-test.js
+```
+
+Testni dokumenti su već u repozitoriju. Ako ih zatreba napraviti ponovno:
+
+```
+node test/napravi-testne-docx.js
+```
+
+### Kad završiš rad
+
+```
+git add -A
+git commit -m "kratak opis onoga sto je napravljeno"
+git push
+```
+
+Prije toga dopuni odjeljak *Povijest izmjena* na dnu ovog dokumenta, jednim
+kratkim unosom s datumom — što je napravljeno i zašto.
+
 ## Prijevodi za provjeru
 
 Sučelje je na 6 jezika. Hrvatski i engleski su provjereni. Za ostale je
@@ -248,6 +335,11 @@ identični Wordu.
 **Napravljen je automatski test.** Testni `.docx` sadrži sve vrste skrivenog
 sadržaja odjednom, a test ga provlači kroz pravi `index.html` u pregledniku i
 provjerava da svaku od njih alat stvarno pronađe. Prošlo je svih 47 provjera.
+
+**Poslano na GitHub i pripremljen prijelaz na drugi stroj.** Repozitorij je
+poslan na `git@github.com:neconeven-max/owluv.git`, a u ovaj dokument dodan je
+odjeljak *Nastavak rada na drugom stroju*, da se rad može nastaviti bez
+prisjećanja kako se što pokreće.
 
 ### Ranije — v3.3 (postojeća radna verzija)
 
