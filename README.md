@@ -109,8 +109,10 @@ js/
   app.js                      sučelje, tijek skeniranja, presuda
 assets/
   sovaweb_logo.svg            logo SOVA WEB za podnožje
+  sovaweb_owl.png             glava sove uz naziv, izrezana iz logotipa
   sovaweb_favicon.ico         ikona kartice preglednika
   sovaweb_favicon_512.png     ikona za dodavanje na početni zaslon
+  izdvoji-sovu.py             skripta koja je izrezala glavu sove iz logotipa
 vendor/
   fflate/                     raspakiravanje ZIP-a (MIT licenca), u repozitoriju
 standalone/
@@ -190,7 +192,7 @@ Testni dokument `test-skriveno.docx` sadrži sve vrste skrivenog sadržaja
 odjednom. `test-bez-teksta.docx` sadrži samo sliku i nijedno slovo.
 `test-cist.docx` je kontrolni uzorak bez ijedne zamke.
 
-### Rezultat zadnjeg pokretanja: 20.08.2026., 77 provjera, sve prošle
+### Rezultat zadnjeg pokretanja: 20.08.2026., 111 provjera, sve prošle
 
 | Provjera | Rezultat |
 |---|---|
@@ -228,6 +230,39 @@ odjednom. `test-bez-teksta.docx` sadrži samo sliku i nijedno slovo.
 | crvena presuda pulsira, zelena ne | prošao |
 | zelena presuda uz plave nalaze ne tvrdi da nema ničega | prošao |
 | duga crtica i pomiješano pismo označeni u desnom panelu | prošao |
+| prikaz koraka se ne pojavljuje na brzoj obradi | prošao |
+| kad se prikaz koraka pojavi, ne nestane prije nego se stigne pročitati | prošao |
+| podnaslov postoji na svih 6 jezika | prošao |
+| podnaslov ulazi u naslov kartice i u opis stranice | prošao |
+| sova uz naziv se učitava iz repozitorija | prošao |
+
+## Zašto nema prekidača za brzi i spori način
+
+Dok se datoteka obrađuje, alat prikazuje korake koje stvarno izvodi. Na maloj
+datoteci ti koraci prije su bljesnuli i nestali prije nego ih se stiglo
+pročitati, pa su samo smetali. Prva pomisao je bila dati korisniku prekidač:
+brzi način bez prikaza i spori način s prikazom.
+
+**Namjerno toga nema, iz dva razloga.**
+
+Prvo, **prekidač koji ne mijenja rezultat daje odluku bez koristi.** Što god
+korisnik odabere, nalaz je isti. Jedino što bi dobio je još jedno pitanje na
+koje mora odgovoriti prije nego dobije ono po što je došao, i to pitanje o
+nečemu što ga se zapravo ne tiče. Postavka koja ne mijenja ishod je trošak, ne
+mogućnost.
+
+Drugo, **kod obrade više datoteka takav prikaz ionako prestaje biti tijek jedne
+provjere.** Kad se odjednom preda deset dokumenata, korisnika više ne zanima
+koji je korak u tijeku, nego koja je datoteka gotova i što je u njoj nađeno.
+Prikaz tada postaje popis obrađenih datoteka, a prekidač za "spori način" bi se
+morao ukinuti čim se to doda.
+
+Zato odlučuje **prag, a ne korisnik**: prikaz se pojavi samo ako obrada stvarno
+traje dulje od otprilike pola sekunde, dakle samo kad ima što gledati. Ako
+završi prije, ne pojavi se uopće. Kad se pojavi, svaki korak ostane vidljiv
+dovoljno dugo da se pročita, ali **obrada ga ne čeka** - posao teče punom
+brzinom, a prikaz samo zaostane za njim i nestane nešto kasnije. Nikakvog
+umjetnog usporavanja posla nema.
 
 ## Nastavak rada na drugom stroju
 
@@ -337,6 +372,46 @@ stalo do točnog značenja.
 ---
 
 ## Povijest izmjena
+
+### 20.08.2026. — v4.2: dorade nakon pregleda v4.1
+
+**Logo u podnožju je povećan otprilike tri puta.** Prije se jedva vidio, sada se
+sova i natpis jasno raspoznaju, a podnožje je i dalje podnožje. Tekst i
+poveznica poravnati su s logotipom po visini.
+
+**Gumb "Novi tekst" je pojačan.** Bio je najsvjetliji od tri gumba u zaglavlju
+pa ga je oko preskakalo. Dobio je jači obrub, tamniji i deblji tekst i nešto
+veći razmak, ali je ostao vidljivo odvojen tankom crtom, jer to nije još jedna
+radnja nad dokumentom nego izlaz iz njega.
+
+**Prikaz tijeka provjere se više ne pojavljuje na brzoj obradi.** Na maloj
+datoteci koraci su bljesnuli i nestali prije nego ih se stiglo pročitati, pa su
+samo smetali. Sada je prikaz odvojen od posla: pojavi se tek ako obrada stvarno
+traje dulje od otprilike pola sekunde, a ako završi prije, ne pojavi se uopće.
+Kad se pojavi, svaki korak ostane vidljiv dovoljno dugo da se pročita, ali
+obrada ga ne čeka - posao ide punom brzinom, prikaz samo zaostaje i nestane
+nešto kasnije od njega. Nema nikakvog umjetnog usporavanja. Zašto to nije
+riješeno prekidačem za brzi i spori način, piše u zasebnom odjeljku gore.
+
+**Alat je dobio podnaslov.** Uz naziv "OwlUV" sada stoji i što alat radi, na
+hrvatskom "Skener skrivenog teksta i AI zamki". Isti opis ide i u naslov kartice
+preglednika i u opis stranice, jer to tražilica čita, i mijenja se sa svih 6
+jezika sučelja.
+
+**Uz naziv je dodana sova koja šalje UV zraku.** Zraka izlazi iz očiju i prijeđe
+s lijeva na desno jednom, kad se stranica otvori i kad skeniranje počne, pa se
+smiri. Ne vrti se stalno i ugašena je ako je u sustavu uključeno smanjenje
+animacija. Nije napravljena kao gif nego se crta i animira u samoj stranici:
+rubovi ostaju glatki na svakoj veličini, podloga se vidi kroz prozirne dijelove
+i datoteka je lakša. Sama glava sove izrezana je iz postojećeg logotipa SOVA WEB
+skriptom `assets/izdvoji-sovu.py`, koja je ostavljena u repozitoriju da se vidi
+odakle je slika došla i da se izrez može ponoviti.
+
+**Test dopunjen na 111 provjera.** Nove provjere: da se prikaz koraka ne
+pojavljuje na brzoj obradi, da se kad se pojavi ne izgubi prije nego ga se
+stigne pročitati, i da podnaslov postoji na svih 6 jezika te ulazi u naslov
+kartice i u opis stranice. Provjera praga napisana je tako da ispituje pravilo,
+a ne brzinu stroja na kojem se vrti.
 
 ### 20.08.2026. — v4.1: popravci nakon testa pravim Wordovim dokumentom
 

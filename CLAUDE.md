@@ -45,7 +45,7 @@ js/detect.js               detekcijska jezgra (iz v3.3)
 js/docx.js                 čitač .docx datoteka, izravno iz XML-a
 js/files.js                ulaz za datoteke: povuci-i-pusti, odabir, formati
 js/app.js                  sučelje, tijek skeniranja, presuda
-assets/                    logo i ikone SOVA WEB (u repozitoriju, ne s OneDrivea)
+assets/                    logo, sova i ikone SOVA WEB (u repozitoriju, ne s OneDrivea)
 vendor/fflate/             raspakiravanje ZIP-a (MIT), vendorirano
 standalone/                zamrznuta v3.3, jedna datoteka za slanje mailom
 test/                      generator testnih .docx i automatski test
@@ -91,9 +91,10 @@ Test se **mora** izvršiti prije nego se prijavi da je nešto gotovo.
 ## Gdje je projekt stao — stanje na 20.08.2026.
 
 **Faza 2a je gotova, provjerena pravim Wordovim dokumentom i dopunjena
-verzijom v4.1.** Grana `main`, `origin` je `git@github.com:neconeven-max/owluv.git`.
+verzijama v4.1 i v4.2.** Grana `main`, `origin` je
+`git@github.com:neconeven-max/owluv.git`.
 
-Radi i provjereno je testom (**77 provjera, sve prošle**):
+Radi i provjereno je testom (**111 provjera, sve prošle**):
 
 - učitavanje datoteka na četiri načina: povuci-i-pusti, gumb za odabir,
   lijepljenje same datoteke iz međuspremnika (ovisi o pregledniku, pouzdano u
@@ -107,7 +108,10 @@ Radi i provjereno je testom (**77 provjera, sve prošle**):
 - četvrta presuda "nema što provjeriti" za dokument bez teksta
 - klik na nalaz skače na mjesto u desnom panelu; svojstva dokumenta nemaju
   mjesto u tekstu pa nisu kliknabilna i to se vidi
-- tijek provjere prikazuje stvarne korake, bez umjetnog kašnjenja
+- tijek provjere prikazuje stvarne korake, bez umjetnog kašnjenja, i pojavljuje
+  se samo kad obrada stvarno traje dulje od otprilike pola sekunde
+- naziv ima podnaslov koji ide i u naslov kartice i u opis stranice, na 6 jezika
+- uz naziv je sova s UV zrakom, crtana i animirana u stranici, ne gif
 - sve sučelje na 6 jezika, test pada ako neki jezik nešto nema
 
 Rad se vodi **s MacBook Aira**, repozitorij je kloniran u `~/owluv`. Sva tri
@@ -149,6 +153,29 @@ poznate tehničke oznake koje sustav sam dodaje pri kopiranju i one se potpuno
 preskaču, i u nalazima i u desnom panelu. **HTML komentari općenito i dalje
 jesu nalaz** — to je ravnoteža koju ne treba dirati, jer se u komentarima
 stvarno kriju poruke. Test pokriva oba slučaja.
+
+## Odluke koje se ne vraćaju natrag
+
+### Prikaz tijeka nema prekidač za brzi i spori način
+
+Prikaz koraka pojavljuje se samo ako obrada traje dulje od praga
+(`PROG_APPEAR_MS` u `js/app.js`, 500 ms). To je **namjerno riješeno pragom, a ne
+postavkom.** Prekidač koji ne mijenja rezultat daje korisniku odluku bez
+koristi, a kod obrade više datoteka takav prikaz ionako postaje popis obrađenih
+datoteka, pa bi se prekidač morao ukinuti čim se to doda. Obrazloženje u cijelosti
+je u README-u, odjeljak *Zašto nema prekidača za brzi i spori način*.
+
+Prikaz je odvojen od posla: posao upisuje korake u red i ide punom brzinom,
+prikaz zaostaje i nestane nešto kasnije. **Nikad se ne dodaje kašnjenje u samu
+obradu.** `OwlUV.app.progressTiming()` postoji isključivo zato da automatski
+test može provjeriti mehaniku prikaza bez ovisnosti o brzini stroja; sučelje je
+ne poziva nikad.
+
+### Sova uz naziv se ne crta iznova
+
+Glava sove izrezana je iz postojećeg logotipa SOVA WEB skriptom
+`assets/izdvoji-sovu.py`. Ako zatreba drugi izrez, mijenja se `BOX` u toj
+skripti. Ne crta se nova sova.
 
 ## Sljedeći korak
 
