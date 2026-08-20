@@ -326,6 +326,109 @@ window.addEventListener('load',async()=>{
       return m.classList.contains('sweep');
     })());
 
+    // ============ 5h. KRETANJE KROZ VISE POJAVA ISTOG NALAZA ============
+    log('\nZADATAK 2 - klik vodi na sljedecu pojavu, ne uvijek na prvu');
+    w.OwlUV.app.reset();
+    await w.OwlUV.app.loadFile(new File(['Prvi \u2014 drugi \u2014 treci \u2014 kraj.'],'tri.txt',{type:'text/plain'}));
+    const mp=w.OwlUV.app.state();
+    const iDash=mp.findings.findIndex(f=>/crtic/i.test(f.title));
+    check('nalaz o dugim crticama postoji', iDash>=0, mp.findings.map(f=>f.title).join('; '));
+    check('brojac pokazuje ukupan broj pojava prije prvog klika',
+          mp.findings[iDash].hits==='1/3', mp.findings[iDash].hits);
+    check('uz brojac stoje dvije strelice', mp.findings[iDash].arrows===2,
+          String(mp.findings[iDash].arrows));
+
+    const obilazak=[];
+    for(let k=0;k<4;k++){
+      w.OwlUV.app.clickFinding(iDash);
+      const st=w.OwlUV.app.state();
+      obilazak.push((st.currentHit?st.currentHit.index:'-')+':'+st.findings[iDash].hits);
+    }
+    check('uzastopni klikovi obilaze sve pojave redom i vracaju se na prvu',
+          obilazak.join(' ')==='0:1/3 1:2/3 2:3/3 0:1/3', obilazak.join(' '));
+
+    const stC=w.OwlUV.app.state();
+    check('brojac pokazuje tocan polozaj i ukupan broj', stC.findings[iDash].hits==='1/3'&&
+          stC.currentHit&&stC.currentHit.index===0&&stC.currentHit.total===3,
+          JSON.stringify(stC.currentHit)+' / '+stC.findings[iDash].hits);
+    check('tekuca pojava je oznacena u desnom panelu',
+          w.document.querySelectorAll('#viz .uv-current').length===1,
+          String(w.document.querySelectorAll('#viz .uv-current').length));
+
+    // strelice pomicu za tocno jedno mjesto, dakle klik na strelicu ne okine i karticu
+    w.OwlUV.app.clickArrow(iDash,1);
+    check('strelica naprijed pomice za tocno jedno mjesto',
+          w.OwlUV.app.state().findings[iDash].hits==='2/3',
+          w.OwlUV.app.state().findings[iDash].hits);
+    w.OwlUV.app.clickArrow(iDash,-1);
+    check('strelica natrag pomice za tocno jedno mjesto',
+          w.OwlUV.app.state().findings[iDash].hits==='1/3',
+          w.OwlUV.app.state().findings[iDash].hits);
+    w.OwlUV.app.clickArrow(iDash,-1);
+    check('strelica natrag s prve pojave vodi na zadnju',
+          w.OwlUV.app.state().findings[iDash].hits==='3/3',
+          w.OwlUV.app.state().findings[iDash].hits);
+
+    // objasnjenje na prijelaz misem, na svakom jeziku
+    for(const L of ['hr','en','de','fr','es','it']){
+      w.OwlUV.app.setLang(L);
+      const c=w.document.querySelectorAll('#findings .finding')[iDash];
+      const prev=c.querySelector('.hitbtn[data-nav="-1"]'), next=c.querySelector('.hitbtn[data-nav="1"]');
+      const num=c.querySelector('.hitn');
+      check(L+': brojac i strelice imaju objasnjenje na prijelaz misem',
+            !!prev&&prev.title.length>5&&!!next&&next.title.length>5&&!!num&&num.title.length>10,
+            [prev&&prev.title,next&&next.title,num&&num.title].join(' | '));
+    }
+    w.OwlUV.app.setLang('hr');
+
+    // ============ 5i. JEDNA POJAVA NEMA BROJAC ============
+    log('\nZADATAK 2 - nalaz s jednom pojavom se ponasa kao dosad');
+    w.OwlUV.app.reset();
+    await w.OwlUV.app.loadFile(new File(['Samo jedna \u2014 crtica.'],'jedna.txt',{type:'text/plain'}));
+    const jed=w.OwlUV.app.state();
+    const iJed=jed.findings.findIndex(f=>/crtic/i.test(f.title));
+    check('nalaz s jednom pojavom nema brojac', jed.findings[iJed].hits==='',
+          '"'+jed.findings[iJed].hits+'"');
+    check('nalaz s jednom pojavom nema strelice', jed.findings[iJed].arrows===0,
+          String(jed.findings[iJed].arrows));
+    check('nalaz s jednom pojavom je i dalje kliknabilan', jed.findings[iJed].jump===true);
+    w.OwlUV.app.clickFinding(iJed);
+    const jed2=w.OwlUV.app.state();
+    check('klik na nalaz s jednom pojavom skace na nju',
+          !!jed2.currentHit&&jed2.currentHit.index===0&&jed2.currentHit.total===1,
+          JSON.stringify(jed2.currentHit));
+
+    // ============ 5j. NAPOMENA KAD POJAVA IMA JAKO PUNO ============
+    log('\nZADATAK 3 - napomena kad pojava ima jako puno');
+    w.OwlUV.app.reset();
+    await w.OwlUV.app.loadFile(new File(['Malo njih \u2014 samo \u2014 tri \u2014 komada.'],'malo.txt',{type:'text/plain'}));
+    const ml=w.OwlUV.app.state();
+    const iMl=ml.findings.findIndex(f=>/crtic/i.test(f.title));
+    check('ispod praga nema napomene o velikom broju', ml.findings[iMl].many==='',
+          '"'+ml.findings[iMl].many+'"');
+
+    w.OwlUV.app.reset();
+    const puno='rijec \u2014 '.repeat(60);
+    await w.OwlUV.app.loadFile(new File([puno],'puno.txt',{type:'text/plain'}));
+    const vise=w.OwlUV.app.state();
+    const iPn=vise.findings.findIndex(f=>/crtic/i.test(f.title));
+    check('iznad praga se pojavljuje napomena o velikom broju',
+          vise.findings[iPn].many.length>20, '"'+vise.findings[iPn].many+'"');
+    check('napomena o crticama kaze da je vjerojatno pisao AI',
+          /\bAI\b/.test(vise.findings[iPn].many)&&/60/.test(vise.findings[iPn].many),
+          vise.findings[iPn].many);
+    check('pojave se ne izlistavaju', vise.findings[iPn].detail==='',
+          vise.findings[iPn].detail.slice(0,80));
+    check('brojac i dalje radi kod velikog broja', vise.findings[iPn].hits==='1/60',
+          vise.findings[iPn].hits);
+    for(const L of ['en','de','fr','es','it']){
+      w.OwlUV.app.setLang(L);
+      const m=w.OwlUV.app.state().findings[iPn].many;
+      check(L+': napomena o velikom broju je prevedena',
+            m.length>20&&m!==vise.findings[iPn].many&&!/manyDashNote/.test(m), m.slice(0,60));
+    }
+    w.OwlUV.app.setLang('hr');
+
     // ============ 6. SVIH 6 JEZIKA ============
     log('\nPRAVILO - sucelje na svih 6 jezika');
     w.OwlUV.app.reset();
@@ -359,6 +462,26 @@ window.addEventListener('load',async()=>{
     check('engleski podnaslov sadrzi "hidden text scanner"',
           /hidden text scanner/i.test(w.OwlUV.app.state().tagline), w.OwlUV.app.state().tagline);
     w.OwlUV.app.setLang('hr');
+
+    // ============ 6b. USKI ZASLON ============
+    // Stranica se ni na jednoj sirini ne smije prelijevati u stranu: na mobitelu
+    // vodoravno pomicanje znaci da je nesto ispalo iz zaslona.
+    log('\nPRAVILO - stranica se ne prelijeva u stranu ni na uskom zaslonu');
+    const okvir=document.getElementById('app');
+    const izvorna=okvir.style.width;
+    for(const sirina of [320,360,390,430,560,768]){
+      okvir.style.width=sirina+'px';
+      await new Promise(r=>setTimeout(r,120));
+      const de=w.document.documentElement;
+      const preko=de.scrollWidth-de.clientWidth;
+      const krivci=Array.from(w.document.querySelectorAll('body *')).filter(el=>
+        el.getBoundingClientRect().right>de.clientWidth+1)
+        .slice(0,3).map(el=>el.tagName.toLowerCase()+'.'+String(el.className||'').split(' ')[0]);
+      check(sirina+' px: nema vodoravnog prelijevanja', preko<=1,
+            'preko za '+preko+' px, krivci: '+(krivci.join(', ')||'-'));
+    }
+    okvir.style.width=izvorna;
+    await new Promise(r=>setTimeout(r,120));
 
     // ============ 7. OBECANJE: NISTA NE IDE VAN ============
     log('\nPRAVILO - nista se ne salje na mrezu');
