@@ -29,9 +29,9 @@
   .wrap{max-width:1100px;margin:0 auto}
   .head-row{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;flex-wrap:wrap}
   header .eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:#8FB0C9}
-  header h1{font-size:26px;font-weight:800;letter-spacing:-.02em;margin-top:4px;
-            display:flex;align-items:center;gap:10px}
-  header h2.tagline{font-size:15px;font-weight:600;color:#C6D8E6;margin-top:3px;letter-spacing:-.01em}
+  header h1{font-size:34px;font-weight:800;letter-spacing:-.02em;margin-top:4px;
+            display:flex;align-items:center;gap:12px}
+  header h2.tagline{font-size:18px;font-weight:600;color:#C6D8E6;margin-top:4px;letter-spacing:-.01em}
   header p{color:#A9BFCF;font-size:13px;margin-top:6px;max-width:640px}
 
   /* ---- sova uz naziv, sa zrakom koja izlazi iz ociju ----
@@ -39,8 +39,8 @@
      svakoj velicini, podloga se vidi kroz prozirne dijelove, i nema dodatne
      tezine. Zraka prijede jednom, s lijeva na desno, pa se ugasi. */
   .owlmark{position:relative;display:inline-block;line-height:0;flex:none}
-  .owlmark .owl{height:30px;width:auto;display:block}
-  .owlmark .beam{position:absolute;left:56%;top:32%;width:44px;height:13px;
+  .owlmark .owl{height:39px;width:auto;display:block}
+  .owlmark .beam{position:absolute;left:56%;top:32%;width:57px;height:17px;
        transform-origin:0 50%;transform:scaleX(.06);opacity:0;pointer-events:none;
        border-radius:2px;
        background:linear-gradient(90deg,rgba(124,58,237,.95),rgba(167,139,250,.7) 48%,rgba(167,139,250,0));
@@ -56,6 +56,19 @@
     .owlmark .beam{display:none}
     .owlmark.sweep .beam{animation:none}
   }
+  /* Uski zaslon: naziv i sova se vracaju na manju mjeru, a gumbi u zaglavlju
+     panela prelaze u novi red umjesto da guraju stranicu u sirinu. */
+  @media(max-width:560px){
+    header h1{font-size:27px;gap:9px}
+    header h2.tagline{font-size:15px}
+    .owlmark .owl{height:31px}
+    .owlmark .beam{width:45px;height:14px}
+    .panel-h .hbtns{margin-left:0;width:100%}
+    .btn.reset{margin-left:0}
+    .btn.reset::before{display:none}
+    .fhead{flex-wrap:wrap}
+    footer .by img{height:54px}
+  }
   .langs{display:flex;gap:5px;flex-wrap:wrap;max-width:220px}
   .lang{font-family:var(--mono);font-size:11px;font-weight:700;letter-spacing:.06em;padding:6px 10px;border-radius:6px;border:1px solid #35505F;background:transparent;color:#A9BFCF;cursor:pointer}
   .lang:hover{border-color:#5C7A8C;color:#D5E3EC}
@@ -68,7 +81,7 @@
   .panel-h .t{font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
   .panel-h .t.ink{color:var(--ink);font-weight:800}
   .panel-h .t.uv{color:var(--uv);font-weight:800}
-  .panel-h .hbtns{display:flex;gap:6px;margin-left:auto}
+  .panel-h .hbtns{display:flex;gap:6px;margin-left:auto;flex-wrap:wrap}
 
   /* ime i velicina ucitane datoteke */
   .fileinfo{display:none;font-family:var(--mono);font-size:11px;background:var(--uv-bg);color:var(--uv);
@@ -170,8 +183,8 @@
   .count{font-family:var(--mono);font-size:11px;background:var(--paper);border:1px solid var(--line);border-radius:20px;padding:2px 10px;color:var(--muted)}
   footer{padding:0 24px 40px}
   footer .wrap{font-size:12px;color:var(--muted);display:flex;align-items:center;gap:14px;flex-wrap:wrap}
-  footer .by{display:flex;align-items:center;gap:10px;padding-left:14px;border-left:1px solid var(--line)}
-  footer .by img{height:58px;width:auto;display:block;opacity:.95}
+  footer .by{display:flex;align-items:center;gap:10px;padding-left:14px;border-left:1px solid var(--line);flex-wrap:wrap}
+  footer .by img{height:70px;width:auto;display:block;opacity:.95}
   footer .by a{color:var(--muted);text-decoration:underline;text-underline-offset:2px}
   footer .by a:hover{color:var(--uv)}
   @media(max-width:520px){footer .by{padding-left:0;border-left:0;width:100%}}
@@ -182,13 +195,16 @@
   .dashmark,.mixmark{border-bottom:1px dotted #A9B6C0;padding-bottom:1px}
   .mixmark{background:rgba(169,182,192,.12);border-radius:2px}
 
-  /* ---- kratko isticanje mjesta na koje je skocio klik na nalaz ---- */
+  /* ---- isticanje pojave na koju je skocio klik na nalaz ----
+     Bljesne jace od ostalih istih oznaka, pa ostane tanko obrubljena dok se ne
+     skoci dalje - kao tekuci pogodak pri trazenju rijeci u pregledniku. */
   .uv-jump{animation:uvJump 1.2s ease-out 1}
   @keyframes uvJump{
-    0%{background:#FDE68A;box-shadow:0 0 0 4px #FDE68A}
-    70%{background:#FDE68A;box-shadow:0 0 0 4px #FDE68A}
-    100%{background:transparent;box-shadow:0 0 0 4px transparent}
+    0%{background:#FDE68A;box-shadow:0 0 0 5px #FDE68A,0 0 16px 7px rgba(217,119,6,.5)}
+    70%{background:#FDE68A;box-shadow:0 0 0 5px #FDE68A,0 0 16px 7px rgba(217,119,6,.28)}
+    100%{background:transparent;box-shadow:0 0 0 5px transparent,0 0 16px 7px transparent}
   }
+  .uv-current{outline:2px solid #D97706;outline-offset:1px;border-radius:3px}
 
   /* ---- tijek provjere: stvarni koraci, bez umjetnog cekanja ---- */
   .progress{display:none;background:var(--panel);border:1px solid var(--line);border-radius:10px;
@@ -222,6 +238,19 @@
   .finding.jump{cursor:pointer}
   .finding.jump:hover{background:#FAFCFE;border-color:var(--muted)}
   .finding.jump h3::after{content:"\2192";margin-left:6px;color:var(--uv);font-weight:400}
+  .finding.hasnav h3::after{content:none}
+  .fhead{display:flex;align-items:center;gap:10px;justify-content:space-between}
+  .fhead h3{flex:1 1 auto}
+
+  /* ---- brojac pojava i strelice: kretanje kao kod trazenja rijeci ---- */
+  .hits{display:flex;align-items:center;gap:3px;flex:none}
+  .hitbtn{font-family:var(--mono);font-size:14px;line-height:1;border:1px solid var(--line);
+          background:var(--panel);color:var(--muted);border-radius:5px;padding:2px 8px;cursor:pointer}
+  .hitbtn:hover{border-color:var(--uv);color:var(--uv);background:var(--uv-bg)}
+  .hitn{font-family:var(--mono);font-size:11px;font-weight:700;color:var(--uv);background:var(--uv-bg);
+        border:1px solid #D9CBF3;border-radius:20px;padding:2px 9px;white-space:nowrap;cursor:default}
+  .many{margin-top:7px;font-size:11.5px;color:var(--muted);background:var(--paper);
+        border:1px dashed var(--line);border-radius:6px;padding:6px 9px}
   .finding.noloc{opacity:.85}
   .finding.noloc h3::after{content:attr(data-noloc);margin-left:8px;font-family:var(--mono);font-size:10px;
        font-weight:400;color:var(--muted);border:1px solid var(--line);border-radius:4px;padding:1px 6px;white-space:nowrap}
