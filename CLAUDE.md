@@ -45,6 +45,7 @@ js/detect.js               detekcijska jezgra (iz v3.3)
 js/docx.js                 čitač .docx datoteka, izravno iz XML-a
 js/files.js                ulaz za datoteke: povuci-i-pusti, odabir, formati
 js/app.js                  sučelje, tijek skeniranja, presuda
+assets/                    logo i ikone SOVA WEB (u repozitoriju, ne s OneDrivea)
 vendor/fflate/             raspakiravanje ZIP-a (MIT), vendorirano
 standalone/                zamrznuta v3.3, jedna datoteka za slanje mailom
 test/                      generator testnih .docx i automatski test
@@ -89,76 +90,74 @@ Test se **mora** izvršiti prije nego se prijavi da je nešto gotovo.
 
 ## Gdje je projekt stao — stanje na 20.08.2026.
 
-**Faza 2a je gotova i poslana na GitHub.** Grana `main`, 6 commitova, oznaka
-`0e2bc41`, `origin` je `git@github.com:neconeven-max/owluv.git`.
+**Faza 2a je gotova, provjerena pravim Wordovim dokumentom i dopunjena
+verzijom v4.1.** Grana `main`, `origin` je `git@github.com:neconeven-max/owluv.git`.
 
-Radi i provjereno je testom (47 provjera, sve prošle):
+Radi i provjereno je testom (**77 provjera, sve prošle**):
 
-- učitavanje datoteka: povuci-i-pusti, gumb za odabir, ime i veličina u
-  zaglavlju, jedna datoteka odjednom
+- učitavanje datoteka na četiri načina: povuci-i-pusti, gumb za odabir,
+  lijepljenje same datoteke iz međuspremnika (ovisi o pregledniku, pouzdano u
+  Chromeu), i lijepljenje teksta; ime i veličina u zaglavlju, jedna datoteka
+  odjednom
 - formati: obični tekst, HTML, `.docx`; `.doc` i PDF daju jasnu poruku
 - čitanje `.docx`-a izravno iz XML-a: Wordova oznaka skrivenog teksta, bijela
   slova, sitan font, skrivanje kroz stil, komentari, obrisani tekst iz praćenja
   izmjena, zaglavlja i podnožja, fusnote, svojstva dokumenta, tekstualni okviri
   izvan stranice (VML i DrawingML)
 - četvrta presuda "nema što provjeriti" za dokument bez teksta
+- klik na nalaz skače na mjesto u desnom panelu; svojstva dokumenta nemaju
+  mjesto u tekstu pa nisu kliknabilna i to se vidi
+- tijek provjere prikazuje stvarne korake, bez umjetnog kašnjenja
 - sve sučelje na 6 jezika, test pada ako neki jezik nešto nema
 
-Rad se nastavlja **s MacBook Aira**. Upute za preuzimanje i pokretanje su u
-README-u, odjeljak "Nastavak rada na drugom stroju". Prije rada provjeriti
-`ssh -T git@github.com` — vidi otvorenu stavku O-7 u INFRASTRUKTURI.
+Rad se vodi **s MacBook Aira**, repozitorij je kloniran u `~/owluv`. Sva tri
+stroja imaju vlastiti SSH ključ na GitHubu (stavka O-7 u INFRASTRUKTURI je
+zatvorena 20.08.2026.).
 
-## Sljedeći korak, tim redom
+## Što je test pravim Wordom pokazao
 
-### 1. Test pravim Wordovim dokumentom — PRVO OVO
+**Test je prošao.** Pravi Wordov dokument od 2,1 MB sa slikama, s dvije skrivene
+poruke u bijeloj boji i veličini 1,3 px. Obje su otkrivene i točno prikazane, uz
+autora iz svojstava dokumenta.
 
-Prije bilo kakvog novog razvoja. Napraviti dokument **u pravom Wordu**, ručno
-posakrivati u njega iste zamke koje ima `test/test-skriveno.docx`, provući ga
-kroz alat i usporediti nalaze.
+### ✅ Riješeno — sumnja oko boje zadane preko teme dokumenta
 
-### ⚠️ Otvorena sumnja koju treba provjeriti prvu
+Ranija sumnja bila je da bi bijela boja zadana **preko teme dokumenta**
+(`w:themeColor` bez upotrebljivog `w:val`) mogla promaknuti, jer `readRPr()` u
+`js/docx.js` čita samo `w:val`, a `word/theme/theme1.xml` se uopće ne čita.
 
-**Testni `.docx`-evi su strojno generirani** — napisao ih je
-`test/napravi-testne-docx.js`, pa zapisuju formatiranje onako kako je nama bilo
-zgodno, a ne nužno onako kako to radi pravi Word.
+**Sumnja se nije obistinila.** Provjereno je na stvarnom dokumentu spremljenom
+iz Worda: Word je bijelu boju zapisao tako da je alat pouzdano prepoznao, i obje
+skrivene poruke su nađene. Razrješavanje tema nije bilo potrebno. Stavka se
+zatvara.
 
-Konkretna sumnja: **bijela boja slova.** Naš generator zapisuje je izravno, kao
-`<w:color w:val="FFFFFF"/>`, i to alat pouzdano hvata. Pravi Word bijelu boju
-često zapisuje **preko teme dokumenta**, otprilike ovako:
-
-```xml
-<w:color w:val="FFFFFF" w:themeColor="background1"/>
-```
-
-a zna zapisati i samo `w:themeColor` bez `w:val`, ili `w:val="auto"` uz
-`w:themeColor`. **U ta dva zadnja slučaja naš čitač boju ne vidi**, jer u
-`js/docx.js`, funkcija `readRPr()`, grana `case 'color'` (oko 44. linije) čita
-isključivo atribut `w:val` i preskače vrijednost `auto`. Teme se nigdje ne
-razrješavaju — `word/theme/theme1.xml` se uopće ne čita.
-
-Ista sumnja vrijedi i za boju zadanu **kroz definiciju stila** u `styles.xml`,
-i za veličinu fonta zapisanu kao `w:szCs` umjesto `w:sz`.
-
-Vjerojatnost da to promaši: **umjerena, ne sigurna** — Word najčešće ispiše i
-`w:val` i `w:themeColor` zajedno, pa bi tada sve radilo. Ali dok se ne provjeri
-na pravom dokumentu, ovo se **ne smije smatrati riješenim**, jer bi značilo da
-alat na pravom životopisu propusti upravo ono zbog čega postoji.
-
-**Kako provjeriti:** u pravom Wordu napisati tekst, obojati ga bijelo preko
-palete boja teme (gornji red palete, ne "More Colors"), spremiti kao `.docx`,
-pa pogledati što je Word stvarno zapisao:
+Ako se ikad pojavi dokument u kojem bijelo promakne, provjera je i dalje ista:
 
 ```
 unzip -p dokument.docx word/document.xml | grep -o '<w:color[^/]*/>'
 ```
 
-Ako se pojavi `w:themeColor` bez upotrebljivog `w:val`, treba u `readRPr()`
-dodati razrješavanje tema iz `word/theme/theme1.xml`, i tek onda dalje.
+### ✅ Riješeno — lažna uzbuna iz međuspremnika
 
-### 2. Faza 2b — PDF
+Kad se sadržaj kopira iz Worda i zalijepi kao tekst, sustav sam ubaci
+`StartFragment` i `EndFragment` kao HTML komentare. Alat ih je prijavljivao kao
+skriveni sadržaj, pa je umjesto dvije prave zamke javljao četiri nalaza i crtao
+ih u desnom panelu s bubom.
 
-Tek kad prva točka prođe. Sučelje već ima poruku da PDF nije podržan, pa
-korisnik dotad ne dobiva lažnu presudu.
+**Popravljeno u v4.1.** U `js/detect.js` funkcija `isClipMarker()` prepoznaje
+poznate tehničke oznake koje sustav sam dodaje pri kopiranju i one se potpuno
+preskaču, i u nalazima i u desnom panelu. **HTML komentari općenito i dalje
+jesu nalaz** — to je ravnoteža koju ne treba dirati, jer se u komentarima
+stvarno kriju poruke. Test pokriva oba slučaja.
+
+## Sljedeći korak
+
+### Faza 2b — PDF
+
+Sučelje već ima poruku da PDF nije podržan, pa korisnik dotad ne dobiva lažnu
+presudu. Prije bilo čega drugog treba odlučiti kako se PDF čita, uz isto
+pravilo kao kod Worda: cilj nije prikazati dokument kakav izgleda, nego vidjeti
+sve što je u datoteci.
 
 ### Namjerno izostavljeno
 

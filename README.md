@@ -68,13 +68,27 @@ redu".
 Otvori `index.html` u pregledniku. Nema instalacije, nema poslužitelja, nema
 koraka izgradnje. Radi i s `file://`, dakle i iz mape na USB-u.
 
-U alat se sadržaj unosi na tri načina:
+U alat se sadržaj unosi ovako:
 - zalijepiš tekst (Cmd+V) — najbolje direktno iz izvornika, jer se tako čuva
   formatiranje koje skener pregledava
 - povučeš datoteku preko lijevog panela
 - klikneš "Odaberi datoteku" (za mobitel, gdje povlačenje ne radi)
+- zalijepiš **samu datoteku** iz međuspremnika: u Finderu kopiraš datoteku, pa
+  pritisneš Cmd+V nad lijevim panelom
 
 Jedna datoteka odjednom. Gumb "Novi tekst" (ili Esc) briše i datoteku.
+
+**Lijepljenje datoteke ovisi o pregledniku.** Pouzdano radi u Chromeu. Safari i
+Firefox često ne prenesu uputu o datoteci, pa se u njima ne dogodi ništa. Zato
+to nikad nije jedini put: **povlačenje i gumb za odabir uvijek rade**, u svakom
+pregledniku. Ako Cmd+V ne donese ni datoteku ni tekst, alat to više ne prešuti
+nego kaže što učiniti.
+
+**Kod Worda je najsigurnije predati samu datoteku.** Kopiranje sadržaja iz
+Worda uglavnom prenese tekst skriven bojom i veličinom fonta, ali ne prenosi
+tekst skriven Wordovom oznakom skrivenog teksta, ni komentare, ni obrisani
+tekst iz praćenja izmjena, ni svojstva dokumenta. Povlačenje, gumb i lijepljenje
+same datoteke daju potpun i vjeran rezultat.
 
 **Podržani formati:** obični tekst, HTML, Word `.docx`.
 Stari `.doc` nije podržan — alat javlja da dokument treba spremiti kao `.docx`.
@@ -93,6 +107,10 @@ js/
   docx.js                     čitač .docx datoteka, izravno iz XML-a
   files.js                    ulaz za datoteke i prepoznavanje formata
   app.js                      sučelje, tijek skeniranja, presuda
+assets/
+  sovaweb_logo.svg            logo SOVA WEB za podnožje
+  sovaweb_favicon.ico         ikona kartice preglednika
+  sovaweb_favicon_512.png     ikona za dodavanje na početni zaslon
 vendor/
   fflate/                     raspakiravanje ZIP-a (MIT licenca), u repozitoriju
 standalone/
@@ -139,6 +157,24 @@ razloga umjesto gotovih hrvatskih rečenica, da bi se razlozi mogli prevesti na
 svih 6 jezika. Uz to funkcija čita i atribut `data-uv-reason`, kojim čitač
 `.docx`-a prijavljuje razloge koje CSS ne može opisati.
 
+**20.08.2026., v4.1** — tri izmjene u `js/detect.js`, sve namjerne:
+
+1. **Tehničke oznake iz međuspremnika preskaču se.** Kad se sadržaj kopira iz
+   Worda i zalijepi, sustav sam ubaci `StartFragment` i `EndFragment` kao HTML
+   komentare. Alat ih je prijavljivao kao skriveni sadržaj, što je bila lažna
+   uzbuna. Preskaču se samo poznate oznake koje dodaje sam sustav pri kopiranju
+   (`StartFragment`, `EndFragment`, `StartSelection`, `EndSelection`,
+   `StartHTML`, `EndHTML` i Wordovi uvjetni komentari `[if ...] ... [endif]`).
+   **HTML komentari općenito i dalje jesu nalaz**, jer se u njima stvarno kriju
+   poruke.
+2. **Duge crtice i riječi s pomiješanim pismima sada se označavaju u desnom
+   panelu.** Prije su se prijavljivale u nalazima, ali se u panelu nisu vidjele
+   nigdje, pa nalaz nije imao kamo skočiti. Pravilo prepoznavanja nije dirano,
+   dodan je samo prikaz, i to namjerno tanak i siv.
+3. **`build()` prima već izračunate razloge skrivenosti.** Time se provjera
+   boja i veličina fonta može izvršiti kao zaseban, stvaran korak prije gradnje
+   prikaza. Bez tog podatka funkcija radi točno kao prije.
+
 ## Test
 
 ```
@@ -154,7 +190,7 @@ Testni dokument `test-skriveno.docx` sadrži sve vrste skrivenog sadržaja
 odjednom. `test-bez-teksta.docx` sadrži samo sliku i nijedno slovo.
 `test-cist.docx` je kontrolni uzorak bez ijedne zamke.
 
-### Rezultat zadnjeg pokretanja: 20.08.2026., 47 provjera, sve prošle
+### Rezultat zadnjeg pokretanja: 20.08.2026., 77 provjera, sve prošle
 
 | Provjera | Rezultat |
 |---|---|
@@ -184,6 +220,14 @@ odjednom. `test-bez-teksta.docx` sadrži samo sliku i nijedno slovo.
 | svih 6 jezika: nema praznog teksta u sučelju | prošao |
 | svih 6 jezika: nalazi i razlozi prevedeni | prošao |
 | nema nijednog vanjskog zahtjeva | prošao |
+| zalijepljena datoteka se učitava kao datoteka, ne kao tekst | prošao |
+| prazan Cmd+V daje poruku što učiniti, na svih 6 jezika | prošao |
+| tehničke oznake iz međuspremnika nisu nalaz | prošao |
+| pravi HTML komentar iz dokumenta i dalje jest nalaz | prošao |
+| nalazi su kliknabilni, svojstva dokumenta nisu | prošao |
+| crvena presuda pulsira, zelena ne | prošao |
+| zelena presuda uz plave nalaze ne tvrdi da nema ničega | prošao |
+| duga crtica i pomiješano pismo označeni u desnom panelu | prošao |
 
 ## Nastavak rada na drugom stroju
 
@@ -293,6 +337,78 @@ stalo do točnog značenja.
 ---
 
 ## Povijest izmjena
+
+### 20.08.2026. — v4.1: popravci nakon testa pravim Wordovim dokumentom
+
+Alat je prvi put proveden kroz **pravi Wordov dokument** od 2,1 MB sa slikama i
+dvije skrivene poruke u bijeloj boji, veličine 1,3 px. Obje su pronađene i
+točno prikazane, zajedno s autorom iz svojstava dokumenta. Sumnja zapisana u
+`CLAUDE.md`, da bi boja zadana preko teme dokumenta mogla promaknuti, nije se
+obistinila i time je zatvorena. Ovo su popravci koje je test pokazao.
+
+**Lažna uzbuna iz međuspremnika, popravljena.** Kad se sadržaj kopira iz Worda
+i zalijepi kao tekst, sustav sam u međuspremnik ubaci tehničke oznake početka i
+kraja odabira. Alat ih je prijavljivao kao skriveni sadržaj, pa je umjesto dvije
+prave zamke javljao četiri nalaza i crtao ih u desnom panelu s bubom. To je
+rušilo povjerenje u alat, jer je izgledalo kao da vidi nešto čega nema. Sada se
+poznate tehničke oznake prepoznaju i potpuno preskaču. Obični HTML komentari i
+dalje jesu nalaz, jer se u njima stvarno kriju poruke.
+
+**Treći put do datoteke i nijedna tišina.** Datoteka se sada može i zalijepiti
+iz međuspremnika: u Finderu kopiraš datoteku pa pritisneš Cmd+V nad lijevim
+panelom. To ovisi o pregledniku, pa nikad nije jedini put; povlačenje i gumb
+uvijek rade. Ako Cmd+V ne donese ni datoteku ni tekst, alat više ne šuti nego
+kaže da datoteku treba povući ili odabrati gumbom. Dosad se u tom slučaju nije
+dogodilo ništa, pa korisnik nije mogao znati je li alat pokvaren.
+
+**Nalazi se sada mogu kliknuti.** Klik na nalaz pomiče desni panel na prvo
+mjesto tog nalaza i nakratko ga istakne. Zbog toga su duge crtice i riječi s
+pomiješanim pismima dobile vlastitu oznaku u desnom panelu, jer se prije nisu
+vidjele nigdje pa nalaz nije imao kamo skočiti. Oznaka je namjerno tanka i siva:
+duge crtice znaju biti česte i u sasvim normalnom tekstu, pa ne smiju bučati.
+Svojstva dokumenta nemaju mjesto u tekstu, pa taj nalaz nije kliknabilan i to
+se vidi.
+
+**Nalazi su čitljiviji.** Citirani tekst je sada u UV ljubičastoj boji, a
+objašnjenje u zagradi manjim sivim slovima ispod njega. Prije su citat i opis
+bili u istoj sivoj boji pa se nije odmah vidjelo što je nađeno, a što je
+objašnjenje.
+
+**Crvena presuda pulsira.** Kad alat javi da je otkriven skriveni sadržaj, okvir
+lagano pulsira da privuče pogled: spor puls od 1,6 sekunde po ciklusu, najviše
+tri ciklusa, pa se smiruje. Nikad ni blizu granice od tri bljeska u sekundi, i
+potpuno ugašen ako je u sustavu uključeno smanjenje animacija. Zelena i siva
+presuda ostaju mirne.
+
+**Dvije ispravke teksta.** Nalaz o dugim crticama je govorio "zamijenjeno", što
+je zvučalo kao da alat mijenja dokument. Ne mijenja ga. Sada piše "pronađeno" i
+objašnjava da se zamjena događa tek u kopiji koju daje gumb "Kopiraj očišćeni
+tekst". Zelena presuda "Tekst izgleda čist" pojavljivala se i kad je bilo plavih
+nalaza, što je bilo proturječno; sada u tom slučaju kaže da nema skrivenog
+sadržaja ni zamki, ali da postoje napomene niže.
+
+**Tijek provjere umjesto praznog čekanja.** Dok se datoteka obrađuje, prikazuju
+se koraci koji se stvarno izvode: čitanje dokumenta, provjera boja i veličina
+fonta, traženje skrivenog teksta, provjera fraza na 6 jezika i pregled svojstava
+dokumenta. Prikazuju se samo koraci koji se doista izvršavaju i samo dok stvarno
+traju; korak sa svojstvima dokumenta pojavljuje se samo kad je učitan Word.
+Nema nijednog umjetnog kašnjenja ni izmišljenog koraka. Ako obrada završi gotovo
+trenutno, prikaz samo bljesne ili se ne pojavi, i to je u redu.
+
+**Gumb "Novi tekst" premješten je gore**, u zaglavlje lijevog panela, uz gumbe
+za odabir datoteke i za primjer. Prije je bio dolje, predaleko od mjesta gdje se
+datoteka mijenja.
+
+**Logo SOVA WEB u podnožju.** Alat je proizvod robne marke SOVA WEB (SOVA VID
+j.d.o.o.). U podnožje su dodani logo, napomena čiji je alat i poveznica na
+`sovaweb.net`, diskretno. Ikona kartice preglednika i ikona za dodavanje na
+početni zaslon također su postavljene. Sve tri datoteke leže u `assets/` unutar
+repozitorija, jer alat mora raditi i bez OneDrivea, bez interneta i s USB-a.
+
+**Test dopunjen.** Uz svih 47 postojećih provjera dodano je 30 novih, među
+njima tri tražene: lijepljenje datoteke iz međuspremnika, poruka kad Cmd+V ne
+donese ništa, i provjera da tehničke oznake iz međuspremnika ne postaju nalaz
+dok pravi HTML komentar i dalje postaje. Ukupno 77 provjera, sve prolaze.
 
 ### 20.08.2026. — faza 2a: učitavanje datoteka i dubinsko čitanje Worda
 
