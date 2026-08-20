@@ -72,7 +72,12 @@
       vOkNotesSub:'Nisu pronađeni skriveni sadržaj ni zamke. Ima nekoliko napomena u nalazima niže, vrijedi ih pogledati.',
       footerBy:'Alat SOVA WEB',
       tagline:'Skener skrivenog teksta i AI zamki',
-      footer:'OwlUV v4.2 · open source alat · radi potpuno lokalno, bez slanja podataka'
+      hitPrev:'Prethodna pojava',
+      hitNext:'Sljedeća pojava',
+      hitOf:(i,n)=>'Pojava '+i+' od '+n+'. Klik na nalaz vodi na sljedeću.',
+      manyNote:n=>'Puno pojava ('+n+'). Nisu izlistane, nego se kroz njih ide klikom, jer popis te duljine nitko ne čita.',
+      manyDashNote:n=>'Puno dugih crtica ('+n+'). Toliki broj obično znači da je tekst pisao AI, a ne da je nešto skriveno.',
+      footer:'OwlUV v4.3 · open source alat · radi potpuno lokalno, bez slanja podataka'
     },
     en:{
       eyebrow:'Text and document inspection tool', intro:'Paste text or drop in a file: an assignment, job description or CV. The scanner reveals invisible characters, text hidden via color or font size, and phrases designed to mislead AI. Everything runs in your browser, nothing is sent anywhere.',
@@ -141,7 +146,12 @@
       vOkNotesSub:'No hidden content and no traps were found. There are a few notes in the findings below, worth a look.',
       footerBy:'A SOVA WEB tool',
       tagline:'Hidden text scanner for AI traps',
-      footer:'OwlUV v4.2 · open source tool · runs fully locally, no data sent'
+      hitPrev:'Previous occurrence',
+      hitNext:'Next occurrence',
+      hitOf:(i,n)=>'Occurrence '+i+' of '+n+'. Clicking the finding moves to the next one.',
+      manyNote:n=>'Many occurrences ('+n+'). They are not listed; you step through them by clicking, because nobody reads a list that long.',
+      manyDashNote:n=>'Many long dashes ('+n+'). A count that high usually means the text was written by an AI, not that something is hidden.',
+      footer:'OwlUV v4.3 · open source tool · runs fully locally, no data sent'
     },
     de:{
       eyebrow:'Werkzeug zur Text- und Dokumentprüfung', intro:'Text einfügen oder Datei ablegen: Aufgabe, Stellenbeschreibung oder Lebenslauf. Der Scanner zeigt unsichtbare Zeichen, per Farbe oder Schriftgröße versteckten Text und Phrasen, die eine KI in die Irre führen sollen. Alles läuft im Browser, nichts wird gesendet.',
@@ -210,7 +220,12 @@
       vOkNotesSub:'Es wurden weder versteckte Inhalte noch Fallen gefunden. Unten in den Befunden stehen einige Hinweise, die einen Blick wert sind.',
       footerBy:'Ein Werkzeug von SOVA WEB',
       tagline:'Scanner für versteckten Text und KI-Fallen',
-      footer:'OwlUV v4.2 · Open-Source-Werkzeug · läuft vollständig lokal, keine Datenübertragung'
+      hitPrev:'Vorheriges Vorkommen',
+      hitNext:'Nächstes Vorkommen',
+      hitOf:(i,n)=>'Vorkommen '+i+' von '+n+'. Ein Klick auf den Befund springt zum nächsten.',
+      manyNote:n=>'Viele Vorkommen ('+n+'). Sie werden nicht aufgelistet, sondern per Klick durchlaufen, denn eine so lange Liste liest niemand.',
+      manyDashNote:n=>'Viele lange Gedankenstriche ('+n+'). Eine so hohe Zahl bedeutet meist, dass der Text von einer KI geschrieben wurde, und nicht, dass etwas versteckt ist.',
+      footer:'OwlUV v4.3 · Open-Source-Werkzeug · läuft vollständig lokal, keine Datenübertragung'
     },
     fr:{
       eyebrow:'Outil de vérification de textes et documents', intro:"Collez un texte ou déposez un fichier : devoir, offre d'emploi ou CV. Le scanner révèle les caractères invisibles, le texte masqué par la couleur ou la taille de police, et les phrases conçues pour induire une IA en erreur. Tout se passe dans votre navigateur, rien n'est envoyé.",
@@ -279,7 +294,12 @@
       vOkNotesSub:"Aucun contenu masqué ni piège n'a été trouvé. Quelques remarques figurent dans les résultats ci-dessous, elles valent un coup d'oeil.",
       footerBy:'Un outil SOVA WEB',
       tagline:'Scanner de texte masqué et de pièges pour IA',
-      footer:'OwlUV v4.2 · outil open source · fonctionne entièrement en local, aucune donnée envoyée'
+      hitPrev:'Occurrence précédente',
+      hitNext:'Occurrence suivante',
+      hitOf:(i,n)=>'Occurrence '+i+' sur '+n+'. Un clic sur le résultat passe à la suivante.',
+      manyNote:n=>'Beaucoup d\u2019occurrences ('+n+'). Elles ne sont pas listées, on les parcourt par clic, car personne ne lit une liste aussi longue.',
+      manyDashNote:n=>'Beaucoup de tirets longs ('+n+'). Un nombre aussi élevé signifie généralement que le texte a été écrit par une IA, et non que quelque chose est masqué.',
+      footer:'OwlUV v4.3 · outil open source · fonctionne entièrement en local, aucune donnée envoyée'
     },
     es:{
       eyebrow:'Herramienta de verificación de textos y documentos', intro:'Pega un texto o suelta un archivo: una tarea, una oferta de empleo o un CV. El escáner revela caracteres invisibles, texto oculto por color o tamaño de fuente y frases diseñadas para engañar a una IA. Todo se procesa en tu navegador, no se envía nada.',
@@ -348,7 +368,12 @@
       vOkNotesSub:'No se ha encontrado contenido oculto ni trampas. Hay algunas observaciones en los resultados de abajo, merece la pena mirarlas.',
       footerBy:'Una herramienta de SOVA WEB',
       tagline:'Escáner de texto oculto y trampas para IA',
-      footer:'OwlUV v4.2 · herramienta de código abierto · funciona totalmente en local, sin enviar datos'
+      hitPrev:'Aparición anterior',
+      hitNext:'Aparición siguiente',
+      hitOf:(i,n)=>'Aparición '+i+' de '+n+'. Al hacer clic en el resultado se pasa a la siguiente.',
+      manyNote:n=>'Muchas apariciones ('+n+'). No se listan, se recorren con clics, porque nadie lee una lista tan larga.',
+      manyDashNote:n=>'Muchos guiones largos ('+n+'). Una cifra tan alta suele significar que el texto lo escribió una IA, no que haya algo oculto.',
+      footer:'OwlUV v4.3 · herramienta de código abierto · funciona totalmente en local, sin enviar datos'
     },
     it:{
       eyebrow:'Strumento di verifica di testi e documenti', intro:'Incolla un testo o trascina un file: un compito, un annuncio di lavoro o un CV. Lo scanner rivela caratteri invisibili, testo nascosto tramite colore o dimensione del carattere e frasi pensate per ingannare una IA. Tutto viene elaborato nel browser, nulla viene inviato.',
@@ -417,7 +442,12 @@
       vOkNotesSub:'Non sono stati trovati contenuti nascosti né trappole. Ci sono alcune note nei risultati qui sotto, vale la pena guardarle.',
       footerBy:'Uno strumento SOVA WEB',
       tagline:'Scanner di testo nascosto e trappole per IA',
-      footer:'OwlUV v4.2 · strumento open source · funziona interamente in locale, nessun dato inviato'
+      hitPrev:'Occorrenza precedente',
+      hitNext:'Occorrenza successiva',
+      hitOf:(i,n)=>'Occorrenza '+i+' di '+n+'. Un clic sul risultato passa alla successiva.',
+      manyNote:n=>'Molte occorrenze ('+n+'). Non vengono elencate, si scorrono con un clic, perché nessuno legge un elenco così lungo.',
+      manyDashNote:n=>'Molti trattini lunghi ('+n+'). Un numero così alto di solito significa che il testo è stato scritto da una IA, non che ci sia qualcosa di nascosto.',
+      footer:'OwlUV v4.3 · strumento open source · funziona interamente in locale, nessun dato inviato'
     }
   };
 })();
