@@ -91,10 +91,10 @@ Test se **mora** izvršiti prije nego se prijavi da je nešto gotovo.
 ## Gdje je projekt stao — stanje na 20.08.2026.
 
 **Faza 2a je gotova, provjerena pravim Wordovim dokumentom i dopunjena
-verzijama v4.1 i v4.2.** Grana `main`, `origin` je
+verzijama v4.1, v4.2 i v4.3.** Grana `main`, `origin` je
 `git@github.com:neconeven-max/owluv.git`.
 
-Radi i provjereno je testom (**111 provjera, sve prošle**):
+Radi i provjereno je testom (**146 provjera, sve prošle**):
 
 - učitavanje datoteka na četiri načina: povuci-i-pusti, gumb za odabir,
   lijepljenje same datoteke iz međuspremnika (ovisi o pregledniku, pouzdano u
@@ -106,8 +106,9 @@ Radi i provjereno je testom (**111 provjera, sve prošle**):
   izmjena, zaglavlja i podnožja, fusnote, svojstva dokumenta, tekstualni okviri
   izvan stranice (VML i DrawingML)
 - četvrta presuda "nema što provjeriti" za dokument bez teksta
-- klik na nalaz skače na mjesto u desnom panelu; svojstva dokumenta nemaju
-  mjesto u tekstu pa nisu kliknabilna i to se vidi
+- klik na nalaz skače na SLJEDEĆU pojavu, uz brojač i strelice; svojstva
+  dokumenta nemaju mjesto u tekstu pa nisu kliknabilna i to se vidi
+- stranica se ne prelijeva u stranu ni na jednoj širini od 320 do 768 px
 - tijek provjere prikazuje stvarne korake, bez umjetnog kašnjenja, i pojavljuje
   se samo kad obrada stvarno traje dulje od otprilike pola sekunde
 - naziv ima podnaslov koji ide i u naslov kartice i u opis stranice, na 6 jezika
@@ -170,6 +171,22 @@ prikaz zaostaje i nestane nešto kasnije. **Nikad se ne dodaje kašnjenje u samu
 obradu.** `OwlUV.app.progressTiming()` postoji isključivo zato da automatski
 test može provjeriti mehaniku prikaza bez ovisnosti o brzini stroja; sučelje je
 ne poziva nikad.
+
+### Kroz pojave se ide klikom, ne popisom
+
+Nalaz s više pojava ne izlistava ih. Kroz njih se hoda klikom, kao kod traženja
+riječi u pregledniku: svaki klik vodi na sljedeću, nakon zadnje na prvu, brojač
+pokazuje položaj. **Popis je namjerno odbačen** jer kod stotinu pojava nitko ne
+čita popis, a stranica naraste toliko da se u njoj više ne snalaziš. Iznad
+`MANY_HITS` (50) uz brojač ide kratka napomena; kod dugih crtica ona kaže i da
+toliki broj obično znači AI, a ne skrivanje. Obrazloženje u cijelosti je u
+README-u, odjeljak *Zašto se kroz pojave ide klikom, a ne popisom*.
+
+**Broj u naslovu i ukupan broj u brojaču ne moraju biti isti.** Naslov broji
+koliko je puta pravilo okinulo nad tekstom, brojač koliko ima označenih mjesta u
+desnom panelu. Oznake se crtaju po tekstualnom čvoru, pa se fraza prelomljena
+formatiranjem pojavi kao dvije oznake. To **nije kvar** i ne popravlja se
+diranjem detekcije ni načina označavanja, jer bi to bio zahvat u jezgru.
 
 ### Sova uz naziv se ne crta iznova
 

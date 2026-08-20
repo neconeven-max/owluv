@@ -192,7 +192,7 @@ Testni dokument `test-skriveno.docx` sadrži sve vrste skrivenog sadržaja
 odjednom. `test-bez-teksta.docx` sadrži samo sliku i nijedno slovo.
 `test-cist.docx` je kontrolni uzorak bez ijedne zamke.
 
-### Rezultat zadnjeg pokretanja: 20.08.2026., 111 provjera, sve prošle
+### Rezultat zadnjeg pokretanja: 20.08.2026., 146 provjera, sve prošle
 
 | Provjera | Rezultat |
 |---|---|
@@ -235,6 +235,46 @@ odjednom. `test-bez-teksta.docx` sadrži samo sliku i nijedno slovo.
 | podnaslov postoji na svih 6 jezika | prošao |
 | podnaslov ulazi u naslov kartice i u opis stranice | prošao |
 | sova uz naziv se učitava iz repozitorija | prošao |
+| uzastopni klikovi obilaze sve pojave redom i vraćaju se na prvu | prošao |
+| brojač pokazuje točan položaj i ukupan broj | prošao |
+| strelice pomiču za točno jedno mjesto | prošao |
+| nalaz s jednom pojavom nema brojač ni strelice | prošao |
+| napomena o velikom broju pojava se pojavljuje iznad praga, a ispod ne | prošao |
+| stranica se ne prelijeva u stranu na širinama od 320 do 768 px | prošao |
+
+## Zašto se kroz pojave ide klikom, a ne popisom
+
+Nalaz obično ima više pojava u tekstu. Kad alat kaže da je našao tri duge
+crtice ili dvadeset sumnjivih fraza, postavlja se pitanje kako korisnika
+dovesti do svake od njih.
+
+**Popis svih pojava je odbačen.** Kod dokumenta u kojem se nešto ponavlja
+stotinu puta, popis od sto stavki nitko ne čita, a stranica naraste toliko da
+se u njoj više ne snalaziš. Nalaz koji je trebao biti sažetak postao bi
+najduži dio stranice, a i dalje bi tražio da očima pretražuješ popis.
+
+**Umjesto toga se kroz pojave ide klikom, kao kod traženja riječi u
+pregledniku.** Taj obrazac ljudi već znaju: svaki klik vodi na sljedeću pojavu,
+nakon zadnje se vraća na prvu, a brojač pokazuje na kojoj si od koliko. Uz
+brojač stoje dvije strelice za preskakanje u oba smjera. Nalaz koji ima samo
+jednu pojavu nema ni brojač ni strelice, jer nema kroz što hodati, a nalaz koji
+uopće nema mjesto u tekstu (svojstva dokumenta) nema ni skok.
+
+Pojava na koju se skočilo nakratko jače zasvijetli od ostalih istih oznaka, pa
+ostane tanko obrubljena dok se ne skoči dalje. Tako se i nakon bljeska vidi na
+kojoj si točno.
+
+Ako neka vrsta nalaza ima više od 50 pojava, uz brojač se pojavljuje kratka
+napomena da ih je puno. Kod dugih crtica ta napomena kaže i zašto je to bitno:
+toliki broj dugih crtica obično znači da je tekst pisao AI, a ne da je nešto
+skriveno. To je korisna informacija sama po sebi.
+
+**Sitnica koju vrijedi znati:** broj u naslovu nalaza i ukupan broj u brojaču ne
+moraju uvijek biti isti. Naslov broji koliko je puta pravilo okinulo u tekstu, a
+brojač koliko ima označenih mjesta u desnom panelu na koja se može skočiti. Kad
+je jedna fraza u dokumentu prelomljena formatiranjem na dva dijela, u desnom
+panelu se pojavi kao dvije oznake. Zato kod fraza brojač zna pokazati koji broj
+više nego naslov.
 
 ## Zašto nema prekidača za brzi i spori način
 
@@ -372,6 +412,44 @@ stalo do točnog značenja.
 ---
 
 ## Povijest izmjena
+
+### 20.08.2026. — v4.3: kretanje kroz pojave i tri veličine
+
+**Klik na nalaz sada vodi na sljedeću pojavu, ne uvijek na prvu.** Prije je
+svaki klik vraćao na isto mjesto, pa je kod nalaza s tri duge crtice treći klik
+opet završio na prvoj i alat je djelovao pokvareno. Sada se kroz pojave ide kao
+kod traženja riječi u pregledniku: klik vodi na sljedeću, nakon zadnje se vraća
+na prvu, a mali brojač pokazuje na kojoj si od koliko. Uz brojač su dvije
+strelice za preskakanje u oba smjera; klik na strelicu pomiče za točno jedno
+mjesto i ne okida usput i skok cijele kartice. Nalaz s jednom pojavom nema ni
+brojač ni strelice, a nalaz bez mjesta u tekstu nema ni skok, kao i dosad.
+Zašto kretanje, a ne popis svih pojava, objašnjeno je u zasebnom odjeljku gore.
+
+**Vidi se na kojoj si pojavi.** Ona na koju se skočilo nakratko zasvijetli jače
+nego prije, pa ostane tanko obrubljena dok se ne skoči dalje. Bez toga se poslije
+bljeska nije znalo koja je od nekoliko jednakih oznaka bila zadnja.
+
+**Zaštita kad pojava ima jako puno.** Iznad 50 pojava uz brojač se pojavljuje
+kratka napomena da ih je puno. Kod dugih crtica napomena kaže i zašto je to
+bitno: toliki broj obično znači da je tekst pisao AI, a ne da je nešto skriveno.
+Pojave se i dalje ne izlistavaju.
+
+**Tri veličine su ispravljene.** Logo u podnožju povećan je još 20 posto, sova i
+naziv "OwlUV" zajedno 30 posto da im odnos ostane isti, a podnaslov 20 posto.
+Zraka je povećana u istoj mjeri kao sova, pa i dalje izlazi iz očiju.
+
+**Popravljeno prelijevanje na uskom zaslonu.** Provjera veličina otkrila je da
+se stranica na mobitelu vodoravno prelijevala: tri gumba u zaglavlju panela nisu
+stala u red i gurala su cijelu stranicu u širinu, pa je tekst bježao izvan
+zaslona. Sada gumbi prelaze u novi red, podnožje se prelama, a naziv i sova se
+na uskom zaslonu vraćaju na manju mjeru. Test to sada mjeri na šest širina, od
+320 do 768 px, i pada ako se išta prelije.
+
+**Test dopunjen na 146 provjera.** Nove provjere: uzastopni klikovi obilaze sve
+pojave redom i vraćaju se na prvu, brojač pokazuje točan položaj i ukupan broj,
+strelice pomiču za točno jedno mjesto, nalaz s jednom pojavom nema brojač,
+napomena o velikom broju se pojavljuje iznad praga a ispod ne, i stranica se ne
+prelijeva u stranu ni na jednoj od šest provjerenih širina.
 
 ### 20.08.2026. — v4.2: dorade nakon pregleda v4.1
 
