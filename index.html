@@ -3,7 +3,10 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>OwlUV</title>
+<title>OwlUV - Skener skrivenog teksta i AI zamki</title>
+<!-- Naslov i opis mijenjaju se s jezikom sucelja (js/app.js, applyLang).
+     Ovdje stoji hrvatska inacica, jer je hrvatski pocetni jezik. -->
+<meta name="description" content="OwlUV je skener skrivenog teksta i AI zamki: otkriva tekst skriven bojom ili velicinom fonta, nevidljive Unicode znakove i fraze koje pokusavaju navesti AI na krivi odgovor. Radi potpuno lokalno u pregledniku.">
 <!-- Ikone se citaju iz repozitorija, nikad s OneDrivea: alat mora raditi i bez njega. -->
 <link rel="icon" href="assets/sovaweb_favicon.ico" sizes="16x16 32x32">
 <link rel="icon" type="image/png" sizes="512x512" href="assets/sovaweb_favicon_512.png">
@@ -26,8 +29,33 @@
   .wrap{max-width:1100px;margin:0 auto}
   .head-row{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;flex-wrap:wrap}
   header .eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:#8FB0C9}
-  header h1{font-size:26px;font-weight:800;letter-spacing:-.02em;margin-top:4px}
+  header h1{font-size:26px;font-weight:800;letter-spacing:-.02em;margin-top:4px;
+            display:flex;align-items:center;gap:10px}
+  header h2.tagline{font-size:15px;font-weight:600;color:#C6D8E6;margin-top:3px;letter-spacing:-.01em}
   header p{color:#A9BFCF;font-size:13px;margin-top:6px;max-width:640px}
+
+  /* ---- sova uz naziv, sa zrakom koja izlazi iz ociju ----
+     Crtez se animira u samoj stranici (CSS), nije gif: rubovi ostaju glatki na
+     svakoj velicini, podloga se vidi kroz prozirne dijelove, i nema dodatne
+     tezine. Zraka prijede jednom, s lijeva na desno, pa se ugasi. */
+  .owlmark{position:relative;display:inline-block;line-height:0;flex:none}
+  .owlmark .owl{height:30px;width:auto;display:block}
+  .owlmark .beam{position:absolute;left:56%;top:32%;width:44px;height:13px;
+       transform-origin:0 50%;transform:scaleX(.06);opacity:0;pointer-events:none;
+       border-radius:2px;
+       background:linear-gradient(90deg,rgba(124,58,237,.95),rgba(167,139,250,.7) 48%,rgba(167,139,250,0));
+       clip-path:polygon(0 42%,100% 0,100% 100%,0 58%)}
+  .owlmark.sweep .beam{animation:uvBeam 1.5s cubic-bezier(.2,.7,.3,1) 1}
+  @keyframes uvBeam{
+    0%{opacity:0;transform:scaleX(.06)}
+    12%{opacity:1}
+    62%{opacity:1;transform:scaleX(1)}
+    100%{opacity:0;transform:scaleX(1.08)}
+  }
+  @media(prefers-reduced-motion:reduce){
+    .owlmark .beam{display:none}
+    .owlmark.sweep .beam{animation:none}
+  }
   .langs{display:flex;gap:5px;flex-wrap:wrap;max-width:220px}
   .lang{font-family:var(--mono);font-size:11px;font-weight:700;letter-spacing:.06em;padding:6px 10px;border-radius:6px;border:1px solid #35505F;background:transparent;color:#A9BFCF;cursor:pointer}
   .lang:hover{border-color:#5C7A8C;color:#D5E3EC}
@@ -112,8 +140,13 @@
   .btn.ghost{background:transparent;color:var(--ink)}
   .btn.ghost:hover{background:#EDF2F6}
   .btn.sm{padding:6px 11px;font-size:11px}
-  .btn.reset{border-color:var(--line);color:var(--muted);background:transparent}
-  .btn.reset:hover{background:#EDF2F6;color:var(--ink);border-color:var(--muted)}
+  /* "Novi tekst" je izlaz iz trenutnog dokumenta, pa mora biti ravnopravan
+     ostalim gumbima u zaglavlju, ali i dalje vidljivo odvojen od njih. */
+  .btn.reset{border-color:var(--muted);border-width:1.5px;color:var(--ink);background:transparent;
+             font-weight:800;padding:7px 14px;font-size:11.5px;margin-left:9px;position:relative}
+  .btn.reset::before{content:"";position:absolute;left:-6px;top:15%;height:70%;width:1px;background:var(--line)}
+  .btn.reset:hover{background:var(--ink);color:#fff;border-color:var(--ink)}
+  .btn.reset:hover::before{background:var(--line)}
   .toolbar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;padding:12px 16px;border-top:1px solid var(--line)}
   .verdict{border-radius:10px;padding:16px 18px;margin-bottom:18px;display:none;border:1px solid}
   .verdict .big{font-size:20px;font-weight:800;letter-spacing:-.01em}
@@ -136,9 +169,9 @@
   .note.recon{display:none;background:var(--uv-bg);color:#4C1D95;border-top-color:#D9CBF3}
   .count{font-family:var(--mono);font-size:11px;background:var(--paper);border:1px solid var(--line);border-radius:20px;padding:2px 10px;color:var(--muted)}
   footer{padding:0 24px 40px}
-  footer .wrap{font-size:12px;color:var(--muted);display:flex;align-items:center;gap:10px;flex-wrap:wrap}
-  footer .by{display:flex;align-items:center;gap:7px;padding-left:10px;border-left:1px solid var(--line)}
-  footer .by img{height:20px;width:auto;display:block;opacity:.9}
+  footer .wrap{font-size:12px;color:var(--muted);display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+  footer .by{display:flex;align-items:center;gap:10px;padding-left:14px;border-left:1px solid var(--line)}
+  footer .by img{height:58px;width:auto;display:block;opacity:.95}
   footer .by a{color:var(--muted);text-decoration:underline;text-underline-offset:2px}
   footer .by a:hover{color:var(--uv)}
   @media(max-width:520px){footer .by{padding-left:0;border-left:0;width:100%}}
@@ -205,7 +238,9 @@
     <div class="head-row">
       <div>
         <div class="eyebrow" data-i18n="eyebrow"></div>
-        <h1>OwlUV</h1>
+        <h1><span class="owlmark" id="owlMark"><img class="owl" src="assets/sovaweb_owl.png"
+              alt="" aria-hidden="true"><span class="beam" aria-hidden="true"></span></span>OwlUV</h1>
+        <h2 class="tagline" data-i18n="tagline"></h2>
         <p data-i18n="intro"></p>
       </div>
       <div class="langs">
