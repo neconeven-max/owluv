@@ -95,7 +95,7 @@
       saveSuffix:'ociscen',
       errSave:'Datoteku nije bilo moguće spremiti.',
       fSigTitle:n=>n+' rečenica koje se obraćaju stroju',
-      fSigWhy:'Rečenice koje po nečemu izgledaju kao da su pisane za program, a ne za čitatelja. Uz svaku piše koji su signali pronađeni, da možeš sam prosuditi. Ovo je širok radar: javit će se i posve bezopasne rečenice, npr. školski zadatak koji traži odgovor ili natječaj koji traži najboljeg kandidata.',
+      fSigWhy:'Ovo je najširi dio provjere i većina ovih rečenica vjerojatno je posve bezopasna. Alat ih pokazuje zato da ništa ne prešuti, a ne zato što tvrdi da su zamke. Pročitaj ih i označi samo one za koje sam procijeniš da su pisane za AI, s namjerom da ga navedu na krivi zaključak. Označene rečenice bit će obrisane iz kopije i iz spremljene datoteke. Ako ništa ne označiš, ništa se ne briše.',
       sig:{addr:'obraća se stroju',cmd:'zapovjedni ton oko ocjenjivanja ili odabira',sec:'traži tajnost',plant:'podmeće ishod',lang:'na drugom jeziku od ostatka dokumenta',headers:'u zaglavlju ili podnožju',notes:'u fusnoti',comments:'u komentaru',props:'u svojstvima dokumenta',deleted:'u obrisanom tekstu',textbox:'u okviru izvan stranice'},
       cutAll:'Označi sve',
       cutNone:'Odznači sve',
@@ -107,7 +107,7 @@
         if(j>=2&&j<=4&&(ds<12||ds>14)) return n+' rečenice označene za brisanje';
         return n+' rečenica označeno za brisanje';
       },
-      footer:'OwlUV v4.7 · open source alat · radi potpuno lokalno, bez slanja podataka'
+      footer:'OwlUV v4.8 · open source alat · radi potpuno lokalno, bez slanja podataka'
     },
     en:{
       eyebrow:'Text and document inspection tool', intro:'Paste text or drop in a file: an assignment, job description or CV. The scanner reveals invisible characters, text hidden via color or font size, and phrases designed to mislead AI. Everything runs in your browser, nothing is sent anywhere.',
@@ -199,13 +199,13 @@
       saveSuffix:'cleaned',
       errSave:'The file could not be saved.',
       fSigTitle:n=>n+' sentences that address a machine',
-      fSigWhy:'Sentences that look in some way as if they were written for a program rather than for a reader. Each one lists the signals found, so you can judge for yourself. This is a wide radar: entirely harmless sentences will show up too, such as a school task asking for an answer or a job ad looking for the best candidate.',
+      fSigWhy:'This is the widest part of the check, and most of these sentences are probably harmless. The tool lists them so that nothing goes unmentioned, not because it claims they are traps. Read them and tick only the ones you judge to be written for an AI, meant to lead it to a wrong conclusion. Ticked sentences are removed from the copy and from the saved file. If you tick nothing, nothing is removed.',
       sig:{addr:'addresses a machine',cmd:'commanding tone about grading or selection',sec:'demands secrecy',plant:'plants an outcome',lang:'in a different language from the rest of the document',headers:'in a header or footer',notes:'in a footnote',comments:'in a comment',props:'in the document properties',deleted:'in deleted text',textbox:'in a box outside the page'},
       cutAll:'Select all',
       cutNone:'Clear all',
       cutTip:'Ticked sentences are removed from the copied text and from the saved file. Hidden content is always removed, with or without a tick.',
       cutCount:n=>n===0?'Nothing marked for removal':(n+(n===1?' sentence':' sentences')+' marked for removal'),
-      footer:'OwlUV v4.7 · open source tool · runs fully locally, no data sent'
+      footer:'OwlUV v4.8 · open source tool · runs fully locally, no data sent'
     },
     de:{
       eyebrow:'Werkzeug zur Text- und Dokumentprüfung', intro:'Text einfügen oder Datei ablegen: Aufgabe, Stellenbeschreibung oder Lebenslauf. Der Scanner zeigt unsichtbare Zeichen, per Farbe oder Schriftgröße versteckten Text und Phrasen, die eine KI in die Irre führen sollen. Alles läuft im Browser, nichts wird gesendet.',
@@ -297,13 +297,13 @@
       saveSuffix:'bereinigt',
       errSave:'Die Datei konnte nicht gespeichert werden.',
       fSigTitle:n=>n+' Sätze, die sich an eine Maschine richten',
-      fSigWhy:'Sätze, die in irgendeiner Weise so wirken, als wären sie für ein Programm geschrieben und nicht für einen Leser. Bei jedem steht, welche Signale gefunden wurden, damit Sie selbst urteilen können. Das ist ein breiter Radar: auch völlig harmlose Sätze tauchen auf, etwa eine Schulaufgabe, die eine Antwort verlangt, oder eine Stellenanzeige, die den besten Kandidaten sucht.',
+      fSigWhy:'Das ist der breiteste Teil der Prüfung, und die meisten dieser Sätze sind vermutlich völlig harmlos. Das Werkzeug zeigt sie, damit nichts verschwiegen wird, und nicht weil es behauptet, sie seien Fallen. Lesen Sie sie und haken Sie nur die an, von denen Sie selbst annehmen, dass sie für eine KI geschrieben wurden, um sie zu einem falschen Schluss zu führen. Angehakte Sätze werden aus der Kopie und aus der gespeicherten Datei entfernt. Haken Sie nichts an, wird nichts entfernt.',
       sig:{addr:'richtet sich an eine Maschine',cmd:'Befehlston zu Bewertung oder Auswahl',sec:'verlangt Geheimhaltung',plant:'schiebt ein Ergebnis unter',lang:'in einer anderen Sprache als der Rest des Dokuments',headers:'in Kopf- oder Fußzeile',notes:'in einer Fußnote',comments:'in einem Kommentar',props:'in den Dokumenteigenschaften',deleted:'in gelöschtem Text',textbox:'in einem Feld außerhalb der Seite'},
       cutAll:'Alle auswählen',
       cutNone:'Auswahl aufheben',
       cutTip:'Angehakte Sätze werden aus dem kopierten Text und aus der gespeicherten Datei entfernt. Versteckte Inhalte werden immer entfernt, mit oder ohne Haken.',
       cutCount:n=>n===0?'Nichts zum Entfernen markiert':(n+(n===1?' Satz':' Sätze')+' zum Entfernen markiert'),
-      footer:'OwlUV v4.7 · Open-Source-Werkzeug · läuft vollständig lokal, keine Datenübertragung'
+      footer:'OwlUV v4.8 · Open-Source-Werkzeug · läuft vollständig lokal, keine Datenübertragung'
     },
     fr:{
       eyebrow:'Outil de vérification de textes et documents', intro:"Collez un texte ou déposez un fichier : devoir, offre d'emploi ou CV. Le scanner révèle les caractères invisibles, le texte masqué par la couleur ou la taille de police, et les phrases conçues pour induire une IA en erreur. Tout se passe dans votre navigateur, rien n'est envoyé.",
@@ -395,13 +395,13 @@
       saveSuffix:'nettoye',
       errSave:'Le fichier n\u2019a pas pu être enregistré.',
       fSigTitle:n=>n+' phrases qui s\u2019adressent à une machine',
-      fSigWhy:"Des phrases qui, d'une manière ou d'une autre, semblent écrites pour un programme et non pour un lecteur. Chacune indique les signaux trouvés, pour que vous puissiez juger vous-même. C'est un radar large : des phrases tout à fait inoffensives apparaîtront aussi, par exemple un exercice scolaire qui demande une réponse ou une offre d'emploi qui cherche le meilleur candidat.",
+      fSigWhy:"C'est la partie la plus large de la vérification, et la plupart de ces phrases sont probablement inoffensives. L'outil les affiche pour ne rien passer sous silence, et non parce qu'il affirme que ce sont des pièges. Lisez-les et ne cochez que celles dont vous jugez vous-même qu'elles ont été écrites pour une IA, afin de la mener à une conclusion erronée. Les phrases cochées sont retirées de la copie et du fichier enregistré. Si vous ne cochez rien, rien n'est retiré.",
       sig:{addr:'s\u2019adresse à une machine',cmd:'ton impératif sur la notation ou la sélection',sec:'exige le secret',plant:'impose un résultat',lang:'dans une autre langue que le reste du document',headers:'dans un en-tête ou un pied de page',notes:'dans une note de bas de page',comments:'dans un commentaire',props:'dans les propriétés du document',deleted:'dans du texte supprimé',textbox:'dans un cadre hors de la page'},
       cutAll:'Tout sélectionner',
       cutNone:'Tout désélectionner',
       cutTip:'Les phrases cochées sont retirées du texte copié et du fichier enregistré. Le contenu masqué est toujours retiré, coché ou non.',
       cutCount:n=>n===0?'Rien n\u2019est marqué pour suppression':(n+(n===1?' phrase marquée':' phrases marquées')+' pour suppression'),
-      footer:'OwlUV v4.7 · outil open source · fonctionne entièrement en local, aucune donnée envoyée'
+      footer:'OwlUV v4.8 · outil open source · fonctionne entièrement en local, aucune donnée envoyée'
     },
     es:{
       eyebrow:'Herramienta de verificación de textos y documentos', intro:'Pega un texto o suelta un archivo: una tarea, una oferta de empleo o un CV. El escáner revela caracteres invisibles, texto oculto por color o tamaño de fuente y frases diseñadas para engañar a una IA. Todo se procesa en tu navegador, no se envía nada.',
@@ -493,13 +493,13 @@
       saveSuffix:'limpio',
       errSave:'No se ha podido guardar el archivo.',
       fSigTitle:n=>n+' frases que se dirigen a una máquina',
-      fSigWhy:'Frases que de algún modo parecen escritas para un programa y no para un lector. Cada una indica las señales encontradas, para que puedas juzgar por ti mismo. Es un radar amplio: también aparecerán frases del todo inofensivas, como una tarea escolar que pide una respuesta o una oferta de empleo que busca al mejor candidato.',
+      fSigWhy:'Esta es la parte más amplia de la comprobación, y la mayoría de estas frases probablemente sean del todo inofensivas. La herramienta las muestra para no callar nada, no porque afirme que son trampas. Léelas y marca solo aquellas que tú mismo consideres escritas para una IA, con la intención de llevarla a una conclusión equivocada. Las frases marcadas se eliminan de la copia y del archivo guardado. Si no marcas nada, no se elimina nada.',
       sig:{addr:'se dirige a una máquina',cmd:'tono imperativo sobre calificación o selección',sec:'exige secreto',plant:'impone un resultado',lang:'en un idioma distinto al del resto del documento',headers:'en un encabezado o pie de página',notes:'en una nota al pie',comments:'en un comentario',props:'en las propiedades del documento',deleted:'en texto eliminado',textbox:'en un cuadro fuera de la página'},
       cutAll:'Seleccionar todo',
       cutNone:'Deseleccionar todo',
       cutTip:'Las frases marcadas se eliminan del texto copiado y del archivo guardado. El contenido oculto se elimina siempre, con marca o sin ella.',
       cutCount:n=>n===0?'No hay nada marcado para eliminar':(n+(n===1?' frase marcada':' frases marcadas')+' para eliminar'),
-      footer:'OwlUV v4.7 · herramienta de código abierto · funciona totalmente en local, sin enviar datos'
+      footer:'OwlUV v4.8 · herramienta de código abierto · funciona totalmente en local, sin enviar datos'
     },
     it:{
       eyebrow:'Strumento di verifica di testi e documenti', intro:'Incolla un testo o trascina un file: un compito, un annuncio di lavoro o un CV. Lo scanner rivela caratteri invisibili, testo nascosto tramite colore o dimensione del carattere e frasi pensate per ingannare una IA. Tutto viene elaborato nel browser, nulla viene inviato.',
@@ -591,13 +591,13 @@
       saveSuffix:'ripulito',
       errSave:'Non è stato possibile salvare il file.',
       fSigTitle:n=>n+' frasi che si rivolgono a una macchina',
-      fSigWhy:'Frasi che in qualche modo sembrano scritte per un programma e non per un lettore. Ognuna indica i segnali trovati, così puoi giudicare da solo. È un radar ampio: compariranno anche frasi del tutto innocue, come un compito scolastico che chiede una risposta o un annuncio di lavoro che cerca il miglior candidato.',
+      fSigWhy:"Questa è la parte più ampia del controllo, e la maggior parte di queste frasi è probabilmente del tutto innocua. Lo strumento le mostra per non tacere nulla, non perché sostenga che siano trappole. Leggile e spunta solo quelle che ritieni scritte per una IA, con l'intento di portarla a una conclusione sbagliata. Le frasi spuntate vengono rimosse dalla copia e dal file salvato. Se non spunti nulla, non viene rimosso nulla.",
       sig:{addr:'si rivolge a una macchina',cmd:'tono imperativo su valutazione o selezione',sec:'chiede segretezza',plant:'impone un esito',lang:'in una lingua diversa dal resto del documento',headers:'in un\u2019intestazione o in un piè di pagina',notes:'in una nota a piè di pagina',comments:'in un commento',props:'nelle proprietà del documento',deleted:'in testo eliminato',textbox:'in una casella fuori pagina'},
       cutAll:'Seleziona tutto',
       cutNone:'Deseleziona tutto',
       cutTip:'Le frasi spuntate vengono rimosse dal testo copiato e dal file salvato. Il contenuto nascosto viene sempre rimosso, con o senza spunta.',
       cutCount:n=>n===0?'Niente selezionato per la rimozione':(n+(n===1?' frase selezionata':' frasi selezionate')+' per la rimozione'),
-      footer:'OwlUV v4.7 · strumento open source · funziona interamente in locale, nessun dato inviato'
+      footer:'OwlUV v4.8 · strumento open source · funziona interamente in locale, nessun dato inviato'
     }
   };
 })();

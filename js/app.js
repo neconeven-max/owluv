@@ -313,7 +313,7 @@
           const b=st.map[Math.min(r.start+r.len,st.map.length)-1];
           return (a===undefined||b===undefined)?null:{start:a,len:b-a+1,txt:text.substr(a,b-a+1)};
         };
-        if(sig.length) g.signal.push({sev:'info',rank:60,title:t.fSigTitle(sig.length),why:t.fSigWhy,
+        if(sig.length) g.signal.push({sev:'info',rank:90,title:t.fSigTitle(sig.length),why:t.fSigWhy,
           pick:true,
           items:sig.map(r=>({
             q:r.txt.slice(0,300),
@@ -345,7 +345,9 @@
       // Bez toga je najsiri i najbucniji nalaz (recenice po signalima) znao
       // zavrsiti na vrhu i zakopati skriveni tekst, koji je najvazniji.
       // Redoslijed: skriveno > fraze > nevidljivi znakovi > struktura datoteke
-      // > pomijesana pisma > signali > duge crtice.
+      // > pomijesana pisma > duge crtice > signali.
+      // Nalaz po signalima je POSLJEDNJI: najsiri je i najbucniji, javlja se i na
+      // posve normalnim recenicama, pa ne smije stajati iznad konkretnih nalaza.
       const findings=[].concat(g.tag,g.inv,g.phrase,g.signal,g.mixed,g.hidden,g.docx,g.dash)
         .sort((a,b)=>(a.rank||99)-(b.rank||99));
 
