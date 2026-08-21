@@ -194,7 +194,7 @@ Testni dokument `test-skriveno.docx` sadrži sve vrste skrivenog sadržaja
 odjednom. `test-bez-teksta.docx` sadrži samo sliku i nijedno slovo.
 `test-cist.docx` je kontrolni uzorak bez ijedne zamke.
 
-### Rezultat zadnjeg pokretanja: 21.08.2026., 267 provjera, sve prošle
+### Rezultat zadnjeg pokretanja: 21.08.2026., 268 provjera, sve prošle
 
 | Provjera | Rezultat |
 |---|---|
@@ -267,7 +267,7 @@ odjednom. `test-bez-teksta.docx` sadrži samo sliku i nijedno slovo.
 | rečenica s jednim signalom se prijavljuje kao ona s više njih | prošao |
 | uz svaki nalaz stoji objašnjenje koji su signali pronađeni | prošao |
 | mjerenje na skupu primjera | prošao |
-| skriveni tekst je prvi nalaz, nalaz po signalima među zadnjima | prošao |
+| skriveni tekst je prvi nalaz, nalaz po signalima posljednji | prošao |
 | svojstva dokumenta se ne pojavljuju u popisu rečenica | prošao |
 | rečenica koja spominje "prometni sustav" ne okida signal obraćanja stroju | prošao |
 | rečenica koja se stvarno obraća AI-ju i dalje okida | prošao |
@@ -493,6 +493,21 @@ stalo do točnog značenja.
 ---
 
 ## Povijest izmjena
+
+### 21.08.2026. — v4.8: radar ide na samo dno, uz jasnije upozorenje
+
+**Nalaz "rečenice koje se obraćaju stroju" sada je posljednji u popisu**, ispod
+dugih crtica. U v4.7 je bio nešto više, iznad njih. Taj je nalaz najširi i
+najbučniji, javlja se i na posve normalnim rečenicama, pa ne smije stajati iznad
+nalaza koji su konkretni.
+
+**Opis tog nalaza sada odmah kaže da je vjerojatno riječ o lažnoj uzbuni.** Prije
+je to spominjao, ali prekasno i preblago, pa je korisnik iz naslova zaključio da
+su sve te rečenice sumnjive. Sada prva rečenica opisa kaže da je većina njih
+vjerojatno posve bezopasna i da ih alat pokazuje zato da ništa ne prešuti, a ne
+zato što tvrdi da su zamke. Tek onda slijedi uputa: pročitaj ih i označi samo one
+za koje sam procijeniš da su pisane za AI. Ako ništa ne označiš, ništa se ne
+briše.
 
 ### 21.08.2026. — v4.7: redoslijed nalaza i manje šuma u novom radaru
 

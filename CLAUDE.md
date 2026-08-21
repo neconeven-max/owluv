@@ -109,10 +109,10 @@ Test se **mora** izvršiti prije nego se prijavi da je nešto gotovo.
 ## Gdje je projekt stao — stanje na 20.08.2026.
 
 **Faza 2a je gotova, provjerena pravim Wordovim dokumentom i dopunjena
-verzijama v4.1 do v4.7.** Grana `main`, `origin` je
+verzijama v4.1 do v4.8.** Grana `main`, `origin` je
 `git@github.com:neconeven-max/owluv.git`.
 
-Radi i provjereno je testom (**267 provjera, sve prošle**):
+Radi i provjereno je testom (**268 provjera, sve prošle**):
 
 - učitavanje datoteka na četiri načina: povuci-i-pusti, gumb za odabir,
   lijepljenje same datoteke iz međuspremnika (ovisi o pregledniku, pouzdano u
@@ -217,12 +217,16 @@ imao 23 stavke i stajao prvi, pa se skriveni tekst nije vidio bez pomicanja.
 | 40 | svojstva dokumenta |
 | 44, 45 | zaglavlja i podnožja, fusnote |
 | 50 | pomiješana pisma |
-| 60 | rečenice koje se obraćaju stroju (signali) |
 | 70 | duge crtice |
+| 90 | rečenice koje se obraćaju stroju (signali) |
 
 Okviri izvan stranice idu gore uz skriveni tekst jer su isto skriveni sadržaj,
-samo gurnut van vidljivog područja. Nalaz po signalima ide među zadnje jer je
-najširi i najbučniji.
+samo gurnut van vidljivog područja.
+
+**Nalaz po signalima je POSLJEDNJI, ispod dugih crtica.** Najširi je i
+najbučniji, javlja se i na posve normalnim rečenicama, pa ne smije stajati iznad
+nalaza koji su konkretni. U v4.7 je bio na 60, dakle iznad dugih crtica; v4.8 ga
+je spustila na dno.
 
 ### Signali: širok radar, i to namjerno
 
@@ -235,6 +239,12 @@ mjesto nalaza (zaglavlje, fusnota, komentar, svojstva).
 kao ona s četiri. Nema praga i nema zbrajanja bodova. Uz svaku rečenicu piše
 koji su signali pronađeni, da korisnik može provjeriti alat, a ne samo vjerovati
 mu.
+
+**Opis nalaza odmah kaže da je vjerojatno lažna uzbuna.** Prva rečenica opisa
+govori da je većina tih rečenica bezopasna i da ih alat pokazuje zato da ništa
+ne prešuti, a ne zato što tvrdi da su zamke. Tek onda slijedi što učiniti ako
+nije. Prije je to stajalo prekasno i preblago, pa je korisnik iz naslova
+zaključio da su sve sumnjive.
 
 **Težina nalaza je `info`, ne crvena.** To nije prešućivanje: svaki pogodak je u
 popisu. Ali mreža je namjerno široka i okida i na posve normalnim rečenicama
