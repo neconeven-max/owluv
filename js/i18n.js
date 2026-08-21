@@ -85,7 +85,16 @@
       errDocxLocked:'Ovaj .docx se ne može otvoriti, najvjerojatnije je zaštićen lozinkom. Skini zaštitu pa pokušaj ponovno. OVO NIJE POTVRDA da je dokument čist, jer alat u njega nije mogao ući.',
       errUnreadable:'Sadržaj ove datoteke nije čitljiv. Nastavak kaže .docx, ali sadržaj to nije, pa se ne može provjeriti.',
       vErrTextBig:'Tekst nije provjeren',
-      footer:'OwlUV v4.4 · open source alat · radi potpuno lokalno, bez slanja podataka'
+      staleWarn:'Tekst je izmijenjen rukom, pa prikazani nalazi više ne odgovaraju sadržaju.',
+      rescanBtn:'Skeniraj ponovno',
+      rescanTip:'Ponovno provjerava izmijenjeni tekst i osvježava nalaze.',
+      saveBtn:'Spremi kao Word',
+      saveTip:'Sprema očišćeni tekst kao novu .docx datoteku na disk.',
+      saveNote:'Sprema se NOVA datoteka, izvorna se ne dira. Prijelom stranica, margine i font neće biti identični izvorniku, jer se dokument gradi iznova iz teksta koji alat vidi.',
+      savedToast:'✓ Očišćena datoteka je spremljena',
+      saveSuffix:'ociscen',
+      errSave:'Datoteku nije bilo moguće spremiti.',
+      footer:'OwlUV v4.5 · open source alat · radi potpuno lokalno, bez slanja podataka'
     },
     en:{
       eyebrow:'Text and document inspection tool', intro:'Paste text or drop in a file: an assignment, job description or CV. The scanner reveals invisible characters, text hidden via color or font size, and phrases designed to mislead AI. Everything runs in your browser, nothing is sent anywhere.',
@@ -167,7 +176,16 @@
       errDocxLocked:'This .docx cannot be opened, most likely it is password-protected. Remove the protection and try again. This is NOT a confirmation that the document is clean, because the tool could not get inside it.',
       errUnreadable:'The content of this file is not readable. The extension says .docx but the content is not, so it cannot be checked.',
       vErrTextBig:'Text not checked',
-      footer:'OwlUV v4.4 · open source tool · runs fully locally, no data sent'
+      staleWarn:'The text was edited by hand, so the findings shown no longer match the content.',
+      rescanBtn:'Scan again',
+      rescanTip:'Checks the edited text again and refreshes the findings.',
+      saveBtn:'Save as Word',
+      saveTip:'Saves the cleaned text as a new .docx file on disk.',
+      saveNote:'A NEW file is saved, the original is untouched. Page breaks, margins and the exact font will not match the original, because the document is rebuilt from the text the tool can see.',
+      savedToast:'✓ Cleaned file saved',
+      saveSuffix:'cleaned',
+      errSave:'The file could not be saved.',
+      footer:'OwlUV v4.5 · open source tool · runs fully locally, no data sent'
     },
     de:{
       eyebrow:'Werkzeug zur Text- und Dokumentprüfung', intro:'Text einfügen oder Datei ablegen: Aufgabe, Stellenbeschreibung oder Lebenslauf. Der Scanner zeigt unsichtbare Zeichen, per Farbe oder Schriftgröße versteckten Text und Phrasen, die eine KI in die Irre führen sollen. Alles läuft im Browser, nichts wird gesendet.',
@@ -249,7 +267,16 @@
       errDocxLocked:'Diese .docx lässt sich nicht öffnen, sie ist höchstwahrscheinlich passwortgeschützt. Entfernen Sie den Schutz und versuchen Sie es erneut. Das ist KEINE Bestätigung, dass das Dokument sauber ist, denn das Werkzeug kam nicht hinein.',
       errUnreadable:'Der Inhalt dieser Datei ist nicht lesbar. Die Endung sagt .docx, der Inhalt aber nicht, daher kann sie nicht geprüft werden.',
       vErrTextBig:'Text nicht geprüft',
-      footer:'OwlUV v4.4 · Open-Source-Werkzeug · läuft vollständig lokal, keine Datenübertragung'
+      staleWarn:'Der Text wurde von Hand geändert, die angezeigten Befunde passen nicht mehr zum Inhalt.',
+      rescanBtn:'Erneut prüfen',
+      rescanTip:'Prüft den geänderten Text erneut und aktualisiert die Befunde.',
+      saveBtn:'Als Word speichern',
+      saveTip:'Speichert den bereinigten Text als neue .docx-Datei auf der Festplatte.',
+      saveNote:'Es wird eine NEUE Datei gespeichert, das Original bleibt unberührt. Seitenumbrüche, Ränder und die genaue Schrift werden nicht mit dem Original übereinstimmen, denn das Dokument wird aus dem Text neu aufgebaut, den das Werkzeug sieht.',
+      savedToast:'✓ Bereinigte Datei gespeichert',
+      saveSuffix:'bereinigt',
+      errSave:'Die Datei konnte nicht gespeichert werden.',
+      footer:'OwlUV v4.5 · Open-Source-Werkzeug · läuft vollständig lokal, keine Datenübertragung'
     },
     fr:{
       eyebrow:'Outil de vérification de textes et documents', intro:"Collez un texte ou déposez un fichier : devoir, offre d'emploi ou CV. Le scanner révèle les caractères invisibles, le texte masqué par la couleur ou la taille de police, et les phrases conçues pour induire une IA en erreur. Tout se passe dans votre navigateur, rien n'est envoyé.",
@@ -331,7 +358,16 @@
       errDocxLocked:'Ce .docx ne peut pas être ouvert, il est très probablement protégé par un mot de passe. Retirez la protection puis réessayez. Ce n\u2019est PAS une confirmation que le document est propre, car l\u2019outil n\u2019a pas pu y entrer.',
       errUnreadable:'Le contenu de ce fichier n\u2019est pas lisible. L\u2019extension indique .docx mais le contenu non, il ne peut donc pas être vérifié.',
       vErrTextBig:'Texte non vérifié',
-      footer:'OwlUV v4.4 · outil open source · fonctionne entièrement en local, aucune donnée envoyée'
+      staleWarn:'Le texte a été modifié à la main, les résultats affichés ne correspondent plus au contenu.',
+      rescanBtn:'Analyser à nouveau',
+      rescanTip:'Vérifie à nouveau le texte modifié et actualise les résultats.',
+      saveBtn:'Enregistrer en Word',
+      saveTip:'Enregistre le texte nettoyé comme nouveau fichier .docx sur le disque.',
+      saveNote:'Un NOUVEAU fichier est enregistré, l\u2019original n\u2019est pas touché. Les sauts de page, les marges et la police exacte ne seront pas identiques à l\u2019original, car le document est reconstruit à partir du texte que l\u2019outil voit.',
+      savedToast:'✓ Fichier nettoyé enregistré',
+      saveSuffix:'nettoye',
+      errSave:'Le fichier n\u2019a pas pu être enregistré.',
+      footer:'OwlUV v4.5 · outil open source · fonctionne entièrement en local, aucune donnée envoyée'
     },
     es:{
       eyebrow:'Herramienta de verificación de textos y documentos', intro:'Pega un texto o suelta un archivo: una tarea, una oferta de empleo o un CV. El escáner revela caracteres invisibles, texto oculto por color o tamaño de fuente y frases diseñadas para engañar a una IA. Todo se procesa en tu navegador, no se envía nada.',
@@ -413,7 +449,16 @@
       errDocxLocked:'Este .docx no se puede abrir, lo más probable es que esté protegido con contraseña. Quita la protección e inténtalo de nuevo. Esto NO es una confirmación de que el documento esté limpio, porque la herramienta no ha podido entrar en él.',
       errUnreadable:'El contenido de este archivo no es legible. La extensión dice .docx pero el contenido no lo es, así que no se puede comprobar.',
       vErrTextBig:'Texto no comprobado',
-      footer:'OwlUV v4.4 · herramienta de código abierto · funciona totalmente en local, sin enviar datos'
+      staleWarn:'El texto se ha editado a mano, así que los resultados mostrados ya no corresponden al contenido.',
+      rescanBtn:'Analizar de nuevo',
+      rescanTip:'Vuelve a comprobar el texto editado y actualiza los resultados.',
+      saveBtn:'Guardar como Word',
+      saveTip:'Guarda el texto limpio como un nuevo archivo .docx en el disco.',
+      saveNote:'Se guarda un archivo NUEVO, el original no se toca. Los saltos de página, los márgenes y la fuente exacta no serán idénticos al original, porque el documento se reconstruye a partir del texto que la herramienta ve.',
+      savedToast:'✓ Archivo limpio guardado',
+      saveSuffix:'limpio',
+      errSave:'No se ha podido guardar el archivo.',
+      footer:'OwlUV v4.5 · herramienta de código abierto · funciona totalmente en local, sin enviar datos'
     },
     it:{
       eyebrow:'Strumento di verifica di testi e documenti', intro:'Incolla un testo o trascina un file: un compito, un annuncio di lavoro o un CV. Lo scanner rivela caratteri invisibili, testo nascosto tramite colore o dimensione del carattere e frasi pensate per ingannare una IA. Tutto viene elaborato nel browser, nulla viene inviato.',
@@ -495,7 +540,16 @@
       errDocxLocked:'Questo .docx non può essere aperto, molto probabilmente è protetto da password. Togli la protezione e riprova. Questa NON è una conferma che il documento sia pulito, perché lo strumento non è riuscito a entrarci.',
       errUnreadable:'Il contenuto di questo file non è leggibile. L\u2019estensione dice .docx ma il contenuto no, quindi non può essere controllato.',
       vErrTextBig:'Testo non controllato',
-      footer:'OwlUV v4.4 · strumento open source · funziona interamente in locale, nessun dato inviato'
+      staleWarn:'Il testo è stato modificato a mano, quindi i risultati mostrati non corrispondono più al contenuto.',
+      rescanBtn:'Analizza di nuovo',
+      rescanTip:'Ricontrolla il testo modificato e aggiorna i risultati.',
+      saveBtn:'Salva come Word',
+      saveTip:'Salva il testo ripulito come nuovo file .docx sul disco.',
+      saveNote:'Viene salvato un file NUOVO, l\u2019originale non viene toccato. Interruzioni di pagina, margini e il carattere esatto non saranno identici all\u2019originale, perché il documento viene ricostruito dal testo che lo strumento vede.',
+      savedToast:'✓ File ripulito salvato',
+      saveSuffix:'ripulito',
+      errSave:'Non è stato possibile salvare il file.',
+      footer:'OwlUV v4.5 · strumento open source · funziona interamente in locale, nessun dato inviato'
     }
   };
 })();
