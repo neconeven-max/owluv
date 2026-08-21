@@ -45,7 +45,7 @@
        border-radius:2px;
        background:linear-gradient(90deg,rgba(124,58,237,.95),rgba(167,139,250,.7) 48%,rgba(167,139,250,0));
        clip-path:polygon(0 42%,100% 0,100% 100%,0 58%)}
-  .owlmark.sweep .beam{animation:uvBeam 1.5s cubic-bezier(.2,.7,.3,1) 1}
+  .owlmark.sweep .beam{animation:uvBeam 4s cubic-bezier(.2,.7,.3,1) 1}
   @keyframes uvBeam{
     0%{opacity:0;transform:scaleX(.06)}
     12%{opacity:1}
@@ -74,9 +74,14 @@
   .lang:hover{border-color:#5C7A8C;color:#D5E3EC}
   .lang.active{background:#EAF1F7;color:var(--dark);border-color:#EAF1F7}
   main{padding:22px 24px 60px}
-  .grid{display:grid;grid-template-columns:1fr 1fr;gap:20px;align-items:start}
+  /* Oba panela su uvijek jednako visoka i rastu zajedno: mreza ih razvlaci, a
+     prazan prostor u svakom panelu upija njegovo podrucje prikaza teksta. */
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:20px;align-items:stretch}
   @media(max-width:860px){.grid{grid-template-columns:1fr}}
   .panel{background:var(--panel);border:1px solid var(--line);border-radius:10px;overflow:hidden}
+  .grid>.panel{display:flex;flex-direction:column;min-height:540px;max-height:820px}
+  .grid>.panel>*{flex:none}
+  .grid>.panel>.dropzone,.grid>.panel>.viz{flex:1 1 auto;min-height:0}
   .panel-h{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:12px 16px;border-bottom:1px solid var(--line);flex-wrap:wrap}
   .panel-h .t{font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
   .panel-h .t.ink{color:var(--ink);font-weight:800}
@@ -89,8 +94,8 @@
             overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 
   /* ---- lijevo: dokument u izvornom izgledu + zona za ispustanje ---- */
-  .dropzone{position:relative}
-  #input{min-height:300px;max-height:520px;overflow:auto;padding:18px;outline:none;
+  .dropzone{position:relative;flex:1 1 auto;min-height:0;display:flex;flex-direction:column}
+  #input{flex:1 1 auto;min-height:0;overflow:auto;padding:18px;outline:none;
          font-family:Georgia,"Times New Roman",serif;font-size:16px;line-height:1.65;color:var(--ink);background:#fff}
   #input:empty::before{content:attr(data-ph);color:#9AA8B2;font-family:var(--mono);font-size:13px;line-height:1.7}
   #input:focus{box-shadow:inset 0 0 0 2px #E4EAF0}
@@ -108,7 +113,7 @@
   .dropzone.dragging .drop-overlay{display:flex}
 
   /* ---- desno: isti dokument, ali pod UV lampom ---- */
-  .viz{padding:18px;max-height:520px;overflow:auto;
+  .viz{flex:1 1 auto;min-height:0;padding:18px;overflow:auto;
        font-family:Georgia,"Times New Roman",serif;font-size:16px;line-height:1.7;color:var(--ink)}
   .viz p{margin:0 0 12px}
   .viz h1{font-size:24px;margin:0 0 8px;line-height:1.25}
@@ -161,6 +166,35 @@
   .btn.reset:hover{background:var(--ink);color:#fff;border-color:var(--ink)}
   .btn.reset:hover::before{background:var(--line)}
   .toolbar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;padding:12px 16px;border-top:1px solid var(--line)}
+
+  /* ---- oblacic koji ne prekriva sadrzaj ----
+     Preglednikov vlastiti oblacic iskoci kod misa i prekrije prvi red teksta u
+     panelu ispod. Ovaj se crta ispod gumba i poravnat s njim, pa se zna gdje ce
+     se pojaviti. */
+  .hastip{position:relative}
+  .hastip::after{content:attr(data-tip);position:absolute;top:calc(100% + 8px);left:0;
+       width:max-content;max-width:270px;background:var(--dark);color:#EAF1F7;
+       font-family:var(--sans);font-size:11.5px;font-weight:400;line-height:1.45;
+       letter-spacing:0;text-transform:none;text-align:left;white-space:normal;
+       padding:8px 10px;border-radius:7px;box-shadow:0 8px 20px rgba(14,27,38,.28);
+       opacity:0;visibility:hidden;transition:opacity .12s ease;z-index:30;pointer-events:none}
+  .hastip.tip-right::after{left:auto;right:0}
+  .hastip:hover::after,.hastip:focus-visible::after{opacity:1;visibility:visible}
+  @media(max-width:560px){.hastip::after{max-width:200px}}
+
+  /* ---- potvrda da je kopirano, sama se povuce ---- */
+  .toast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%) translateY(10px);
+         background:var(--dark);color:#EAF1F7;font-size:13px;font-weight:600;
+         padding:11px 18px;border-radius:24px;box-shadow:0 10px 26px rgba(14,27,38,.3);
+         opacity:0;visibility:hidden;transition:opacity .18s ease,transform .18s ease;
+         z-index:60;pointer-events:none;max-width:88vw;text-align:center}
+  .toast.on{opacity:1;visibility:visible;transform:translateX(-50%) translateY(0)}
+  @media(prefers-reduced-motion:reduce){.toast{transition:none}}
+
+  /* ---- jedini gumb za kopiranje, u desnom panelu ispod prikaza ---- */
+  .copybar{padding:12px 16px;border-top:1px solid var(--line);display:flex;
+           align-items:center;gap:12px;flex-wrap:wrap}
+  .copybar .cnote{font-size:11.5px;color:var(--muted);flex:1 1 200px;min-width:0}
   .verdict{border-radius:10px;padding:16px 18px;margin-bottom:18px;display:none;border:1px solid}
   .verdict .big{font-size:20px;font-weight:800;letter-spacing:-.01em}
   .verdict .sub{font-size:13px;margin-top:4px}
@@ -292,9 +326,9 @@
         <span class="t ink" data-i18n="inputTitle"></span>
         <span class="fileinfo" id="fileInfo"></span>
         <span class="hbtns">
-          <button class="btn ghost sm" id="pickBtn" data-i18n="pickBtn" data-i18n-title="pickTip"></button>
-          <button class="btn ghost sm" id="demoBtn" data-i18n="demoBtn" data-i18n-title="demoTip"></button>
-          <button class="btn ghost sm reset" id="resetBtn" data-i18n="resetBtn" data-i18n-title="resetTip"></button>
+          <button class="btn ghost sm hastip" id="pickBtn" data-i18n="pickBtn" data-i18n-tip="pickTip"></button>
+          <button class="btn ghost sm hastip" id="demoBtn" data-i18n="demoBtn" data-i18n-tip="demoTip"></button>
+          <button class="btn ghost sm reset hastip tip-right" id="resetBtn" data-i18n="resetBtn" data-i18n-tip="resetTip"></button>
         </span>
       </div>
       <div class="dropzone" id="dropZone">
@@ -305,10 +339,8 @@
              accept=".txt,.md,.csv,.log,.json,.xml,.html,.htm,.docx,.doc,.pdf,text/plain,text/html,application/vnd.openxmlformats-officedocument.wordprocessingml.document">
       <div class="toolbar">
         <button class="btn" id="scanBtn" data-i18n="scanBtn"></button>
-        <button class="btn ghost" id="cleanBtn" data-i18n="cleanBtn"></button>
-        <button class="btn ghost" id="visibleBtn" style="display:none" data-i18n="visibleBtn"></button>
       </div>
-      <div class="note paste" id="pasteNote" data-i18n="pasteNothing"></div>
+      <div class="note paste" id="pasteNote"></div>
       <div class="note recon" id="reconNote" data-i18n="noteRecon"></div>
       <div class="note" data-i18n="tip"></div>
     </section>
@@ -316,6 +348,10 @@
       <div class="panel-h"><span class="t uv" data-i18n="vizTitle"></span><span class="count" id="charCount"></span></div>
       <div class="viz" id="viz"></div>
       <div class="note" data-i18n="legend"></div>
+      <div class="copybar">
+        <button class="btn hastip" id="cleanBtn" data-i18n="cleanBtn" data-i18n-tip="cleanTip"></button>
+        <span class="cnote" data-i18n="cleanNote"></span>
+      </div>
     </section>
   </div>
   <section class="panel" style="margin-top:20px">
@@ -323,6 +359,7 @@
     <div class="findings" id="findings"></div>
   </section>
 </main>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
 <footer><div class="wrap">
   <span data-i18n="footer"></span>
   <span class="by">
