@@ -167,6 +167,18 @@
   .btn.reset:hover::before{background:var(--line)}
   .toolbar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;padding:12px 16px;border-top:1px solid var(--line)}
 
+  /* ---- upozorenje da je tekst izmijenjen rukom ----
+     Ne skenira se pri svakom tipkanju, jer je to nepotreban posao koji na
+     velikom dokumentu usporava rad. Umjesto toga se jasno kaze da prikazani
+     nalazi vise ne vrijede, i ponudi gumb koji ih osvjezi. */
+  .stale{display:none;align-items:center;gap:12px;flex-wrap:wrap;
+         padding:12px 16px;border-top:2px solid var(--danger);background:var(--danger-bg)}
+  .stale.on{display:flex}
+  .stale .msg{flex:1 1 220px;min-width:0;font-size:12.5px;font-weight:700;color:var(--danger)}
+  .stale .msg::before{content:"\26A0";margin-right:7px;font-weight:400}
+  .btn.rescan{background:var(--danger);border-color:var(--danger);color:#fff}
+  .btn.rescan:hover{background:#8F1E17;border-color:#8F1E17}
+
   /* ---- oblacic koji ne prekriva sadrzaj ----
      Preglednikov vlastiti oblacic iskoci kod misa i prekrije prvi red teksta u
      panelu ispod. Ovaj se crta ispod gumba i poravnat s njim, pa se zna gdje ce
@@ -193,8 +205,9 @@
 
   /* ---- jedini gumb za kopiranje, u desnom panelu ispod prikaza ---- */
   .copybar{padding:12px 16px;border-top:1px solid var(--line);display:flex;
-           align-items:center;gap:12px;flex-wrap:wrap}
-  .copybar .cnote{font-size:11.5px;color:var(--muted);flex:1 1 200px;min-width:0}
+           align-items:center;gap:10px;flex-wrap:wrap}
+  .copybar .cnote{font-size:11.5px;color:var(--muted);flex:1 1 100%;min-width:0}
+  .copybar .btns{display:flex;gap:8px;flex-wrap:wrap}
   .verdict{border-radius:10px;padding:16px 18px;margin-bottom:18px;display:none;border:1px solid}
   .verdict .big{font-size:20px;font-weight:800;letter-spacing:-.01em}
   .verdict .sub{font-size:13px;margin-top:4px}
@@ -337,8 +350,9 @@
       </div>
       <input type="file" id="fileInput" style="display:none"
              accept=".txt,.md,.csv,.log,.json,.xml,.html,.htm,.docx,.doc,.pdf,text/plain,text/html,application/vnd.openxmlformats-officedocument.wordprocessingml.document">
-      <div class="toolbar">
-        <button class="btn" id="scanBtn" data-i18n="scanBtn"></button>
+      <div class="stale" id="staleBar">
+        <span class="msg" id="staleMsg"></span>
+        <button class="btn rescan hastip" id="rescanBtn" data-i18n="rescanBtn" data-i18n-tip="rescanTip"></button>
       </div>
       <div class="note paste" id="pasteNote"></div>
       <div class="note recon" id="reconNote" data-i18n="noteRecon"></div>
@@ -349,8 +363,12 @@
       <div class="viz" id="viz"></div>
       <div class="note" data-i18n="legend"></div>
       <div class="copybar">
-        <button class="btn hastip" id="cleanBtn" data-i18n="cleanBtn" data-i18n-tip="cleanTip"></button>
+        <span class="btns">
+          <button class="btn hastip" id="cleanBtn" data-i18n="cleanBtn" data-i18n-tip="cleanTip"></button>
+          <button class="btn ghost hastip" id="saveBtn" data-i18n="saveBtn" data-i18n-tip="saveTip"></button>
+        </span>
         <span class="cnote" data-i18n="cleanNote"></span>
+        <span class="cnote" data-i18n="saveNote"></span>
       </div>
     </section>
   </div>
@@ -374,6 +392,7 @@
 <script src="js/detect.js"></script>
 <script src="js/docx.js"></script>
 <script src="js/files.js"></script>
+<script src="js/docxout.js"></script>
 <script src="js/app.js"></script>
 </body>
 </html>
