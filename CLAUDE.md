@@ -41,6 +41,16 @@ Repozitorij: `github.com/neconeven-max/OwlUV` (privatan). Domena kasnije:
 7. **Očišćeno znači očišćeno.** Skriveni sadržaj se u kopiji **briše**. Ne
    označava se, ne omotava se, ne ostavlja se bilješka na njegovom mjestu.
    Ništa se ne dodaje. Tekst jednostavno teče dalje.
+8. **Alat je radar.** Prikazuje SVE što je sumnjivo, i jako i malo sumnjivo. Uz
+   svaki nalaz piše zašto je označen. **Korisnik odlučuje što je prijetnja.**
+   Alat ne prosuđuje umjesto njega i ne prešućuje nalaz zato što mu se čini
+   premalo sumnjiv. **Nema praga ispod kojeg se nalaz odbacuje.** Jedina iznimka
+   su tehničke oznake koje sam sustav ubaci pri kopiranju (`StartFragment` i
+   slično); one nisu sadržaj dokumenta.
+9. **Skriveno se briše, vidljivo se nudi.** Skriveni sadržaj se iz kopije briše
+   uvijek, bez pitanja: skrivanje je samo po sebi dokaz namjere. Vidljiva
+   sumnjiva rečenica se **ne briše sama** - nju korisnik označava kvačicom.
+   Alat ne briše ono što je korisnik mogao vidjeti i sam.
 
 ## Struktura
 
@@ -51,6 +61,7 @@ js/detect.js               detekcijska jezgra (iz v3.3)
 js/docx.js                 čitač .docx datoteka, izravno iz XML-a
 js/files.js                ulaz za datoteke: povuci-i-pusti, odabir, formati
 js/app.js                  sučelje, tijek skeniranja, presuda
+js/signals.js              prepoznavanje AI manipulacije po signalima
 js/docxout.js              gradnja nove .docx datoteke iz očišćenog teksta
 assets/                    logo, sova i ikone SOVA WEB (u repozitoriju, ne s OneDrivea)
 vendor/fflate/             raspakiravanje ZIP-a (MIT), vendorirano
@@ -98,10 +109,10 @@ Test se **mora** izvršiti prije nego se prijavi da je nešto gotovo.
 ## Gdje je projekt stao — stanje na 20.08.2026.
 
 **Faza 2a je gotova, provjerena pravim Wordovim dokumentom i dopunjena
-verzijama v4.1 do v4.5.** Grana `main`, `origin` je
+verzijama v4.1 do v4.6.** Grana `main`, `origin` je
 `git@github.com:neconeven-max/owluv.git`.
 
-Radi i provjereno je testom (**221 provjera, sve prošle**):
+Radi i provjereno je testom (**254 provjere, sve prošle**):
 
 - učitavanje datoteka na četiri načina: povuci-i-pusti, gumb za odabir,
   lijepljenje same datoteke iz međuspremnika (ovisi o pregledniku, pouzdano u
@@ -122,6 +133,9 @@ Radi i provjereno je testom (**221 provjera, sve prošle**):
 - jasne poruke za Word zaštićen lozinkom, krivi nastavak i više datoteka odjednom
 - crveno upozorenje kad se tekst izmijeni rukom, s gumbom za ponovno skeniranje
 - spremanje očišćenog teksta kao nove `.docx` datoteke, bez ijedne nove knjižnice
+- prepoznavanje po signalima uz postojeći popis fraza, uz objašnjenje koji su
+  signali pronađeni
+- kvačice kojima korisnik sam bira koje se vidljive rečenice brišu iz kopije
 - tijek provjere prikazuje stvarne korake, bez umjetnog kašnjenja, i pojavljuje
   se samo kad obrada stvarno traje dulje od otprilike pola sekunde
 - naziv ima podnaslov koji ide i u naslov kartice i u opis stranice, na 6 jezika
@@ -184,6 +198,30 @@ prikaz zaostaje i nestane nešto kasnije. **Nikad se ne dodaje kašnjenje u samu
 obradu.** `OwlUV.app.progressTiming()` postoji isključivo zato da automatski
 test može provjeriti mehaniku prikaza bez ovisnosti o brzini stroja; sučelje je
 ne poziva nikad.
+
+### Signali: širok radar, i to namjerno
+
+`js/signals.js` traži šest signala, uz postojeći popis fraza koji **ostaje
+netaknut**: obraćanje stroju, zapovjedni ton oko ocjenjivanja ili odabira,
+traženje tajnosti, podmetanje ishoda, rečenica na drugom jeziku od dokumenta, i
+mjesto nalaza (zaglavlje, fusnota, komentar, svojstva).
+
+**Svaki pogodak se prikazuje.** Rečenica s jednim signalom ide u popis jednako
+kao ona s četiri. Nema praga i nema zbrajanja bodova. Uz svaku rečenicu piše
+koji su signali pronađeni, da korisnik može provjeriti alat, a ne samo vjerovati
+mu.
+
+**Težina nalaza je `info`, ne crvena.** To nije prešućivanje: svaki pogodak je u
+popisu. Ali mreža je namjerno široka i okida i na posve normalnim rečenicama
+(mjereno: 97% rečenica iz kontrolne skupine normalnih dokumenata), pa bi crvena
+presuda na svakom školskom zadatku prestala išta značiti. Boja upozorenja
+odgovara širini mreže, a odluka ostaje na korisniku.
+
+**Tekst za signale gradi se s granicama odlomaka.** `textContent` spaja blokove
+bez razmaka ("geografijeNapiši"), pa se granica riječi i granica rečenice na tom
+spoju gube i signal tiho promaši. Zato `scanText()` u `js/app.js` umeće prijelom
+reda na svakom prijelazu bloka i vodi mapu koja svaki znak vraća na njegov pravi
+pomak, po kojem se poslije briše točno označena rečenica.
 
 ### Zašto nema skeniranja pri tipkanju nego upozorenje
 

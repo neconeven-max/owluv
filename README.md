@@ -103,6 +103,7 @@ Ako tek postavljaš alat na drugom računalu, vidi odjeljak
 index.html                    glavni alat
 js/
   i18n.js                     prijevodi sučelja, 6 jezika
+  signals.js                  prepoznavanje AI manipulacije po signalima
   docxout.js                  gradnja nove .docx datoteke iz očišćenog teksta
   detect.js                   detekcijska jezgra (prenesena iz v3.3)
   docx.js                     čitač .docx datoteka, izravno iz XML-a
@@ -193,7 +194,7 @@ Testni dokument `test-skriveno.docx` sadrži sve vrste skrivenog sadržaja
 odjednom. `test-bez-teksta.docx` sadrži samo sliku i nijedno slovo.
 `test-cist.docx` je kontrolni uzorak bez ijedne zamke.
 
-### Rezultat zadnjeg pokretanja: 21.08.2026., 221 provjera, sve prošle
+### Rezultat zadnjeg pokretanja: 21.08.2026., 254 provjere, sve prošle
 
 | Provjera | Rezultat |
 |---|---|
@@ -258,6 +259,14 @@ odjednom. `test-bez-teksta.docx` sadrži samo sliku i nijedno slovo.
 | očišćena kopija sadrži zaglavlje, podnožje i fusnotu | prošao |
 | očišćena kopija ne sadrži svojstva dokumenta ni natpise alata | prošao |
 | spremljena .docx datoteka se otvara, ima naslove i nema skrivenog sadržaja | prošao |
+| kvačice su po zadanom prazne | prošao |
+| označena rečenica nestaje iz kopije i iz spremljene datoteke | prošao |
+| neoznačena rečenica ostaje | prošao |
+| skriveni sadržaj se briše bez obzira na kvačice | prošao |
+| gumbi pokazuju koliko je stavki označeno | prošao |
+| rečenica s jednim signalom se prijavljuje kao ona s više njih | prošao |
+| uz svaki nalaz stoji objašnjenje koji su signali pronađeni | prošao |
+| mjerenje na skupu primjera | prošao |
 
 ## Granice veličine
 
@@ -269,6 +278,39 @@ odjednom. `test-bez-teksta.docx` sadrži samo sliku i nijedno slovo.
 Iznad granice alat daje jasnu poruku i **ne pokušava obraditi**. Prije je
 pokušavao, pa je preglednik na vrlo velikoj datoteci znao stati bez ijedne
 riječi objašnjenja, što je izgledalo kao da je alat pokvaren.
+
+## Mjerenje na skupu primjera
+
+Bez skupa primjera ne bismo znali je li nova verzija bolja ili samo drugačija.
+U `test/primjeri-recenice.js` stoje dvije skupine rečenica, po pet na svakom od
+šest jezika:
+
+- **A, zamke** koje NISU na postojećem popisu fraza: napisane svojim riječima,
+  uljudnim tonom, u trećem licu, zamotane u naizgled običnu rečenicu.
+- **B, normalne rečenice** iz pravih dokumenata koje bi mogle okinuti signal:
+  školski zadaci koji traže odgovor, natječaji koji traže najboljeg kandidata,
+  tekstovi o umjetnoj inteligenciji kao temi, upute za korištenje programa.
+
+Rezultat mjerenja, 21.08.2026.:
+
+| Skupina | Okinulo signal | Po signalima |
+|---|---|---|
+| **A, zamke** (30) | **30 od 30, 100%** | obraćanje stroju 23, podmetanje ishoda 15, zapovjedni ton 6, tajnost 6 |
+| **B, normalne** (30) | **29 od 30, 97%** | obraćanje stroju 12, zapovjedni ton 12, podmetanje ishoda 6 |
+
+Na pravim dokumentima: kontrolni čisti dokument daje **1** rečenicu sa signalom
+i **i dalje dobiva zelenu presudu**; dokument sa zamkama daje 30.
+
+**Kako čitati te brojke.** Doseg je pun: nijedna zamka nije promakla, uključujući
+one napisane svojim riječima koje stari popis fraza ne bi uhvatio. Ali mreža je
+široka i okida na gotovo svakoj normalnoj rečenici. To je namjerno: alat je
+radar i prikazuje sve, a odluku donosi korisnik. Zato nalaz po signalima nosi
+plavu težinu napomene, a ne crvenu presudu, i uz svaku rečenicu piše koji su
+signali pronađeni.
+
+Skupina B se **ne koristi za odbacivanje nalaza**. Služi da se vidi koliko se
+često signal javlja na normalnom tekstu i da objašnjenja uz nalaz budu napisana
+tako da korisnik odmah razazna bezopasan slučaj.
 
 ## Zašto se kroz pojave ide klikom, a ne popisom
 
@@ -440,6 +482,46 @@ stalo do točnog značenja.
 ---
 
 ## Povijest izmjena
+
+### 21.08.2026. — v4.6: korisnik bira što se briše, i šira mreža za AI manipulaciju
+
+**Sada ti biraš što se briše iz kopije.** Uz svaku sumnjivu rečenicu stoji
+kvačica. Kvačice su po zadanom prazne, ništa se ne briše dok ne odlučiš. Kad
+označiš rečenicu, ona nestaje i iz kopiranog teksta i iz spremljene Word
+datoteke; ništa se ne stavlja na njeno mjesto. Uz popis su gumbi "označi sve" i
+"odznači sve", jer pojava zna biti mnogo, a uz gumbe za kopiranje i spremanje
+piše koliko je stavki označeno, da se vidi što će ti dati.
+
+**Skriveni sadržaj i dalje nema kvačicu i briše se uvijek.** Razlika je
+namjerna: skrivanje je samo po sebi dokaz namjere, pa se briše bez pitanja.
+Vidljivu rečenicu alat ne briše sam, jer je korisnik mogao vidjeti i sam.
+
+**Alat sada hvata i zamke napisane svojim riječima.** Dosad je tražio gotove
+fraze s popisa, što hvata lijene napade a promašuje svakoga tko istu stvar
+napiše drugačije. Nije važno koje točno riječi stoje, nego da se rečenica
+obraća stroju, a ne čitatelju: kao kad se u pismu upućenom tebi odjednom pojavi
+rečenica upućena poštaru. Uz postojeći popis, koji ostaje netaknut, dodano je
+prepoznavanje po šest signala: obraćanje stroju, zapovjedni ton oko ocjenjivanja
+ili odabira, traženje tajnosti, podmetanje ishoda, rečenica na drugom jeziku od
+ostatka dokumenta, i mjesto nalaza (zaglavlje, fusnota, komentar, svojstva).
+
+**Uz svaku rečenicu piše zašto je označena**, npr. "obraća se stroju, traži
+tajnost, u podnožju". Rečenica s jednim signalom ide u popis jednako kao ona s
+četiri; nema praga i nema odbacivanja. Kad rečenica ima više signala, to se vidi
+u objašnjenju, pa sam razaznaješ što je ozbiljnije bez da alat odlučuje umjesto
+tebe.
+
+**Napravljen je skup primjera za mjerenje**, po pet rečenica na svakom od šest
+jezika u dvije skupine, pa se zna je li verzija bolja ili samo drugačija.
+Rezultat i objašnjenje su u zasebnom odjeljku gore. Ukratko: sve zamke su
+prepoznate, ali mreža okida i na gotovo svakoj normalnoj rečenici. Zato nalaz po
+signalima nosi plavu težinu napomene, a ne crvenu presudu - inače bi svaki
+školski zadatak koji traži odgovor završio kao crvena uzbuna i crvena bi
+prestala išta značiti.
+
+**Usput popravljeno:** tekst se za signale sada gradi s granicama odlomaka.
+Prije se naslov i prvi odlomak spajali bez razmaka ("geografijeNapiši"), pa je
+signal na tom spoju tiho promašivao.
 
 ### 21.08.2026. — v4.5: upozorenje o izmjeni, potpunija kopija, spremanje u Word
 
