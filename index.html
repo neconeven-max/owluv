@@ -298,6 +298,17 @@
         border:1px solid #D9CBF3;border-radius:20px;padding:2px 9px;white-space:nowrap;cursor:default}
   .many{margin-top:7px;font-size:11.5px;color:var(--muted);background:var(--paper);
         border:1px dashed var(--line);border-radius:6px;padding:6px 9px}
+
+  /* ---- kvacice: korisnik bira sto se brise iz kopije ----
+     Prazne po zadanom. Alat ne brise ono sto je korisnik mogao vidjeti i sam;
+     skriveni sadrzaj se brise uvijek i nema kvacicu. */
+  .pickbar{display:flex;gap:6px;margin-top:8px;flex-wrap:wrap}
+  .item.pickable{display:flex;align-items:flex-start;gap:9px}
+  .item.pickable .q{flex:1 1 auto;min-width:0}
+  .pick{flex:none;display:flex;align-items:center;padding-top:1px;cursor:pointer}
+  .pick input{width:15px;height:15px;cursor:pointer;accent-color:var(--uv);margin:0}
+  .cutcount{font-family:var(--mono);font-size:11px;color:var(--uv);background:var(--uv-bg);
+            border:1px solid #D9CBF3;border-radius:20px;padding:3px 10px;white-space:nowrap}
   .finding.noloc{opacity:.85}
   .finding.noloc h3::after{content:attr(data-noloc);margin-left:8px;font-family:var(--mono);font-size:10px;
        font-weight:400;color:var(--muted);border:1px solid var(--line);border-radius:4px;padding:1px 6px;white-space:nowrap}
@@ -306,6 +317,7 @@
   .finding .item{background:var(--paper);border:1px solid var(--line);border-radius:6px;padding:8px 10px}
   .finding .item .q{font-family:var(--mono);font-size:12px;color:var(--uv);word-break:break-word;white-space:pre-wrap;display:block}
   .finding .item .n{display:block;margin-top:3px;font-size:11px;color:var(--muted);font-family:var(--sans)}
+  .finding .item.pickable .n{width:100%}
 </style>
 </head>
 <body>
@@ -367,6 +379,7 @@
           <button class="btn hastip" id="cleanBtn" data-i18n="cleanBtn" data-i18n-tip="cleanTip"></button>
           <button class="btn ghost hastip" id="saveBtn" data-i18n="saveBtn" data-i18n-tip="saveTip"></button>
         </span>
+        <span class="cutcount" id="cutCount"></span>
         <span class="cnote" data-i18n="cleanNote"></span>
         <span class="cnote" data-i18n="saveNote"></span>
       </div>
@@ -392,6 +405,7 @@
 <script src="js/detect.js"></script>
 <script src="js/docx.js"></script>
 <script src="js/files.js"></script>
+<script src="js/signals.js"></script>
 <script src="js/docxout.js"></script>
 <script src="js/app.js"></script>
 </body>

@@ -12,7 +12,10 @@
    velicine i duljine, te jasne poruke za rubne slucajeve datoteka.
    v4.5 dodaje: upozorenje kad se tekst izmijeni rukom (umjesto skeniranja pri
    svakom tipkanju), zaglavlja i fusnote natrag u ociscenu kopiju, i spremanje
-   ociscenog teksta kao nove .docx datoteke. */
+   ociscenog teksta kao nove .docx datoteke.
+   v4.6 dodaje: prepoznavanje po signalima (js/signals.js) uz postojeci popis
+   fraza, i kvacice kojima korisnik sam bira koje se VIDLJIVE recenice brisu iz
+   kopije. Skriveni sadrzaj se i dalje brise uvijek, bez pitanja. */
 (function(){
   const OwlUV = window.OwlUV;
   const D = OwlUV.detect, F = OwlUV.files, I18N = OwlUV.I18N;
@@ -35,6 +38,10 @@
   let hasScanned=false;
   let noteKey='pasteNothing', noteArg=null;   // koja poruka stoji u zutoj traci
   let settingContent=false;   // true dok sadrzaj panela postavlja sam alat
+  // Koje je VIDLJIVE recenice korisnik oznacio za brisanje iz kopije.
+  // Prazno po zadanom: alat ne brise ono sto je korisnik mogao vidjeti i sam.
+  // Skriveni sadrzaj nije ovdje, on se brise uvijek i nema kvacicu.
+  let cutSel=new Set();
   let lastError=null;      // zadnja poruka o gresci, da se prevede uz jezik
   let loaded=null;         // {name,size,source,docx?} - trenutno ucitana datoteka
   let lastFindings=[];     // za skok s nalaza na mjesto u desnom panelu
@@ -163,6 +170,44 @@
     owlMark.classList.add('sweep');
   }
 
+  // ---------- tekst za signale, s granicama odlomaka ----------
+  // textContent spaja blokove bez razmaka ("geografijeNapisi"), pa se granica
+  // rijeci i granica recenice na tom spoju gube i signal tiho promasi. Zato se
+  // za signale gradi tekst u koji je na svakom prijelazu bloka umetnut prijelom
+  // reda, uz mapu koja svaki znak vraca na njegov pravi pomak u textContent -
+  // po tom se pomaku poslije brise tocno oznacena recenica.
+  const BLOK=new Set(['p','div','h1','h2','h3','h4','h5','h6','li','tr','td','th',
+                      'blockquote','pre','section','article','header','footer',
+                      'figure','figcaption','ul','ol','table']);
+  function blockOf(node,root){
+    let p=node.parentNode;
+    while(p&&p!==root){
+      const t=p.tagName&&p.tagName.toLowerCase();
+      if(t&&BLOK.has(t)) return p;
+      p=p.parentNode;
+    }
+    return root;
+  }
+  // Vraca {text,map,zones}: text s prijelomima, map[i] = pomak u textContent,
+  // zones = podrucja aneksa (zaglavlje, fusnota, komentar, svojstva) u tom tekstu.
+  function scanText(root){
+    const aneksi=Array.from(root.querySelectorAll('.uv-annex[data-uv-annex]'))
+      .map(el=>({el,kind:el.getAttribute('data-uv-annex'),start:-1,end:-1}));
+    const w=document.createTreeWalker(root,NodeFilter.SHOW_TEXT,null);
+    let text='', map=[], off=0, prev=null, n;
+    while((n=w.nextNode())){
+      const b=blockOf(n,root);
+      if(prev&&b!==prev){ text+='\n'; map.push(off); }
+      prev=b;
+      const v=n.nodeValue||'';
+      aneksi.forEach(x=>{ if(x.el.contains(n)){ if(x.start<0) x.start=text.length; x.end=text.length+v.length; } });
+      for(let i=0;i<v.length;i++){ text+=v[i]; map.push(off+i); }
+      off+=v.length;
+    }
+    return {text,map,
+      zones:aneksi.filter(x=>x.start>=0).map(x=>({start:x.start,end:x.end,kind:x.kind}))};
+  }
+
   // ============ SKENIRANJE ============
   // Razlozeno na stvarne korake. Isti koraci izvrse se odjednom (scan) ili
   // jedan po jedan uz prikaz tijeka (scanWithProgress) - posao je isti.
@@ -172,7 +217,7 @@
     charCount.textContent=t.chars([...text].length);
 
     // nalazi se skupljaju po skupinama da redoslijed prikaza ostane isti
-    const g={tag:[],inv:[],phrase:[],mixed:[],hidden:[],docx:[],dash:[]};
+    const g={tag:[],inv:[],phrase:[],signal:[],mixed:[],hidden:[],docx:[],dash:[]};
     let preRead=null, hiddenTexts=[];
     const steps=[];
 
@@ -223,8 +268,43 @@
         }
       }
       hits.sort((a,b)=>a.s-b.s);
+      // Svaka pojava dobiva kvacicu: vidljivu recenicu brise korisnik, ne alat.
+      // Brise se CIJELA recenica u kojoj izraz stoji, jer bi brisanje samo
+      // pogodenog izraza ostavilo krnji ostatak recenice.
+      const reci=(OwlUV.signals?OwlUV.signals.sentences(text):[]);
+      const recenicaOko=poz=>{
+        const r=reci.find(x=>poz>=x.start&&poz<x.start+x.txt.length);
+        return r?{start:r.start,len:r.txt.length,txt:r.txt}:null;
+      };
       if(hits.length) g.phrase.push({sev:'danger',title:t.fPhraseTitle(hits.length),why:t.fPhraseWhy,
-        anchor:'mark.phrase', items:hits.map(h=>({q:h.txt,n:t.cat[h.cat]}))});
+        anchor:'mark.phrase', pick:true,
+        items:hits.map(h=>({q:h.txt,n:t.cat[h.cat],
+          cut:recenicaOko(h.s)||{start:h.s,len:h.txt.length,txt:h.txt}}))});
+
+      // ---- prepoznavanje po signalima ----
+      // Popis fraza gore hvata lijene napade; signali hvataju istu stvar
+      // napisanu svojim rijecima. SVAKI pogodak ide u popis, i onaj s jednim
+      // signalom i onaj s cetiri. Nema praga i nema odbacivanja.
+      // Tezina je INFO, ne crvena: ovo je namjerno sirok radar koji se javlja i
+      // na posve normalnim recenicama, pa bi crvena presuda na svakom skolskom
+      // zadatku prestala isto sto znaciti. Nista se ne presucuje - svaki pogodak
+      // je u popisu, samo boja upozorenja odgovara sirini mreze.
+      if(OwlUV.signals){
+        const st=scanText(input);
+        const sig=OwlUV.signals.scan(st.text,{zones:st.zones});
+        const uPravi=r=>{
+          const a=st.map[r.start];
+          const b=st.map[Math.min(r.start+r.len,st.map.length)-1];
+          return (a===undefined||b===undefined)?null:{start:a,len:b-a+1,txt:text.substr(a,b-a+1)};
+        };
+        if(sig.length) g.signal.push({sev:'info',title:t.fSigTitle(sig.length),why:t.fSigWhy,
+          pick:true,
+          items:sig.map(r=>({
+            q:r.txt.slice(0,300),
+            n:r.signals.map(k=>t.sig[k.indexOf(':')>0?k.split(':')[1]:k]||k).join(', '),
+            cut:uPravi(r)
+          })).filter(x=>x.cut)});
+      }
 
       // pomijesana pisma
       const mixed=text.split(/\s+/).filter(w=>/[a-zA-Z]/.test(w)&&/[\u0400-\u04FF\u0370-\u03FF]/.test(w));
@@ -245,7 +325,7 @@
     }});
 
     function finish(){
-      const findings=[].concat(g.tag,g.inv,g.phrase,g.mixed,g.hidden,g.docx,g.dash);
+      const findings=[].concat(g.tag,g.inv,g.phrase,g.signal,g.mixed,g.hidden,g.docx,g.dash);
 
       // Ociscena kopija se vise ne racuna ovdje nego tek na klik (buildClean),
       // da uvijek odgovara onome sto je u panelu u tom trenutku.
@@ -281,12 +361,14 @@
 
   function scan(){
     hasScanned=true;
+    cutSel=new Set();
     const p=scanPlan();
     p.steps.forEach(s=>s.fn());
     p.finish();
   }
   async function scanWithProgress(){
     hasScanned=true;
+    cutSel=new Set();
     const p=scanPlan();
     for(const s of p.steps){
       progStep(s.k);
@@ -313,6 +395,10 @@
   // nakon zadnje se vraca na prvu, a brojac pokazuje na kojoj si od koliko.
   function hitsOf(f){ return f&&f.anchor?Array.from(viz.querySelectorAll(f.anchor)):[]; }
 
+  function renderCutCount(){
+    const el=$('cutCount');
+    if(el) el.textContent=T().cutCount(cutSel.size);
+  }
   function renderFindings(findings){
     lastFindings=findings;
     hitPos=findings.map(()=>-1);          // jos se nije skocilo ni na jednu
@@ -335,19 +421,32 @@
       const many=(n>MANY_HITS)
         ? '<div class="many">'+esc((f.manyKey==='dash'?t.manyDashNote:t.manyNote)(n))+'</div>'
         : '';
+      const moze=!!(f.pick&&f.items&&f.items.some(it=>it.cut));
       const body=(f.items&&f.items.length)
-        ? '<div class="items">'+f.items.map(it=>
-            '<div class="item"><span class="q">'+esc(it.q)+'</span>'+
+        ? '<div class="items">'+f.items.map((it,k)=>
+            '<div class="item'+(it.cut?' pickable':'')+'">'+
+            (it.cut?'<label class="pick" title="'+esc(t.cutTip)+'">'+
+                    '<input type="checkbox" class="cutbox" data-i="'+i+'" data-k="'+k+'"'+
+                    (cutSel.has(i+'|'+k)?' checked':'')+'></label>':'')+
+            '<span class="q">'+esc(it.q)+'</span>'+
             (it.n?'\n<span class="n">('+esc(it.n)+')</span>':'')+'</div>').join('')+'</div>'
         : (f.detail?'<div class="detail">'+esc(f.detail)+'</div>':'');
+      // dva gumba jer pojava moze biti mnogo
+      const pickBar=moze
+        ? '<div class="pickbar">'+
+            '<button type="button" class="btn ghost sm cutall" data-i="'+i+'" data-all="1">'+esc(t.cutAll)+'</button>'+
+            '<button type="button" class="btn ghost sm cutall" data-i="'+i+'" data-all="0">'+esc(t.cutNone)+'</button>'+
+          '</div>'
+        : '';
       // oznaka "nema mjesta u tekstu" crta se kao pseudoelement naslova, pa
       // atribut mora stajati na naslovu - attr() cita element na kojem visi
       // kad postoji brojac sa strelicama, strelica iza naslova bi bila visak
-      return '<div class="finding '+f.sev+(can?' jump':' noloc')+(nav?' hasnav':'')+'" data-i="'+i+'"'+
+      return '<div class="finding '+f.sev+(can?' jump':' noloc')+(nav?' hasnav':'')+(moze?' haspick':'')+'" data-i="'+i+'"'+
              (can?' title="'+esc(t.jumpTip)+'"':'')+'>'+
              '<div class="fhead"><h3'+(can?'':' data-noloc="'+esc(t.noLoc)+'"')+'>'+esc(f.title)+'</h3>'+nav+'</div>'+
-             '<div class="why">'+esc(f.why)+'</div>'+many+body+'</div>';
+             '<div class="why">'+esc(f.why)+'</div>'+many+pickBar+body+'</div>';
     }).join('');
+    renderCutCount();
   }
 
   // pomak na sljedecu (dir=1) ili prethodnu (dir=-1) pojavu tog nalaza
@@ -429,8 +528,52 @@
     })(root);
     return out.replace(/[ \t]+\n/g,'\n').replace(/\n{3,}/g,'\n\n').replace(/[ \t]{2,}/g,' ').trim();
   }
+  // Rasponi koje je korisnik oznacio kvacicom. Provjerava se da raspon jos
+  // odgovara tekstu; ako je tekst u meduvremenu izmijenjen rukom, trazi se isti
+  // niz, a ako se ni tada ne nade, taj se odabir preskace.
+  function selectedCuts(){
+    const text=input.textContent||'';
+    const out=[];
+    cutSel.forEach(kljuc=>{
+      const [i,k]=kljuc.split('|').map(Number);
+      const f=lastFindings[i];
+      const it=f&&f.items&&f.items[k];
+      if(!it||!it.cut) return;
+      const c=it.cut;
+      if(text.substr(c.start,c.len)===c.txt){ out.push({start:c.start,len:c.len}); return; }
+      const p=text.indexOf(c.txt);
+      if(p>=0) out.push({start:p,len:c.txt.length});
+    });
+    return out.sort((a,b)=>a.start-b.start);
+  }
+  // Brise oznacene raspone iz preslike. Radi se PRIJE uklanjanja skrivenog, dok
+  // se pomaci jos poklapaju s izvornim tekstom; brisanje mijenja samo sadrzaj
+  // tekstualnih cvorova, pa redoslijed elemenata ostaje isti.
+  // NISTA se ne stavlja na mjesto obrisanog.
+  function applyCuts(clone,cuts){
+    if(!cuts.length) return;
+    const w=document.createTreeWalker(clone,NodeFilter.SHOW_TEXT,null);
+    const nodes=[]; let n;
+    while((n=w.nextNode())) nodes.push(n);
+    let off=0, ci=0;
+    nodes.forEach(node=>{
+      const val=node.nodeValue||'';
+      let out='';
+      for(let i=0;i<val.length;i++){
+        const abs=off+i;
+        while(ci<cuts.length&&cuts[ci].start+cuts[ci].len<=abs) ci++;
+        if(ci<cuts.length&&abs>=cuts[ci].start) continue;
+        out+=val[i];
+      }
+      off+=val.length;
+      if(out!==val) node.nodeValue=out;
+    });
+  }
+
   function buildClean(){
     const clone=input.cloneNode(true);
+    // 0. recenice koje je korisnik oznacio kvacicom
+    applyCuts(clone,selectedCuts());
     // 1. skriveno formatiranjem: racuna se na zivom stablu (preslika nije u
     //    dokumentu, pa na njoj getComputedStyle nema sto racunati), a brise se
     //    na preslici, po istom redoslijedu elemenata
@@ -655,7 +798,7 @@
   function resetAll(){
     setContent('');
     loaded=null; fileInput.value='';
-    hasScanned=false; lastFindings=[]; lastError=null;
+    hasScanned=false; lastFindings=[]; lastError=null; cutSel=new Set();
     hidePasteNote(); progHide();
     if(toast) toast.classList.remove('on');
     setVerdict('','','');
@@ -701,8 +844,33 @@
     setTimeout(scan,30);
   });
 
+  findingsEl.addEventListener('change',e=>{
+    const box=e.target&&e.target.classList&&e.target.classList.contains('cutbox')?e.target:null;
+    if(!box) return;
+    const kljuc=box.getAttribute('data-i')+'|'+box.getAttribute('data-k');
+    if(box.checked) cutSel.add(kljuc); else cutSel.delete(kljuc);
+    renderCutCount();
+  });
   findingsEl.addEventListener('click',e=>{
     if(!e.target.closest) return;
+    // kvacica i gumbi za odabir hvataju se prvi, da klik ne okine i skok kartice
+    if(e.target.classList&&e.target.classList.contains('cutbox')){ e.stopPropagation(); return; }
+    const pick=e.target.closest('.pick');
+    if(pick){ e.stopPropagation(); return; }
+    const svi=e.target.closest('.cutall');
+    if(svi){
+      e.preventDefault(); e.stopPropagation();
+      const i=+svi.getAttribute('data-i'), na=svi.getAttribute('data-all')==='1';
+      const f=lastFindings[i];
+      if(f&&f.items) f.items.forEach((it,k)=>{
+        if(!it.cut) return;
+        if(na) cutSel.add(i+'|'+k); else cutSel.delete(i+'|'+k);
+      });
+      const card=findingsEl.querySelector('.finding[data-i="'+i+'"]');
+      if(card) card.querySelectorAll('.cutbox').forEach(b=>{ b.checked=na; });
+      renderCutCount();
+      return;
+    }
     // strelica se hvata prva i tu staje, da klik ne okine i skok cijele kartice
     const nav=e.target.closest('.hitbtn');
     if(nav){
@@ -768,6 +936,21 @@
     saveName:saveName,
     save:saveClean,
     edit(html){ input.innerHTML=html; input.dispatchEvent(new Event('input',{bubbles:true})); },
+    // testna kuka: oznacavanje kvacice bez misa
+    pick(i,k,na){
+      const b=findingsEl.querySelector('.cutbox[data-i="'+i+'"][data-k="'+k+'"]');
+      if(!b) return false;
+      b.checked=(na!==false);
+      b.dispatchEvent(new Event('change',{bubbles:true}));
+      return true;
+    },
+    pickAll(i,na){
+      const b=findingsEl.querySelector('.cutall[data-i="'+i+'"][data-all="'+(na===false?'0':'1')+'"]');
+      if(!b) return false;
+      b.click();
+      return true;
+    },
+    cuts(){ return selectedCuts(); },
     clickFinding(i){ const c=findingsEl.querySelectorAll('.finding')[i]; if(c) c.click(); },
     clickArrow(i,dir){
       const c=findingsEl.querySelectorAll('.finding')[i]; if(!c) return;
@@ -791,6 +974,7 @@
       pasteNote:{shown:pasteNote.classList.contains('on'),text:pasteNote.textContent,key:noteKey},
       toast:{shown:!!(toast&&toast.classList.contains('on')),text:toast?toast.textContent:''},
       stale:{shown:isStale(),text:staleMsg.textContent},
+      cut:{count:cutSel.size,label:($('cutCount')||{textContent:''}).textContent},
       panels:(function(){
         const ps=document.querySelectorAll('.grid > .panel');
         if(ps.length<2) return null;
@@ -805,11 +989,13 @@
       docTitle:document.title,
       docDesc:metaDesc?metaDesc.getAttribute('content'):'',
       findings:Array.from(findingsEl.querySelectorAll('.finding')).map(f=>({
-        sev:f.className.replace('finding','').replace('jump','').replace('noloc','').trim(),
+        sev:f.className.replace(/\b(finding|jump|noloc|hasnav|haspick)\b/g,'').trim(),
         jump:f.classList.contains('jump'),
         title:f.querySelector('h3').textContent,
         hits:(f.querySelector('.hitn')||{textContent:''}).textContent,
         arrows:f.querySelectorAll('.hitbtn').length,
+        boxes:f.querySelectorAll('.cutbox').length,
+        checked:f.querySelectorAll('.cutbox:checked').length,
         many:(f.querySelector('.many')||{textContent:''}).textContent,
         detail:(f.querySelector('.detail')||f.querySelector('.items')||{textContent:''}).textContent
       })),
