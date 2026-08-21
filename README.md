@@ -194,7 +194,7 @@ Testni dokument `test-skriveno.docx` sadrži sve vrste skrivenog sadržaja
 odjednom. `test-bez-teksta.docx` sadrži samo sliku i nijedno slovo.
 `test-cist.docx` je kontrolni uzorak bez ijedne zamke.
 
-### Rezultat zadnjeg pokretanja: 21.08.2026., 254 provjere, sve prošle
+### Rezultat zadnjeg pokretanja: 21.08.2026., 267 provjera, sve prošle
 
 | Provjera | Rezultat |
 |---|---|
@@ -267,6 +267,10 @@ odjednom. `test-bez-teksta.docx` sadrži samo sliku i nijedno slovo.
 | rečenica s jednim signalom se prijavljuje kao ona s više njih | prošao |
 | uz svaki nalaz stoji objašnjenje koji su signali pronađeni | prošao |
 | mjerenje na skupu primjera | prošao |
+| skriveni tekst je prvi nalaz, nalaz po signalima među zadnjima | prošao |
+| svojstva dokumenta se ne pojavljuju u popisu rečenica | prošao |
+| rečenica koja spominje "prometni sustav" ne okida signal obraćanja stroju | prošao |
+| rečenica koja se stvarno obraća AI-ju i dalje okida | prošao |
 
 ## Granice veličine
 
@@ -291,22 +295,29 @@ U `test/primjeri-recenice.js` stoje dvije skupine rečenica, po pet na svakom od
   školski zadaci koji traže odgovor, natječaji koji traže najboljeg kandidata,
   tekstovi o umjetnoj inteligenciji kao temi, upute za korištenje programa.
 
-Rezultat mjerenja, 21.08.2026.:
+Rezultat mjerenja, 21.08.2026., nakon sužavanja signala "obraća se stroju":
 
 | Skupina | Okinulo signal | Po signalima |
 |---|---|---|
-| **A, zamke** (30) | **30 od 30, 100%** | obraćanje stroju 23, podmetanje ishoda 15, zapovjedni ton 6, tajnost 6 |
-| **B, normalne** (30) | **29 od 30, 97%** | obraćanje stroju 12, zapovjedni ton 12, podmetanje ishoda 6 |
+| **A, zamke** (30) | **30 od 30, 100%** | obraćanje stroju 20, podmetanje ishoda 15, zapovjedni ton 6, tajnost 6 |
+| **B, normalne** (30) | **18 od 30, 60%** | zapovjedni ton 12, podmetanje ishoda 6, obraćanje stroju **0** |
+
+Za usporedbu, prije sužavanja: A 30 od 30, B **29 od 30 (97%)**, a signal
+obraćanja stroju sam je okidao na 12 normalnih rečenica.
 
 Na pravim dokumentima: kontrolni čisti dokument daje **1** rečenicu sa signalom
-i **i dalje dobiva zelenu presudu**; dokument sa zamkama daje 30.
+i **i dalje dobiva zelenu presudu**; dokument sa zamkama daje 11, prije 30.
 
-**Kako čitati te brojke.** Doseg je pun: nijedna zamka nije promakla, uključujući
-one napisane svojim riječima koje stari popis fraza ne bi uhvatio. Ali mreža je
-široka i okida na gotovo svakoj normalnoj rečenici. To je namjerno: alat je
-radar i prikazuje sve, a odluku donosi korisnik. Zato nalaz po signalima nosi
-plavu težinu napomene, a ne crvenu presudu, i uz svaku rečenicu piše koji su
-signali pronađeni.
+**Kako čitati te brojke.** Doseg je i dalje pun: nijedna zamka nije promakla,
+uključujući one napisane svojim riječima koje stari popis fraza ne bi uhvatio.
+Šum je prepolovljen, a signal obraćanja stroju na normalnom tekstu više ne okida
+nijednom. Ono što je ostalo je zapovjedni ton ("odgovori na pitanja") i
+podmetanje ishoda ("tražimo najboljeg kandidata"), koji u pravim školskim
+zadacima i natječajima stoje sasvim opravdano.
+
+To je namjerno: alat je radar i prikazuje sve, a odluku donosi korisnik. Zato
+nalaz po signalima nosi plavu težinu napomene, a ne crvenu presudu, i uz svaku
+rečenicu piše koji su signali pronađeni.
 
 Skupina B se **ne koristi za odbacivanje nalaza**. Služi da se vidi koliko se
 često signal javlja na normalnom tekstu i da objašnjenja uz nalaz budu napisana
@@ -482,6 +493,41 @@ stalo do točnog značenja.
 ---
 
 ## Povijest izmjena
+
+### 21.08.2026. — v4.7: redoslijed nalaza i manje šuma u novom radaru
+
+**Najvažniji nalaz je opet na vrhu.** Novi nalaz po signalima znao je imati
+dvadesetak stavki i stajati prvi, pa je nalaz o skrivenom tekstu bio zakopan
+ispod njega i korisnik ga nije vidio bez pomicanja. Popis se sada slaže po
+ozbiljnosti: skriveni tekst i skrivena poruka, pa okviri izvan stranice, pa
+sumnjive fraze, nevidljivi znakovi, sadržaj iz strukture datoteke sa svojstvima
+dokumenta, pomiješana pisma, tek onda rečenice koje se obraćaju stroju, i na
+kraju duge crtice. Novi nalaz je namjerno pri dnu jer je najširi i najbučniji.
+
+**Svojstva dokumenta više ne ulaze u popis rečenica.** U njemu su znale stajati
+stavke poput "Svojstva dokumenta", "Autorkristina." i "jedvajic@gmail." - dakle
+e-mail adresa razlomljena na pola kao da je rečenica, što je izgledalo kao kvar.
+Uz to su se svojstva prijavljivala dvaput, jer već imaju vlastiti nalaz. Isto
+vrijedi za natpise koje alat sam dodaje radi preglednosti, poput naslova
+odjeljaka i imena datoteke uz zaglavlje. Nalaz o svojstvima dokumenta ostaje
+netaknut.
+
+**Signal "obraća se stroju" više ne okida na riječ "sustav".** Na pravom
+dokumentu o prometu gotovo svaka rečenica koja spominje prometni sustav
+završavala je u popisu s objašnjenjem da se obraća stroju. To nije obraćanje
+stroju nego obična hrvatska riječ. Signal sada traži **okvir obraćanja**, a ne
+samu pojavu riječi: da je riječ upotrijebljena kao netko kome se govori. Riječi
+poput "sustav", "program" i "model" okidaju samo kad uz njih stoji uvjet s
+čitanjem ili obradom ("ako ovo obrađuje program..."), a "upute" i "naredba"
+izbačene su iz tog signala jer nisu stroj.
+
+**To nije prag ni odbacivanje nalaza**, nego ispravak signala koji je krivo
+prepoznavao. Alat i dalje prikazuje sve što nađe.
+
+**Mjereno prije i poslije:** zamke ostaju na 30 od 30, dakle nijedna nije
+izgubljena, a lažno okidanje na normalnim rečenicama palo je s 29 od 30 na 18 od
+30. Signal obraćanja stroju na normalnom tekstu sada ne okida nijednom. Brojke
+i objašnjenje su u odjeljku o mjerenju gore.
 
 ### 21.08.2026. — v4.6: korisnik bira što se briše, i šira mreža za AI manipulaciju
 

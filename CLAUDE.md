@@ -109,10 +109,10 @@ Test se **mora** izvršiti prije nego se prijavi da je nešto gotovo.
 ## Gdje je projekt stao — stanje na 20.08.2026.
 
 **Faza 2a je gotova, provjerena pravim Wordovim dokumentom i dopunjena
-verzijama v4.1 do v4.6.** Grana `main`, `origin` je
+verzijama v4.1 do v4.7.** Grana `main`, `origin` je
 `git@github.com:neconeven-max/owluv.git`.
 
-Radi i provjereno je testom (**254 provjere, sve prošle**):
+Radi i provjereno je testom (**267 provjera, sve prošle**):
 
 - učitavanje datoteka na četiri načina: povuci-i-pusti, gumb za odabir,
   lijepljenje same datoteke iz međuspremnika (ovisi o pregledniku, pouzdano u
@@ -199,6 +199,31 @@ obradu.** `OwlUV.app.progressTiming()` postoji isključivo zato da automatski
 test može provjeriti mehaniku prikaza bez ovisnosti o brzini stroja; sučelje je
 ne poziva nikad.
 
+### Redoslijed nalaza je po ozbiljnosti, ne po redu izračuna
+
+Popis nalaza slaže se po polju `rank`, od najozbiljnijeg prema napomenama.
+**Bez toga je najširi i najbučniji nalaz znao završiti na vrhu i zakopati
+skriveni tekst**, koji je najvažniji: na pravom dokumentu je nalaz po signalima
+imao 23 stavke i stajao prvi, pa se skriveni tekst nije vidio bez pomicanja.
+
+| rank | nalaz |
+|---|---|
+| 10 | tekst skriven formatiranjem |
+| 11 | dekodirana skrivena poruka (Unicode TAG) |
+| 12 | tekstualni okviri izvan stranice |
+| 20 | sumnjive fraze s popisa |
+| 30 | nevidljivi znakovi |
+| 38, 39 | komentari, obrisani tekst iz praćenja izmjena |
+| 40 | svojstva dokumenta |
+| 44, 45 | zaglavlja i podnožja, fusnote |
+| 50 | pomiješana pisma |
+| 60 | rečenice koje se obraćaju stroju (signali) |
+| 70 | duge crtice |
+
+Okviri izvan stranice idu gore uz skriveni tekst jer su isto skriveni sadržaj,
+samo gurnut van vidljivog područja. Nalaz po signalima ide među zadnje jer je
+najširi i najbučniji.
+
 ### Signali: širok radar, i to namjerno
 
 `js/signals.js` traži šest signala, uz postojeći popis fraza koji **ostaje
@@ -213,9 +238,29 @@ mu.
 
 **Težina nalaza je `info`, ne crvena.** To nije prešućivanje: svaki pogodak je u
 popisu. Ali mreža je namjerno široka i okida i na posve normalnim rečenicama
-(mjereno: 97% rečenica iz kontrolne skupine normalnih dokumenata), pa bi crvena
+(mjereno: 60% rečenica iz kontrolne skupine normalnih dokumenata), pa bi crvena
 presuda na svakom školskom zadatku prestala išta značiti. Boja upozorenja
 odgovara širini mreže, a odluka ostaje na korisniku.
+
+**Signal "obraća se stroju" traži OKVIR obraćanja, a ne samu riječ.** Riječ
+"sustav" u "prometni sustav" nije obraćanje stroju nego obična hrvatska riječ, a
+"Umjetna inteligencija mijenja način učenja" govori O stroju, ne STROJU. Zato
+`obracaSeStroju()` dijeli riječi na nedvosmislene (AI, umjetna inteligencija,
+jezični model, asistent) i svakodnevne (sustav, program, model). Nedvosmislene
+okidaju uz bilo koji okvir obraćanja, uključujući naredbu odmah iza; svakodnevne
+samo uz jaki okvir, dakle uvjet s glagolom čitanja ili obrade ili napomenu
+upućenu nekome. Riječi "upute" i "naredba" izbačene su iz tog signala jer nisu
+stroj; injekcije koje ih koriste hvata popis fraza i signal zapovjednog tona.
+
+**Ovo nije prag ni odbacivanje nalaza**, nego ispravak signala koji je krivo
+prepoznavao. Alat i dalje prikazuje sve što nađe.
+
+**Iz teksta za signale ispadaju svojstva dokumenta i natpisi alata.** Svojstva
+već imaju vlastiti nalaz, pa bi se prijavljivala dvaput, a e-mail adresa se
+pritom lomila na pola kao da je rečenica ("Autorkristina.", "jedvajic@gmail.")
+što je izgledalo kao kvar. Isto vrijedi za natpise koje je alat sam dodao radi
+preglednosti (naslovi odjeljaka, ime datoteke uz zaglavlje, autor uz komentar):
+to nisu riječi dokumenta. Vidi `IZVAN_SIGNALA` u `js/app.js`.
 
 **Tekst za signale gradi se s granicama odlomaka.** `textContent` spaja blokove
 bez razmaka ("geografijeNapiši"), pa se granica riječi i granica rečenice na tom
