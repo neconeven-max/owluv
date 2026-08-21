@@ -7,7 +7,9 @@
    provjere i puls na crvenoj presudi.
    v4.2 dodaje: prikaz tijeka odvojen od posla (pojavi se samo kad obrada stvarno
    traje), podnaslov koji ide i u naslov kartice i u opis stranice, i sovu uz
-   naziv sa zrakom koja prijede jednom. */
+   naziv sa zrakom koja prijede jednom.
+   v4.4 dodaje: ociscenu kopiju koja skriveni sadrzaj STVARNO brise, granice
+   velicine i duljine, te jasne poruke za rubne slucajeve datoteka. */
 (function(){
   const OwlUV = window.OwlUV;
   const D = OwlUV.detect, F = OwlUV.files, I18N = OwlUV.I18N;
@@ -19,13 +21,16 @@
   const $=id=>document.getElementById(id);
   const input=$('input'), viz=$('viz'), findingsEl=$('findings');
   const verdict=$('verdict'), verdictBig=$('verdictBig'), verdictSub=$('verdictSub');
-  const charCount=$('charCount'), findCount=$('findCount'), visibleBtn=$('visibleBtn');
+  const charCount=$('charCount'), findCount=$('findCount');
   const fileInfo=$('fileInfo'), fileInput=$('fileInput'), dropZone=$('dropZone');
   const dropOverlay=$('dropOverlay'), reconNote=$('reconNote'), pasteNote=$('pasteNote');
+  const toast=$('toast');
   const progress=$('progress'), progressH=$('progressH'), progressList=$('progressList');
   const metaDesc=document.querySelector('meta[name="description"]');
 
-  let lastCleaned='', lastVisibleText=null, hasScanned=false;
+  let hasScanned=false;
+  let noteKey='pasteNothing', noteArg=null;   // koja poruka stoji u zutoj traci
+  let lastError=null;      // zadnja poruka o gresci, da se prevede uz jezik
   let loaded=null;         // {name,size,source,docx?} - trenutno ucitana datoteka
   let lastFindings=[];     // za skok s nalaza na mjesto u desnom panelu
   let hitPos=[];           // na kojoj je pojavi svaki nalaz, -1 = jos nigdje
@@ -237,24 +242,8 @@
     function finish(){
       const findings=[].concat(g.tag,g.inv,g.phrase,g.mixed,g.hidden,g.docx,g.dash);
 
-      // tekstovi za kopiranje
-      lastCleaned=[...text].filter(ch=>{
-        const cp=ch.codePointAt(0);
-        return !INVISIBLE[cp]&&!isVariation(cp)&&!isTag(cp);
-      }).join('').replace(/\u00A0/g,' ').replace(/[\u2014\u2013\u2015]/g,'-');
-
-      if(hiddenTexts.length){
-        const clone=input.cloneNode(true);
-        const src=Array.from(input.querySelectorAll('*'));
-        const cln=Array.from(clone.querySelectorAll('*'));
-        src.forEach((el,i)=>{
-          const rs=(preRead&&preRead.has(el))?preRead.get(el):hiddenReasons(el);
-          if(rs.length&&cln[i]) cln[i].remove();
-        });
-        lastVisibleText=(clone.textContent||'').replace(/\n{3,}/g,'\n\n').trim();
-        visibleBtn.style.display='inline-block';
-      } else { lastVisibleText=null; visibleBtn.style.display='none'; }
-
+      // Ociscena kopija se vise ne racuna ovdje nego tek na klik (buildClean),
+      // da uvijek odgovara onome sto je u panelu u tom trenutku.
       renderFindings(findings);
 
       // ---- PRESUDA ----
@@ -387,6 +376,109 @@
   }
   function jumpTo(sel){ return jumpToEl(viz.querySelector(sel)); }
 
+  // ============ OCISCENA KOPIJA ============
+  // NACELO: izvorna datoteka korisnika se NIKAD ne mijenja. Alat je samo cita.
+  // Mijenja se iskljucivo tekst koji korisnik kopira u medduspremnik.
+  // Ociscено znaci obrisano: skriveni sadrzaj se BRISE. Ne oznacava se, ne
+  // omotava se, i na njegovo mjesto se NISTA ne stavlja - tekst tece dalje.
+  //
+  // Iz kopije izlazi:
+  //  - sve sto je bilo skriveno formatiranjem (bijela ili prozirna boja slova,
+  //    mikroskopski font, prozirnost, sakriveni elementi, gurnuto izvan stranice)
+  //  - sve sto nosi Wordovu oznaku skrivenog teksta
+  //  - HTML komentari
+  //  - cijeli aneks: komentari, obrisani tekst iz pracenja izmjena, zaglavlja,
+  //    fusnote, okviri izvan stranice i svojstva dokumenta. Aneks je
+  //    rekonstrukcija koju je alat sam sastavio, s vlastitim natpisima, pa bi
+  //    njegovo prepisivanje bilo dodavanje teksta kojeg u dokumentu nema.
+  //  - nevidljivi Unicode znakovi
+  // Duge crtice postaju obicne. Ostatak teksta ostaje netaknut.
+  //
+  // U bogatu verziju propustaju se SAMO svojstva stila kojima se nista ne moze
+  // sakriti. Boja, velicina fonta, prozirnost i polozaj ne prolaze ni slucajno,
+  // pa se skrivanje ne moze provuci ni ako negdje promakne.
+  const KEEP_STYLE=['font-weight','font-style','text-decoration','text-decoration-line','text-align'];
+  const BLOCKS=new Set(['p','div','h1','h2','h3','h4','h5','h6','li','tr','blockquote','pre',
+                        'section','article','header','footer','figure','figcaption','ul','ol','table']);
+
+  function stripInvisible(str){
+    return [...str].filter(ch=>{
+      const cp=ch.codePointAt(0);
+      return !INVISIBLE[cp]&&!isVariation(cp)&&!isTag(cp);
+    }).join('').replace(/\u00A0/g,' ').replace(/[\u2014\u2013\u2015]/g,'-');
+  }
+  function plainFrom(root){
+    let out='';
+    (function walk(n){
+      n.childNodes.forEach(c=>{
+        if(c.nodeType===3){ out+=c.nodeValue; return; }
+        if(c.nodeType!==1) return;
+        const tag=c.tagName.toLowerCase();
+        if(tag==='br'){ out+='\n'; return; }
+        walk(c);
+        if(tag==='td'||tag==='th') out+='\t';
+        else if(BLOCKS.has(tag)) out+='\n';
+      });
+    })(root);
+    return out.replace(/[ \t]+\n/g,'\n').replace(/\n{3,}/g,'\n\n').replace(/[ \t]{2,}/g,' ').trim();
+  }
+  function buildClean(){
+    const clone=input.cloneNode(true);
+    // 1. skriveno formatiranjem: racuna se na zivom stablu (preslika nije u
+    //    dokumentu, pa na njoj getComputedStyle nema sto racunati), a brise se
+    //    na preslici, po istom redoslijedu elemenata
+    const src=Array.from(input.querySelectorAll('*'));
+    const cln=Array.from(clone.querySelectorAll('*'));
+    src.forEach((el,i)=>{ if(hiddenReasons(el).length&&cln[i]) cln[i].remove(); });
+    // 2. aneks van u cijelosti
+    clone.querySelectorAll('.uv-annex').forEach(el=>el.remove());
+    // 3. HTML komentari van
+    const cw=document.createTreeWalker(clone,NodeFilter.SHOW_COMMENT,null);
+    const cs=[]; while(cw.nextNode()) cs.push(cw.currentNode);
+    cs.forEach(c=>{ if(c.parentNode) c.parentNode.removeChild(c); });
+    // 4. nevidljivi znakovi van, duge crtice u obicne
+    const tw=document.createTreeWalker(clone,NodeFilter.SHOW_TEXT,null);
+    const ts=[]; while(tw.nextNode()) ts.push(tw.currentNode);
+    ts.forEach(n=>{ n.nodeValue=stripInvisible(n.nodeValue||''); });
+    // 5. iz bogate verzije van sve cime bi se moglo skrivati
+    Array.from(clone.querySelectorAll('*')).forEach(el=>{
+      const keep=(el.getAttribute('style')||'').split(';')
+        .map(d=>d.trim()).filter(d=>d&&KEEP_STYLE.indexOf(d.split(':')[0].trim().toLowerCase())>=0);
+      if(keep.length) el.setAttribute('style',keep.join(';')); else el.removeAttribute('style');
+      ['data-uv-reason','data-uv-annex','class','id','color','size','face','width','height','align']
+        .forEach(a=>el.removeAttribute(a));
+    });
+    return {html:clone.innerHTML,plain:plainFrom(clone)};
+  }
+
+  function showToast(msg){
+    if(!toast) return;
+    toast.textContent=msg;
+    toast.classList.add('on');
+    clearTimeout(showToast._t);
+    showToast._t=setTimeout(()=>toast.classList.remove('on'),3800);
+  }
+
+  async function copyClean(){
+    const {html,plain}=buildClean();
+    let ok=false;
+    try{
+      if(window.ClipboardItem&&navigator.clipboard&&navigator.clipboard.write){
+        // obje verzije odjednom: primatelj uzme ono sto moze primiti
+        await navigator.clipboard.write([new ClipboardItem({
+          'text/html':new Blob([html],{type:'text/html'}),
+          'text/plain':new Blob([plain],{type:'text/plain'})
+        })]);
+        ok=true;
+      }
+    }catch(e){ ok=false; }
+    if(!ok){
+      try{ await navigator.clipboard.writeText(plain); ok=true; }catch(e){ ok=false; }
+    }
+    if(ok) showToast(T().copiedToast);
+    return ok;
+  }
+
   // ============ DATOTEKE ============
   function showFileInfo(){
     if(!loaded){ fileInfo.textContent=''; fileInfo.style.display='none'; reconNote.style.display='none'; return; }
@@ -395,11 +487,12 @@
     fileInfo.style.display='inline-block';
     reconNote.style.display=(loaded.source==='docx')?'block':'none';
   }
-  function fileError(msgKey){
+  function fileError(msgKey,bigKey){
     loaded=null; showFileInfo();
     input.innerHTML='';
+    lastError={msgKey,bigKey:bigKey||'vErrBig'};
     const t=T();
-    setVerdict('v-err',t.vErrBig,t[msgKey]);
+    setVerdict('v-err',t[lastError.bigKey],t[msgKey]);
     viz.innerHTML='<div class="empty">'+esc(t.vizEmpty)+'</div>';
     findingsEl.innerHTML='<div class="empty">'+esc(t.findingsEmpty)+'</div>';
     lastFindings=[];
@@ -408,7 +501,8 @@
   }
   async function handleFile(file){
     const t=T();
-    hidePasteNote();
+    hidePasteNote('pasteNothing');
+    lastError=null;
     setVerdict('v-none',t.reading,file.name);
     owlSweep();
     progBegin();
@@ -425,17 +519,31 @@
   // ============ LIJEPLJENJE ============
   // Poruka kad Cmd+V ne donese ni datoteku ni tekst. Dosad se u tom slucaju nije
   // dogodilo nista, pa korisnik nije mogao znati je li alat pokvaren.
-  function showPasteNote(){
+  // Zuta traka nosi vise razlicitih poruka (prazan Cmd+V, vise datoteka
+  // odjednom), pa se pamti kljuc da se pri promjeni jezika prevede ispravno.
+  function showPasteNote(key,arg){
+    noteKey=key||'pasteNothing'; noteArg=(arg===undefined?null:arg);
+    renderPasteNote();
     pasteNote.classList.add('on');
     if(pasteTimer) clearTimeout(pasteTimer);
     pasteTimer=setTimeout(()=>pasteNote.classList.remove('on'),9000);
   }
-  function hidePasteNote(){
+  function renderPasteNote(){
+    const v=T()[noteKey];
+    pasteNote.textContent=(typeof v==='function')?v(noteArg):(v||'');
+  }
+  // samoKljuc: sakrij samo ako u traci stoji bas ta poruka. Bez toga bi obrada
+  // prve datoteke odmah pojela poruku da ih je baceno vise.
+  function hidePasteNote(samoKljuc){
+    if(samoKljuc&&noteKey!==samoKljuc) return;
     if(pasteTimer){ clearTimeout(pasteTimer); pasteTimer=null; }
     pasteNote.classList.remove('on');
   }
   function clipFile(cd){
-    if(cd.files&&cd.files.length) return cd.files[0];
+    if(cd.files&&cd.files.length){
+      if(cd.files.length>1) showPasteNote('multiFiles',cd.files.length);
+      return cd.files[0];
+    }
     if(cd.items){
       for(const it of Array.from(cd.items)){
         if(it.kind==='file'){ const f=it.getAsFile&&it.getAsFile(); if(f) return f; }
@@ -450,6 +558,10 @@
     document.documentElement.lang=LANG;
     document.querySelectorAll('[data-i18n]').forEach(el=>{el.textContent=t[el.getAttribute('data-i18n')];});
     document.querySelectorAll('[data-i18n-title]').forEach(el=>{el.title=t[el.getAttribute('data-i18n-title')];});
+    // vlastiti oblacic: crta se ispod gumba i poravnat s njim, umjesto da
+    // preglednik baci svoj preko sadrzaja panela
+    document.querySelectorAll('[data-i18n-tip]').forEach(el=>{el.setAttribute('data-tip',t[el.getAttribute('data-i18n-tip')]);});
+    renderPasteNote();
     input.setAttribute('data-ph',t.placeholder);
     dropOverlay.textContent=t.dropHere;
     charCount.textContent=t.chars([...(input.textContent||'')].length);
@@ -457,6 +569,8 @@
     document.title='OwlUV - '+t.tagline;
     if(metaDesc) metaDesc.setAttribute('content',t.tagline+'. '+t.intro);
     if(prog&&prog.shown) progRender();
+    // poruka o gresci se ne racuna ponovno kroz skeniranje, pa se prevodi ovdje
+    if(lastError) setVerdict('v-err',t[lastError.bigKey],t[lastError.msgKey]);
     if(loaded&&loaded.docx) input.innerHTML=OwlUV.docx.toHtml(loaded.docx,t);  // oznake aneksa na novom jeziku
     if(!hasScanned){
       viz.innerHTML='<div class="empty">'+esc(t.vizEmpty)+'</div>';
@@ -469,9 +583,9 @@
   function resetAll(){
     input.innerHTML='';
     loaded=null; fileInput.value='';
-    lastCleaned=''; lastVisibleText=null; hasScanned=false; lastFindings=[];
-    visibleBtn.style.display='none';
+    hasScanned=false; lastFindings=[]; lastError=null;
     hidePasteNote(); progHide();
+    if(toast) toast.classList.remove('on');
     setVerdict('','','');
     showFileInfo();
     const t=T();
@@ -502,9 +616,13 @@
       if(file){ handleFile(file); return; }
     }
     // 2. nista nije stiglo: ne sutimo, nego kazemo sto uciniti
-    if(!html.trim()&&!plain){ showPasteNote(); return; }
-    // 3. tekst: ponasanje ostaje kao dosad
-    hidePasteNote();
+    if(!html.trim()&&!plain){ showPasteNote('pasteNothing'); return; }
+    // 3. predug tekst: granica velicine datoteke tu ne pomaze jer datoteke nema
+    if(plain.length>F.MAX_TEXT||html.length>F.MAX_TEXT*4){
+      fileError('errTooLong','vErrTextBig'); return;
+    }
+    // 4. tekst: ponasanje ostaje kao dosad
+    hidePasteNote(); lastError=null;
     const frag=html.trim()?D.sanitize(html):D.plainToHtml(plain);
     input.innerHTML=(input.innerHTML.trim()?input.innerHTML:'')+frag;
     owlSweep();
@@ -526,7 +644,9 @@
     stepHit(+card.getAttribute('data-i'),1);
   });
 
-  F.wireDropzone(dropZone,handleFile,on=>dropZone.classList.toggle('dragging',on));
+  // uzima se prva, ali se to mora reci: presucivanje bi ostavilo dojam da su sve provjerene
+  F.wireDropzone(dropZone,handleFile,on=>dropZone.classList.toggle('dragging',on),
+    n=>showPasteNote('multiFiles',n));
   // preglednik inace otvori ispustenu datoteku i izgubi stranicu
   ['dragover','drop'].forEach(ev=>window.addEventListener(ev,e=>{
     if(!dropZone.contains(e.target)) e.preventDefault();
@@ -538,14 +658,11 @@
   $('resetBtn').addEventListener('click',resetAll);
   document.addEventListener('keydown',e=>{ if(e.key==='Escape') resetAll(); });
   $('cleanBtn').addEventListener('click',()=>{
-    if(!lastCleaned&&(input.textContent||'').trim()) scan();
-    navigator.clipboard.writeText(lastCleaned||input.textContent||'').then(()=>{
-      const b=$('cleanBtn'),o=b.textContent;b.textContent=T().copied;setTimeout(()=>b.textContent=o,1500);
-    });
-  });
-  visibleBtn.addEventListener('click',()=>{
-    if(lastVisibleText) navigator.clipboard.writeText(lastVisibleText).then(()=>{
-      const o=visibleBtn.textContent;visibleBtn.textContent=T().copied;setTimeout(()=>visibleBtn.textContent=o,1500);
+    const b=$('cleanBtn'),o=b.textContent;
+    copyClean().then(ok=>{
+      if(!ok) return;
+      b.textContent=T().copied;
+      setTimeout(()=>{ b.textContent=T().cleanBtn; },1500);
     });
   });
   $('demoBtn').addEventListener('click',()=>{
@@ -567,6 +684,9 @@
     scan:scan,
     reset:resetAll,
     jump:jumpTo,
+    // ociscena kopija, da je test moze provjeriti bez diranja medduspremnika
+    cleaned:buildClean,
+    copy:copyClean,
     clickFinding(i){ const c=findingsEl.querySelectorAll('.finding')[i]; if(c) c.click(); },
     clickArrow(i,dir){
       const c=findingsEl.querySelectorAll('.finding')[i]; if(!c) return;
@@ -587,7 +707,15 @@
       pulsing:verdict.classList.contains('pulse'),
       verdictBig:verdictBig.textContent,
       verdictSub:verdictSub.textContent,
-      pasteNote:{shown:pasteNote.classList.contains('on'),text:pasteNote.textContent},
+      pasteNote:{shown:pasteNote.classList.contains('on'),text:pasteNote.textContent,key:noteKey},
+      toast:{shown:!!(toast&&toast.classList.contains('on')),text:toast?toast.textContent:''},
+      panels:(function(){
+        const ps=document.querySelectorAll('.grid > .panel');
+        if(ps.length<2) return null;
+        const a=ps[0].getBoundingClientRect(), b=ps[1].getBoundingClientRect();
+        return {razlikaDna:Math.abs(a.bottom-b.bottom),razlikaVisine:Math.abs(a.height-b.height),
+                jedanIspodDrugog:Math.abs(a.top-b.top)>4};
+      })(),
       progressOn:progress.classList.contains('on'),
       progressEverShown:progEverShown,
       progressSteps:progressList.querySelectorAll('li').length,
