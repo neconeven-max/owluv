@@ -18,24 +18,96 @@
   // ============ LEKSIKONI SIGNALA, SVIH 6 JEZIKA ============
   // Svaki signal je popis izraza. Trazi se pojava bilo kojeg izraza u recenici.
 
-  // 1. obracanje stroju: spominjanje AI, modela, asistenta, sustava, uputa,
-  //    te strojne ili automatske obrade dokumenta
-  const ADDR=[
-    /\b(ai|a\.i\.|llm|gpt|chatbot|chat ?gpt|copilot|claude|gemini)\b/i,
-    /\bartificial intelligence\b|\blanguage model\b|\bassistant\b|\bsystem prompt\b/i,
-    /\bprompt\b|\binstructions?\b|\bdirectives?\b|\bcommands?\b/i,
-    /\b(automated|automatic|machine)\s+(review\w*|process\w*|grading|grader|reading|evaluation|assessment|screening|selection|system)\b/i,
-    /umjetn\w+ inteligencij\w+|jezi[čc]n\w+ model\w*|asistent\w*|sustav\w*|upute|uputa|naredb\w+/i,
+  // 1. OBRACANJE STROJU
+  //
+  // Signal NE okida na samu pojavu rijeci. Rijec "sustav" u "prometni sustav"
+  // nije obracanje stroju nego obicna hrvatska rijec, a "Umjetna inteligencija
+  // mijenja nacin ucenja" govori O stroju, ne STROJU. Zato se trazi OKVIR
+  // OBRACANJA: da je rijec upotrijebljena kao netko kome se govori.
+  //
+  // Rijeci se dijele na dvije skupine:
+  //  - NEDVOSMISLENE (ai, umjetna inteligencija, jezicni model, asistent):
+  //    okidaju uz bilo koji okvir obracanja, ukljucujuci naredbu odmah iza
+  //    ("sustav TREBA", "assistant OUGHT TO")
+  //  - SVAKODNEVNE (sustav, program, model, software): okidaju SAMO uz jaki
+  //    okvir, dakle uvjet s glagolom citanja ili obrade ("ako ovo CITA...")
+  //    ili napomenu upucenu nekome ("napomena ZA...")
+  //
+  // Rijeci "upute" i "naredba" izbacene su iz ovog signala: one nisu stroj.
+  // Injekcije koje ih koriste hvata popis fraza i signal zapovjednog tona.
+  const M_JAKE=[
+    /\b(ai|a\.i\.|llm|gpt|chat ?gpt|chatbot|copilot|claude|gemini)\b/i,
+    /\bartificial intelligence\b|\blanguage model\b|\bsystem prompt\b/i,
+    /\bassistant\b|\breviewer\b/i,
+    /umjetn\w+\s+inteligencij\w+|jezi[čc]n\w+\s+model\w*|asistent\w*/i,
+    /k[üu]nstlich\w+\s+intelligenz|sprachmodell\w*|assistent\w*/i,
+    /intelligence\s+artificielle|mod[èe]le\s+de\s+langage|assistant\w*/i,
+    /inteligencia\s+artificial|modelo\s+de\s+lenguaje|asistente\w*/i,
+    /intelligenza\s+artificiale|modello\s+linguistico|assistente\w*/i
+  ];
+  const M_SLABE=[
+    /\b(system|program|programme|software|bot|model)\b/i,
+    /\bsustav\w*|\bprogram\w*|\bmodel\w*/i,
+    /\bsystem\w*|\bprogramm\w*/i,
+    /\bsyst[èe]me\w*|\bprogramme\w*|\bmod[èe]le\w*/i,
+    /\bsistema\w*|\bprograma\w*|\bmodelo\w*/i,
+    /\bsistema\w*|\bprogramma\w*|\bmodello\w*/i
+  ];
+  // jaki okvir: uvjet s citanjem ili obradom, ili napomena upucena nekome
+  const OKVIR_JAKI=[
+    /\b(ako|kad|kada)\b[^.!?]{0,60}\b(čita\w*|cita\w*|obrađuj\w*|obraduj\w*|procesir\w*|pregleda\w*|obrad\w+)/i,
+    /\b(if|when|should|in case)\b[^.!?]{0,60}\b(read|reads|reading|process|processes|processed|processing|review\w*|parse\w*)\b/i,
+    /\b(falls|wenn|sollte)\b[^.!?]{0,60}\b(gelesen|liest|verarbeit\w*|gepr[üu]ft|bewertet)\b/i,
+    /\b(si|lorsque|au cas)\b[^.!?]{0,60}\b(lu|lit|lue|trait[ée]\w*|traite|analys[ée]\w*)\b/i,
+    /\b(si|cuando|en caso)\b[^.!?]{0,60}\b(lee|le[íi]do|procesa\w*|analiza\w*|revisa\w*)\b/i,
+    /\b(se|quando|nel caso)\b[^.!?]{0,60}\b(letto|legge|elabora\w*|analizza\w*|esamina\w*)\b/i,
+    /\b(napomena|uputa|poruka)\s+(za|tehni[čc]koj)\b/i,
+    /\bnote\s+(for|to)\b|\bmessage\s+(for|to)\b|\bfor\s+any\s+\w+\s+(reviewer|reader|system)\b/i,
+    /\bhinweis\s+(f[üu]r|an)\b|\bnachricht\s+(f[üu]r|an)\b/i,
+    /\bnote\s+(pour|à l['’]attention)\b|\bmessage\s+pour\b/i,
+    /\bnota\s+para\b|\bmensaje\s+para\b/i,
+    /\bnota\s+per\b|\bmessaggio\s+per\b/i,
+    // izravno obracanje u drugom licu
+    /\bako\s+si\b|\bif\s+you\s+are\b|\bwenn\s+du\b|\bsi\s+(tu|vous)\s+[êe]tes?\b|\bsi\s+eres\b|\bse\s+sei\b/i
+  ];
+  // slabi okvir: naredba ili duznost odmah iza rijeci
+  const OKVIR_NAREDBA=/^[^.!?]{0,45}?\b(treba\w*|mora\w*|neka\b|dužan\w*|duzan\w*|zada[ćc]a\s+je|zadatak\s+je|should|must|ought\s+to|shall|is\s+to\b|are\s+to\b|has\s+to\b|soll\w*|muss|m[üu]ssen|ist\s+zu\b|doit|devrait|deve|deber[íi]a|debe|dovrebbe|va\s+\w+t[oa]\b)/i;
+  // strojna obrada dokumenta: sama po sebi znaci da dokument obraduje stroj
+  const M_OBRADA=[
+    /\b(automated|automatic|machine)\s+(review\w*|process\w*|grading|grader|reading|evaluation|assessment|screening|selection)\b/i,
     /(strojn\w+|automatsk\w+)\s+(obrad\w+|provjer\w+|ocjen\w+|čitanj\w+|odabir\w*)/i,
-    /k[üu]nstlich\w+ intelligenz|sprachmodell\w*|assistent\w*|anweisung\w*|befehl\w*|system\w*/i,
     /(automatisch\w+|maschinell\w+)\s+(verarbeitung|bewertung|pr[üu]fung|auswertung|lesen|auswahl)/i,
-    /intelligence artificielle|mod[èe]le de langage|assistant\w*|instruction\w*|consigne\w*|syst[èe]me/i,
     /(traitement|[ée]valuation|lecture|s[ée]lection|notation)\s+automatique/i,
-    /inteligencia artificial|modelo de lenguaje|asistente\w*|instrucci[óo]n\w*|indicaci[óo]n\w*|sistema/i,
     /(procesamiento|evaluaci[óo]n|lectura|selecci[óo]n|correcci[óo]n)\s+autom[áa]tic\w+/i,
-    /intelligenza artificiale|modello linguistico|assistente\w*|istruzion\w+|comando\w*|sistema/i,
     /(elaborazione|valutazione|lettura|selezione|correzione)\s+automatic\w+/i
   ];
+
+  // Vraca true ako se recenica OBRACA stroju, a ne samo spominje rijec.
+  function obracaSeStroju(txt){
+    if(M_OBRADA.some(re=>{re.lastIndex=0;return re.test(txt);})) return true;
+    const jakiOkvir=OKVIR_JAKI.some(re=>{re.lastIndex=0;return re.test(txt);});
+    const nadi=(popis)=>{
+      for(const re of popis){
+        const r=new RegExp(re.source,re.flags.replace('g','')+'g');
+        let m;
+        while((m=r.exec(txt))!==null){
+          if(m.index===r.lastIndex) r.lastIndex++;
+          return m;               // dovoljna je prva pojava
+        }
+      }
+      return null;
+    };
+    const jaka=nadi(M_JAKE);
+    if(jaka){
+      if(jakiOkvir) return true;
+      // naredba odmah iza rijeci: "sustav treba", "assistant ought to"
+      if(OKVIR_NAREDBA.test(txt.slice(jaka.index+jaka[0].length))) return true;
+    }
+    const slaba=nadi(M_SLABE);
+    if(slaba&&jakiOkvir) return true;   // svakodnevna rijec samo uz jaki okvir
+    return false;
+  }
+  const ADDR=[{test:obracaSeStroju}];
 
   // 2. zapovjedni ton usmjeren na ocjenjivanje ili odabir
   const CMD=[
@@ -144,7 +216,7 @@
     sentences(text).forEach(r=>{
       const sig=[];
       for(const key of Object.keys(SETS)){
-        if(SETS[key].some(re=>{ re.lastIndex=0; return re.test(r.txt); })) sig.push(key);
+        if(SETS[key].some(re=>{ if(re.lastIndex!==undefined) re.lastIndex=0; return re.test(r.txt); })) sig.push(key);
       }
       // recenica na drugom jeziku od ostatka dokumenta
       let lang=null;
@@ -159,5 +231,5 @@
     return out;
   }
 
-  OwlUV.signals={scan,sentences,langScore,SETS,STOP};
+  OwlUV.signals={scan,sentences,langScore,SETS,STOP,obracaSeStroju};
 })();
