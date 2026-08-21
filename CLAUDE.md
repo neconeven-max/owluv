@@ -35,6 +35,12 @@ Repozitorij: `github.com/neconeven-max/OwlUV` (privatan). Domena kasnije:
    su novi *ulaz* u isti mehanizam, ne nova detekcija.
 5. **Koriste se isključivo datoteke ovog projekta.** Ne povlače se imena,
    adrese ni podaci iz drugih projekata.
+6. **Izvorna datoteka korisnika se NIKAD ne mijenja.** Alat je čita, pretvara u
+   tekst i skenira. Datoteka na disku ostaje netaknuta. Mijenja se samo tekst
+   koji korisnik kopira u međuspremnik, i taj tekst izlazi očišćen.
+7. **Očišćeno znači očišćeno.** Skriveni sadržaj se u kopiji **briše**. Ne
+   označava se, ne omotava se, ne ostavlja se bilješka na njegovom mjestu.
+   Ništa se ne dodaje. Tekst jednostavno teče dalje.
 
 ## Struktura
 
@@ -91,10 +97,10 @@ Test se **mora** izvršiti prije nego se prijavi da je nešto gotovo.
 ## Gdje je projekt stao — stanje na 20.08.2026.
 
 **Faza 2a je gotova, provjerena pravim Wordovim dokumentom i dopunjena
-verzijama v4.1, v4.2 i v4.3.** Grana `main`, `origin` je
+verzijama v4.1 do v4.4.** Grana `main`, `origin` je
 `git@github.com:neconeven-max/owluv.git`.
 
-Radi i provjereno je testom (**146 provjera, sve prošle**):
+Radi i provjereno je testom (**187 provjera, sve prošle**):
 
 - učitavanje datoteka na četiri načina: povuci-i-pusti, gumb za odabir,
   lijepljenje same datoteke iz međuspremnika (ovisi o pregledniku, pouzdano u
@@ -109,6 +115,10 @@ Radi i provjereno je testom (**146 provjera, sve prošle**):
 - klik na nalaz skače na SLJEDEĆU pojavu, uz brojač i strelice; svojstva
   dokumenta nemaju mjesto u tekstu pa nisu kliknabilna i to se vidi
 - stranica se ne prelijeva u stranu ni na jednoj širini od 320 do 768 px
+- jedan gumb za kopiranje, u desnom panelu; kopija **stvarno** briše skriveni
+  sadržaj i u međuspremnik ide u dvije verzije, bogatoj i običnoj
+- granice: 15 MB po datoteci i 1.000.000 znakova po tekstu
+- jasne poruke za Word zaštićen lozinkom, krivi nastavak i više datoteka odjednom
 - tijek provjere prikazuje stvarne korake, bez umjetnog kašnjenja, i pojavljuje
   se samo kad obrada stvarno traje dulje od otprilike pola sekunde
 - naziv ima podnaslov koji ide i u naslov kartice i u opis stranice, na 6 jezika
@@ -172,6 +182,25 @@ obradu.** `OwlUV.app.progressTiming()` postoji isključivo zato da automatski
 test može provjeriti mehaniku prikaza bez ovisnosti o brzini stroja; sučelje je
 ne poziva nikad.
 
+### Što ulazi u očišćenu kopiju, a što ne
+
+Kopija se gradi u `buildClean()` u `js/app.js`. Iz nje izlazi sve što je bilo
+skriveno formatiranjem, sve s Wordovom oznakom skrivenog teksta, HTML komentari,
+nevidljivi znakovi, i **cijeli aneks** (komentari, obrisani tekst iz praćenja
+izmjena, zaglavlja, fusnote, okviri izvan stranice i svojstva dokumenta).
+
+**Zašto cijeli aneks:** aneks je rekonstrukcija koju je alat sam sastavio, s
+vlastitim natpisima ("KOMENTARI", "SVOJSTVA DOKUMENTA") i oznakama autora. Da se
+prepisuje u kopiju, u tekst bi ušle riječi kojih u dokumentu nema, a to bi
+prekršilo pravilo da se ništa ne dodaje. Uz to su svojstva dokumenta čest
+nositelj injekcije, pa bi njihovo zadržavanje provuklo upravo ono zbog čega alat
+postoji. Kopija je dakle ono što čovjek vidi kad čita dokument, bez skrivenog.
+
+U bogatu verziju propuštaju se **samo** `font-weight`, `font-style`,
+`text-decoration` i `text-align`. Boja, veličina fonta, prozirnost i položaj ne
+prolaze ni slučajno, pa se skrivanje ne može provući ni ako negdje promakne.
+Naslovi, popisi i tablice prežive jer su oznake, a ne stil.
+
 ### Kroz pojave se ide klikom, ne popisom
 
 Nalaz s više pojava ne izlistava ih. Kroz njih se hoda klikom, kao kod traženja
@@ -195,6 +224,23 @@ Glava sove izrezana je iz postojećeg logotipa SOVA WEB skriptom
 skripti. Ne crta se nova sova.
 
 ## Sljedeći korak
+
+### ⚠️ Otvoreno — gumb "Skeniraj" i utipkani tekst
+
+U v4.4 je traženo da se gumb "Skeniraj" ukloni, jer alat skenira sam. Provjera
+je pokazala da **postoji slučaj u kojem ne skenira sam**, pa je gumb ostao i
+stavka je vraćena vlasniku na odluku.
+
+Lijevi panel je `contenteditable`, ali na njemu **nema nijednog `input`
+slušatelja**. Skeniranje pokreću samo lijepljenje, učitavanje datoteke, primjer
+i sam gumb. Dakle:
+
+- **utipkani tekst se ne skenira sam** (a savjet u sučelju taj put spominje),
+- **naknadna izmjena se ne skenira sam**: obrišeš odlomak nakon lijepljenja i
+  nalazi ostaju stari, pa više ne odgovaraju sadržaju panela.
+
+Popravak je slušatelj na `input` s odgodom od oko 400 ms. Tek kad to postoji,
+gumb je stvarno suvišan i može otići. **Ne uklanjati gumb prije toga.**
 
 ### Faza 2b — PDF
 

@@ -192,7 +192,7 @@ Testni dokument `test-skriveno.docx` sadrži sve vrste skrivenog sadržaja
 odjednom. `test-bez-teksta.docx` sadrži samo sliku i nijedno slovo.
 `test-cist.docx` je kontrolni uzorak bez ijedne zamke.
 
-### Rezultat zadnjeg pokretanja: 20.08.2026., 146 provjera, sve prošle
+### Rezultat zadnjeg pokretanja: 21.08.2026., 187 provjera, sve prošle
 
 | Provjera | Rezultat |
 |---|---|
@@ -241,6 +241,27 @@ odjednom. `test-bez-teksta.docx` sadrži samo sliku i nijedno slovo.
 | nalaz s jednom pojavom nema brojač ni strelice | prošao |
 | napomena o velikom broju pojava se pojavljuje iznad praga, a ispod ne | prošao |
 | stranica se ne prelijeva u stranu na širinama od 320 do 768 px | prošao |
+| kopirani tekst ne sadrži nijednu riječ iz skrivenog sadržaja | prošao |
+| kopirani tekst nema oznaka ni bilježaka na mjestu obrisanog | prošao |
+| kopirani tekst nema nevidljivih znakova ni dugih crtica | prošao |
+| bogata verzija ima naslove, a nema boje, veličine fonta ni skrivenih elemenata | prošao |
+| dna oba panela poravnata u praznom stanju i nakon učitavanja | prošao |
+| prevelika datoteka daje poruku, a datoteka od 2,1 MB prolazi | prošao |
+| predug zalijepljeni tekst daje poruku | prošao |
+| više odjednom bačenih datoteka daje poruku i obrađuje prvu | prošao |
+| Word zaštićen lozinkom daje izričitu poruku, a ne "nema što provjeriti" | prošao |
+| datoteka s krivim nastavkom daje poruku o nečitljivom sadržaju | prošao |
+
+## Granice veličine
+
+| Što | Granica | Zašto baš tolika |
+|---|---|---|
+| Datoteka | **15 MB** | Životopisi su desetci KB, završni radovi sa slikama nekoliko MB. 15 MB ostavlja veliku rezervu, a sprječava da preglednik stane bez ijedne poruke pokušavajući obraditi nešto čemu nije dorastao. |
+| Tekst | **1.000.000 znakova** | Vrijedi i za zalijepljeni tekst, gdje granica veličine datoteke ne pomaže jer datoteke nema. Milijun znakova je više nego što ima ijedan završni rad. |
+
+Iznad granice alat daje jasnu poruku i **ne pokušava obraditi**. Prije je
+pokušavao, pa je preglednik na vrlo velikoj datoteci znao stati bez ijedne
+riječi objašnjenja, što je izgledalo kao da je alat pokvaren.
 
 ## Zašto se kroz pojave ide klikom, a ne popisom
 
@@ -412,6 +433,69 @@ stalo do točnog značenja.
 ---
 
 ## Povijest izmjena
+
+### 21.08.2026. — v4.4: gumb za kopiranje sada stvarno čisti
+
+**Glavni popravak: "Kopiraj očišćeni tekst" nije čistio ono najvažnije.** Gumb
+je obećavao očišćen tekst, a uklanjao je samo nevidljive znakove i duge crtice.
+Skrivene rečenice, one bijele ili u fontu od jednog piksela, ostajale su u
+kopiranom tekstu. Tko bi taj tekst zalijepio u AI, zalijepio bi i injekciju,
+uvjeren da je očišćena. To je bilo zavaravajuće upravo prema korisniku koji je
+postupio ispravno: prepoznao je opasnost, kliknuo na čišćenje i dobio isti
+otrov s etiketom da je uklonjen.
+
+Sada se iz kopije **briše** sve što je bilo skriveno formatiranjem, sve s
+Wordovom oznakom skrivenog teksta, komentari, obrisani tekst iz praćenja
+izmjena i nevidljivi znakovi. Duge crtice postaju obične. Na mjesto obrisanog
+**ništa se ne stavlja**: bez oznaka, bez bilježaka, bez zagrada. Tekst
+jednostavno teče dalje. Ostatak teksta ostaje netaknut.
+
+**Izvorna datoteka se pritom ne dira.** Alat je samo čita. Mijenja se isključivo
+tekst koji korisnik kopira.
+
+**Formatiranje se čuva.** U međuspremnik idu obje verzije odjednom, bogata i
+obična, pa primatelj uzme ono što može primiti: u Wordu i e-pošti dobiješ
+naslove, podebljano, popise i tablice, a u običnom polju i AI chatu čist tekst.
+U bogatu verziju propuštaju se samo svojstva kojima se ništa ne može sakriti,
+pa se skrivanje ne može provući ni slučajno.
+
+**Drugi gumb je uklonjen.** "Kopiraj samo vidljivi tekst" nakon ovog popravka
+radi isto što i prvi, pa je bio samo još jedan izbor bez razlike. Preostali
+gumb preselio je u desni panel, ispod prikaza: lijevo je ono što si unio, desno
+je rezultat.
+
+**Paneli su sada jednake visine.** Lijevi je imao gumbe i savjet ispod, desni
+nije, pa se dna nisu poklapala. Sada rastu zajedno, a prazan prostor upija
+područje prikaza teksta.
+
+**Granice veličine.** Vrlo velika datoteka je prije mogla zaustaviti preglednik
+bez ijedne poruke. Sada postoji granica od 15 MB za datoteku i 1.000.000 znakova
+za tekst, uz jasnu poruku. Objašnjenje u zasebnom odjeljku gore.
+
+**Više datoteka odjednom više se ne prešućuje.** Kad se baci tri datoteke, alat
+i dalje uzima prvu, ali sada to i kaže. Prije je šutio, pa se moglo pomisliti da
+su sve provjerene.
+
+**Tri rubna slučaja kod datoteka.** Word zaštićen lozinkom sada se prepoznaje po
+potpisu datoteke i dobiva izričitu poruku koja kaže i da to **nije** potvrda o
+čistoći. Prije je takav dokument mogao izgledati kao neispravan, a najgori
+mogući ishod bio bi da izgleda prazan i dobije presudu "nema što provjeriti" na
+dokument koji možda ima zamku. Datoteka s krivim nastavkom, primjerice slika
+preimenovana u `.docx`, sada kaže da sadržaj nije čitljiv umjesto da prikaže
+prazno.
+
+**Sitnice.** Zraka iz očiju sove traje četiri sekunde umjesto dvije. Objašnjenje
+na prijelaz mišem više ne iskače kod miša preko teksta nego se crta ispod gumba
+i poravnato s njim. Savjet ispod lijevog panela više ne govori samo o
+lijepljenju nego o tome koliko se pouzdan rezultat dobiva kojim putem, dok
+uputa kako unijeti sadržaj ostaje u samom panelu. Nakon kopiranja se pojavi
+kratka potvrda koja se sama povuče.
+
+**Što nije napravljeno:** gumb "Skeniraj" je ostao. Trebao je otići jer alat
+skenira sam, ali provjera je pokazala da postoji slučaj u kojem ne skenira sam:
+lijevi panel se može uređivati, a utipkani tekst i naknadna izmjena ne pokreću
+provjeru. Dok se to ne riješi, gumb je jedini način da se takav sadržaj
+provjeri, pa ostaje.
 
 ### 20.08.2026. — v4.3: kretanje kroz pojave i tri veličine
 
