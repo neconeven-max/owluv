@@ -779,7 +779,7 @@ window.addEventListener('load',async()=>{
     log('  redoslijed: '+naslovi.map((x,k)=>k+'. '+x.slice(0,42)).join(' | '));
     check('skriveni tekst je prvi nalaz u popisu', iSkriveno===0,
           'na mjestu '+iSkriveno+': '+naslovi[0]);
-    check('nalaz po signalima je medu zadnjima', iSignali>=0&&iSignali>=naslovi.length-2,
+    check('nalaz po signalima je POSLJEDNJI u popisu', iSignali===naslovi.length-1,
           'na mjestu '+iSignali+' od '+naslovi.length);
     check('sumnjive fraze su iznad nevidljivih znakova', iFraza>=0&&iNevidljivi>=0&&iFraza<iNevidljivi,
           iFraza+' < '+iNevidljivi);
@@ -787,8 +787,12 @@ window.addEventListener('load',async()=>{
           iNevidljivi>=0&&iSvojstva>=0&&iNevidljivi<iSvojstva, iNevidljivi+' < '+iSvojstva);
     check('svojstva dokumenta su iznad nalaza po signalima',
           iSvojstva>=0&&iSignali>=0&&iSvojstva<iSignali, iSvojstva+' < '+iSignali);
-    check('duge crtice su zadnje', iCrtice===naslovi.length-1,
-          'na mjestu '+iCrtice+' od '+naslovi.length);
+    check('duge crtice su odmah iznad nalaza po signalima',
+          iCrtice>=0&&iCrtice===iSignali-1, 'crtice '+iCrtice+', signali '+iSignali);
+    check('nalaz po signalima je ispod svih konkretnih nalaza',
+          iSignali>iSkriveno&&iSignali>iFraza&&iSignali>iNevidljivi&&
+          iSignali>iSvojstva&&iSignali>iCrtice,
+          naslovi.map((x,k)=>k+'. '+x.slice(0,30)).join(' | '));
 
     // ============ 5r3. SVOJSTVA I NATPISI NE ULAZE U POPIS RECENICA ============
     log('\nZADATAK 2 - svojstva dokumenta i natpisi alata izvan popisa recenica');
