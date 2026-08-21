@@ -190,16 +190,32 @@
   }
   // Vraca {text,map,zones}: text s prijelomima, map[i] = pomak u textContent,
   // zones = podrucja aneksa (zaglavlje, fusnota, komentar, svojstva) u tom tekstu.
+  // Iz teksta za signale ispadaju:
+  //  - odjeljak sa SVOJSTVIMA DOKUMENTA: ona vec imaju vlastiti nalaz, pa bi se
+  //    prijavljivala dvaput, a e-mail adresa se pritom lomi na pola kao da je
+  //    recenica ("Autorkristina.", "jedvajic@gmail.") sto izgleda kao kvar
+  //  - NATPISI koje je alat sam dodao radi preglednosti (naslovi odjeljaka,
+  //    ime datoteke uz zaglavlje, autor uz komentar): to nisu rijeci dokumenta
+  // Preskoceni dio se broji kao granica odlomka, da se recenice ne slijepe
+  // preko njega. Pomak u textContent se i dalje uredno pomice, pa brisanje
+  // kvacicom i dalje pogada tocno mjesto.
+  const IZVAN_SIGNALA='.uv-annex[data-uv-annex="props"], .uv-annex-h, .uv-tag';
   function scanText(root){
     const aneksi=Array.from(root.querySelectorAll('.uv-annex[data-uv-annex]'))
       .map(el=>({el,kind:el.getAttribute('data-uv-annex'),start:-1,end:-1}));
+    const izvan=Array.from(root.querySelectorAll(IZVAN_SIGNALA));
     const w=document.createTreeWalker(root,NodeFilter.SHOW_TEXT,null);
     let text='', map=[], off=0, prev=null, n;
     while((n=w.nextNode())){
+      const v=n.nodeValue||'';
+      if(izvan.some(el=>el.contains(n))){
+        off+=v.length;                       // pomak tece dalje, tekst se preskace
+        prev=null;                           // preskoceni dio je granica odlomka
+        continue;
+      }
       const b=blockOf(n,root);
       if(prev&&b!==prev){ text+='\n'; map.push(off); }
       prev=b;
-      const v=n.nodeValue||'';
       aneksi.forEach(x=>{ if(x.el.contains(n)){ if(x.start<0) x.start=text.length; x.end=text.length+v.length; } });
       for(let i=0;i<v.length;i++){ text+=v[i]; map.push(off+i); }
       off+=v.length;
@@ -237,7 +253,7 @@
 
       const seen=new Set();
       hiddenTexts=hiddenOut.filter(h=>{const k=h.t.slice(0,120);if(seen.has(k))return false;seen.add(k);return true;});
-      if(hiddenTexts.length) g.hidden.push({sev:'danger',title:t.fHiddenTitle(hiddenTexts.length),
+      if(hiddenTexts.length) g.hidden.push({sev:'danger',rank:10,title:t.fHiddenTitle(hiddenTexts.length),
         why:t.fHiddenWhy, anchor:'.revealed',
         items:hiddenTexts.map(h=>({q:h.t.slice(0,300),n:h.reasons.map(reasonText).join(', ')}))});
 
@@ -251,9 +267,9 @@
           const a=cp-0xE0000; if(a>=0x20&&a<=0x7E) tagDecoded+=String.fromCharCode(a);
         }
       }
-      if(tagDecoded) g.tag.push({sev:'danger',title:t.fTagTitle,why:t.fTagWhy,
+      if(tagDecoded) g.tag.push({sev:'danger',rank:11,title:t.fTagTitle,why:t.fTagWhy,
         anchor:'.chip[data-l^="TAG"]', detail:t.fTagDetail(tagDecoded)});
-      if(serious) g.inv.push({sev:'uv',title:t.fInvTitle(serious),why:t.fInvWhy,
+      if(serious) g.inv.push({sev:'uv',rank:30,title:t.fInvTitle(serious),why:t.fInvWhy,
         anchor:'.chip', detail:Object.entries(byLabel).map(([l,n])=>n+'x '+l).join(', ')});
     }});
 
@@ -276,7 +292,7 @@
         const r=reci.find(x=>poz>=x.start&&poz<x.start+x.txt.length);
         return r?{start:r.start,len:r.txt.length,txt:r.txt}:null;
       };
-      if(hits.length) g.phrase.push({sev:'danger',title:t.fPhraseTitle(hits.length),why:t.fPhraseWhy,
+      if(hits.length) g.phrase.push({sev:'danger',rank:20,title:t.fPhraseTitle(hits.length),why:t.fPhraseWhy,
         anchor:'mark.phrase', pick:true,
         items:hits.map(h=>({q:h.txt,n:t.cat[h.cat],
           cut:recenicaOko(h.s)||{start:h.s,len:h.txt.length,txt:h.txt}}))});
@@ -297,7 +313,7 @@
           const b=st.map[Math.min(r.start+r.len,st.map.length)-1];
           return (a===undefined||b===undefined)?null:{start:a,len:b-a+1,txt:text.substr(a,b-a+1)};
         };
-        if(sig.length) g.signal.push({sev:'info',title:t.fSigTitle(sig.length),why:t.fSigWhy,
+        if(sig.length) g.signal.push({sev:'info',rank:60,title:t.fSigTitle(sig.length),why:t.fSigWhy,
           pick:true,
           items:sig.map(r=>({
             q:r.txt.slice(0,300),
@@ -308,13 +324,13 @@
 
       // pomijesana pisma
       const mixed=text.split(/\s+/).filter(w=>/[a-zA-Z]/.test(w)&&/[\u0400-\u04FF\u0370-\u03FF]/.test(w));
-      if(mixed.length) g.mixed.push({sev:'warn',title:t.fMixedTitle,why:t.fMixedWhy,
+      if(mixed.length) g.mixed.push({sev:'warn',rank:50,title:t.fMixedTitle,why:t.fMixedWhy,
         anchor:'.mixmark', detail:mixed.slice(0,20).join(', ')});
 
       // duge crtice
       DASHES.lastIndex=0;
       const dashCount=(text.match(DASHES)||[]).length;
-      if(dashCount) g.dash.push({sev:'info',title:t.fDashTitle(dashCount),why:t.fDashWhy,
+      if(dashCount) g.dash.push({sev:'info',rank:70,title:t.fDashTitle(dashCount),why:t.fDashWhy,
         anchor:'.dashmark',manyKey:'dash'});
     }});
 
@@ -325,7 +341,13 @@
     }});
 
     function finish(){
-      const findings=[].concat(g.tag,g.inv,g.phrase,g.signal,g.mixed,g.hidden,g.docx,g.dash);
+      // Popis se slaze po OZBILJNOSTI, a ne po tome kojim su redom izracunati.
+      // Bez toga je najsiri i najbucniji nalaz (recenice po signalima) znao
+      // zavrsiti na vrhu i zakopati skriveni tekst, koji je najvazniji.
+      // Redoslijed: skriveno > fraze > nevidljivi znakovi > struktura datoteke
+      // > pomijesana pisma > signali > duge crtice.
+      const findings=[].concat(g.tag,g.inv,g.phrase,g.signal,g.mixed,g.hidden,g.docx,g.dash)
+        .sort((a,b)=>(a.rank||99)-(b.rank||99));
 
       // Ociscena kopija se vise ne racuna ovdje nego tek na klik (buildClean),
       // da uvijek odgovara onome sto je u panelu u tom trenutku.

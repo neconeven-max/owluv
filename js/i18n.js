@@ -107,7 +107,7 @@
         if(j>=2&&j<=4&&(ds<12||ds>14)) return n+' rečenice označene za brisanje';
         return n+' rečenica označeno za brisanje';
       },
-      footer:'OwlUV v4.6 · open source alat · radi potpuno lokalno, bez slanja podataka'
+      footer:'OwlUV v4.7 · open source alat · radi potpuno lokalno, bez slanja podataka'
     },
     en:{
       eyebrow:'Text and document inspection tool', intro:'Paste text or drop in a file: an assignment, job description or CV. The scanner reveals invisible characters, text hidden via color or font size, and phrases designed to mislead AI. Everything runs in your browser, nothing is sent anywhere.',
@@ -205,7 +205,7 @@
       cutNone:'Clear all',
       cutTip:'Ticked sentences are removed from the copied text and from the saved file. Hidden content is always removed, with or without a tick.',
       cutCount:n=>n===0?'Nothing marked for removal':(n+(n===1?' sentence':' sentences')+' marked for removal'),
-      footer:'OwlUV v4.6 · open source tool · runs fully locally, no data sent'
+      footer:'OwlUV v4.7 · open source tool · runs fully locally, no data sent'
     },
     de:{
       eyebrow:'Werkzeug zur Text- und Dokumentprüfung', intro:'Text einfügen oder Datei ablegen: Aufgabe, Stellenbeschreibung oder Lebenslauf. Der Scanner zeigt unsichtbare Zeichen, per Farbe oder Schriftgröße versteckten Text und Phrasen, die eine KI in die Irre führen sollen. Alles läuft im Browser, nichts wird gesendet.',
@@ -303,7 +303,7 @@
       cutNone:'Auswahl aufheben',
       cutTip:'Angehakte Sätze werden aus dem kopierten Text und aus der gespeicherten Datei entfernt. Versteckte Inhalte werden immer entfernt, mit oder ohne Haken.',
       cutCount:n=>n===0?'Nichts zum Entfernen markiert':(n+(n===1?' Satz':' Sätze')+' zum Entfernen markiert'),
-      footer:'OwlUV v4.6 · Open-Source-Werkzeug · läuft vollständig lokal, keine Datenübertragung'
+      footer:'OwlUV v4.7 · Open-Source-Werkzeug · läuft vollständig lokal, keine Datenübertragung'
     },
     fr:{
       eyebrow:'Outil de vérification de textes et documents', intro:"Collez un texte ou déposez un fichier : devoir, offre d'emploi ou CV. Le scanner révèle les caractères invisibles, le texte masqué par la couleur ou la taille de police, et les phrases conçues pour induire une IA en erreur. Tout se passe dans votre navigateur, rien n'est envoyé.",
@@ -401,7 +401,7 @@
       cutNone:'Tout désélectionner',
       cutTip:'Les phrases cochées sont retirées du texte copié et du fichier enregistré. Le contenu masqué est toujours retiré, coché ou non.',
       cutCount:n=>n===0?'Rien n\u2019est marqué pour suppression':(n+(n===1?' phrase marquée':' phrases marquées')+' pour suppression'),
-      footer:'OwlUV v4.6 · outil open source · fonctionne entièrement en local, aucune donnée envoyée'
+      footer:'OwlUV v4.7 · outil open source · fonctionne entièrement en local, aucune donnée envoyée'
     },
     es:{
       eyebrow:'Herramienta de verificación de textos y documentos', intro:'Pega un texto o suelta un archivo: una tarea, una oferta de empleo o un CV. El escáner revela caracteres invisibles, texto oculto por color o tamaño de fuente y frases diseñadas para engañar a una IA. Todo se procesa en tu navegador, no se envía nada.',
@@ -499,7 +499,7 @@
       cutNone:'Deseleccionar todo',
       cutTip:'Las frases marcadas se eliminan del texto copiado y del archivo guardado. El contenido oculto se elimina siempre, con marca o sin ella.',
       cutCount:n=>n===0?'No hay nada marcado para eliminar':(n+(n===1?' frase marcada':' frases marcadas')+' para eliminar'),
-      footer:'OwlUV v4.6 · herramienta de código abierto · funciona totalmente en local, sin enviar datos'
+      footer:'OwlUV v4.7 · herramienta de código abierto · funciona totalmente en local, sin enviar datos'
     },
     it:{
       eyebrow:'Strumento di verifica di testi e documenti', intro:'Incolla un testo o trascina un file: un compito, un annuncio di lavoro o un CV. Lo scanner rivela caratteri invisibili, testo nascosto tramite colore o dimensione del carattere e frasi pensate per ingannare una IA. Tutto viene elaborato nel browser, nulla viene inviato.',
@@ -597,7 +597,7 @@
       cutNone:'Deseleziona tutto',
       cutTip:'Le frasi spuntate vengono rimosse dal testo copiato e dal file salvato. Il contenuto nascosto viene sempre rimosso, con o senza spunta.',
       cutCount:n=>n===0?'Niente selezionato per la rimozione':(n+(n===1?' frase selezionata':' frasi selezionate')+' per la rimozione'),
-      footer:'OwlUV v4.6 · strumento open source · funziona interamente in locale, nessun dato inviato'
+      footer:'OwlUV v4.7 · strumento open source · funziona interamente in locale, nessun dato inviato'
     }
   };
 })();

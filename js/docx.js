@@ -344,24 +344,27 @@
   // dokumenta ga namjerno nemaju: to su podaci o datoteci, a ne mjesto u tekstu,
   // pa taj nalaz ostaje nekliknabilan i to se u sucelju vidi.
   const ax = key => '[data-uv-annex="'+key+'"]';
+  // rank slaze nalaze po ozbiljnosti u zajednickom popisu (vidi renderFindings
+  // u js/app.js). Manji broj ide gore. Okviri izvan stranice idu uz skriveni
+  // tekst jer su isto skriveni sadrzaj, samo gurnut van vidljivog podrucja.
   function findings(r,t){
     const f=[];
-    if(r.comments.length) f.push({sev:'warn',title:t.fCommTitle(r.comments.length),why:t.fCommWhy,
+    if(r.comments.length) f.push({sev:'warn',rank:38,title:t.fCommTitle(r.comments.length),why:t.fCommWhy,
       anchor:ax('comments'),
       items:r.comments.map(c=>({q:strip(c.html),n:c.author||'?'}))});
-    if(r.deleted.length) f.push({sev:'warn',title:t.fDelTitle(r.deleted.length),why:t.fDelWhy,
+    if(r.deleted.length) f.push({sev:'warn',rank:39,title:t.fDelTitle(r.deleted.length),why:t.fDelWhy,
       anchor:ax('deleted'),
       items:r.deleted.map(d=>({q:d.slice(0,300)}))});
-    if(r.boxes.length) f.push({sev:'danger',title:t.fBoxTitle(r.boxes.length),why:t.fBoxWhy,
+    if(r.boxes.length) f.push({sev:'danger',rank:12,title:t.fBoxTitle(r.boxes.length),why:t.fBoxWhy,
       anchor:ax('textbox'),
       items:r.boxes.map(b=>({q:strip(b).slice(0,300)}))});
-    if(r.headers.length) f.push({sev:'info',title:t.fHeadTitle(r.headers.length),why:t.fHeadWhy,
+    if(r.headers.length) f.push({sev:'info',rank:44,title:t.fHeadTitle(r.headers.length),why:t.fHeadWhy,
       anchor:ax('headers'),
       items:r.headers.map(x=>({q:strip(x.html),n:x.file}))});
-    if(r.notes.length) f.push({sev:'info',title:t.fNoteTitle(r.notes.length),why:t.fNoteWhy,
+    if(r.notes.length) f.push({sev:'info',rank:45,title:t.fNoteTitle(r.notes.length),why:t.fNoteWhy,
       anchor:ax('notes'),
       items:r.notes.map(x=>({q:strip(x.html)}))});
-    if(r.props.length) f.push({sev:'info',title:t.fPropTitle(r.props.length),why:t.fPropWhy,
+    if(r.props.length) f.push({sev:'info',rank:40,title:t.fPropTitle(r.props.length),why:t.fPropWhy,
       items:r.props.map(p=>({q:p.v,n:t.prop[p.k]||p.k}))});
     return f;
   }
