@@ -103,6 +103,7 @@ Ako tek postavljaš alat na drugom računalu, vidi odjeljak
 index.html                    glavni alat
 js/
   i18n.js                     prijevodi sučelja, 6 jezika
+  docxout.js                  gradnja nove .docx datoteke iz očišćenog teksta
   detect.js                   detekcijska jezgra (prenesena iz v3.3)
   docx.js                     čitač .docx datoteka, izravno iz XML-a
   files.js                    ulaz za datoteke i prepoznavanje formata
@@ -192,7 +193,7 @@ Testni dokument `test-skriveno.docx` sadrži sve vrste skrivenog sadržaja
 odjednom. `test-bez-teksta.docx` sadrži samo sliku i nijedno slovo.
 `test-cist.docx` je kontrolni uzorak bez ijedne zamke.
 
-### Rezultat zadnjeg pokretanja: 21.08.2026., 187 provjera, sve prošle
+### Rezultat zadnjeg pokretanja: 21.08.2026., 221 provjera, sve prošle
 
 | Provjera | Rezultat |
 |---|---|
@@ -251,6 +252,12 @@ odjednom. `test-bez-teksta.docx` sadrži samo sliku i nijedno slovo.
 | više odjednom bačenih datoteka daje poruku i obrađuje prvu | prošao |
 | Word zaštićen lozinkom daje izričitu poruku, a ne "nema što provjeriti" | prošao |
 | datoteka s krivim nastavkom daje poruku o nečitljivom sadržaju | prošao |
+| izmjena teksta rukom pokreće crveno upozorenje | prošao |
+| ponovno skeniranje uklanja upozorenje i osvježava nalaze | prošao |
+| učitavanje, lijepljenje i primjer ne pokreću upozorenje | prošao |
+| očišćena kopija sadrži zaglavlje, podnožje i fusnotu | prošao |
+| očišćena kopija ne sadrži svojstva dokumenta ni natpise alata | prošao |
+| spremljena .docx datoteka se otvara, ima naslove i nema skrivenog sadržaja | prošao |
 
 ## Granice veličine
 
@@ -433,6 +440,52 @@ stalo do točnog značenja.
 ---
 
 ## Povijest izmjena
+
+### 21.08.2026. — v4.5: upozorenje o izmjeni, potpunija kopija, spremanje u Word
+
+**Kad se tekst izmijeni rukom, alat to sada kaže.** Lijevi panel se može
+uređivati, pa se tekst može promijeniti nakon skeniranja, a nalazi u desnom
+panelu ostanu stari. Prije se to nije javljalo nikako. Sada se čim se sadržaj
+dirne rukom pojavi crveno upozorenje da prikazani nalazi više ne odgovaraju
+sadržaju, s gumbom koji ih osvježi. Javlja se na svaku izmjenu, i na brisanje
+jednog razmaka, jer je bolje javiti previše nego prešutjeti.
+
+**Skeniranja pri svakom pritisku tipke namjerno nema.** To je nepotreban posao
+koji na velikom dokumentu vidljivo usporava rad, a korisniku ne donosi ništa dok
+još piše. Zato upozorenje, a ne stalno skeniranje.
+
+**Gumb "Skeniraj" je uklonjen iz stalne trake.** Skeniranje ide samo pri unosu,
+a ručno samo kroz to upozorenje, dakle točno onda kad stvarno treba. Gumb više
+ne stoji na najistaknutijem mjestu i ne navodi na pomisao da se nešto mora
+pritisnuti da bi se dobio rezultat.
+
+**Zaglavlja, podnožja i fusnote vraćeni su u očišćenu kopiju.** U v4.4 su bili
+izbačeni zajedno s ostatkom aneksa. To je bilo prestrogo: zaglavlje, podnožje i
+fusnota su pravi sadržaj koji je autor napisao i koji čovjek vidi kad čita
+dokument. Kopija iz koje tiho nedostaje dio dokumenta je pogrešna, a korisnik ne
+bi ni znao da mu nešto fali. Pravilo čišćenja vrijedi i unutar njih: ako je
+nešto u zaglavlju bilo skriveno, briše se kao i drugdje. Svojstva dokumenta i
+dalje ostaju vani, jer to nisu riječi dokumenta nego podaci o datoteci.
+Natpisi koje je alat sam dodao radi preglednosti ne prepisuju se u kopiju.
+
+**Očišćeni tekst se sada može spremiti kao Word datoteka.** Uz gumb za kopiranje
+stoji i gumb koji sprema isti očišćeni sadržaj kao novu `.docx` datoteku, sa
+sačuvanim naslovima, podebljanim i ukošenim tekstom, popisima, tablicama i
+odlomcima. Ime je izvedeno iz izvornog, uz jasnu oznaku da je riječ o očišćenoj
+verziji. To je **nova** datoteka; izvorna se ne dira, a prijelom stranica,
+margine i točan font neće biti identični izvorniku, jer se dokument gradi iznova
+iz teksta koji alat vidi. To piše i uz sam gumb.
+
+Za spremanje **nije dodana nova knjižnica**. Datoteka se gradi ručno, uz već
+vendoriranu fflate za pakiranje. Popisi se rade pravim Wordovim numeriranjem, a
+ne dopisivanjem točke ili broja u tekst, jer bi to bilo dodavanje znakova kojih
+u dokumentu nema.
+
+**Test dopunjen na 221 provjeru.** Spremljena datoteka se u testu provlači kroz
+vlastiti čitač alata, što je jača potvrda da se stvarno otvara nego provjera da
+je ZIP. Uz to je provjerena i macOS-ovim vlastitim čitačem Worda: otvara se,
+sadrži naslov, tekst, zaglavlje, podnožje i fusnotu, a od skrivenog sadržaja
+nema ni jedne riječi.
 
 ### 21.08.2026. — v4.4: gumb za kopiranje sada stvarno čisti
 

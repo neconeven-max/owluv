@@ -51,6 +51,7 @@ js/detect.js               detekcijska jezgra (iz v3.3)
 js/docx.js                 čitač .docx datoteka, izravno iz XML-a
 js/files.js                ulaz za datoteke: povuci-i-pusti, odabir, formati
 js/app.js                  sučelje, tijek skeniranja, presuda
+js/docxout.js              gradnja nove .docx datoteke iz očišćenog teksta
 assets/                    logo, sova i ikone SOVA WEB (u repozitoriju, ne s OneDrivea)
 vendor/fflate/             raspakiravanje ZIP-a (MIT), vendorirano
 standalone/                zamrznuta v3.3, jedna datoteka za slanje mailom
@@ -97,10 +98,10 @@ Test se **mora** izvršiti prije nego se prijavi da je nešto gotovo.
 ## Gdje je projekt stao — stanje na 20.08.2026.
 
 **Faza 2a je gotova, provjerena pravim Wordovim dokumentom i dopunjena
-verzijama v4.1 do v4.4.** Grana `main`, `origin` je
+verzijama v4.1 do v4.5.** Grana `main`, `origin` je
 `git@github.com:neconeven-max/owluv.git`.
 
-Radi i provjereno je testom (**187 provjera, sve prošle**):
+Radi i provjereno je testom (**221 provjera, sve prošle**):
 
 - učitavanje datoteka na četiri načina: povuci-i-pusti, gumb za odabir,
   lijepljenje same datoteke iz međuspremnika (ovisi o pregledniku, pouzdano u
@@ -119,6 +120,8 @@ Radi i provjereno je testom (**187 provjera, sve prošle**):
   sadržaj i u međuspremnik ide u dvije verzije, bogatoj i običnoj
 - granice: 15 MB po datoteci i 1.000.000 znakova po tekstu
 - jasne poruke za Word zaštićen lozinkom, krivi nastavak i više datoteka odjednom
+- crveno upozorenje kad se tekst izmijeni rukom, s gumbom za ponovno skeniranje
+- spremanje očišćenog teksta kao nove `.docx` datoteke, bez ijedne nove knjižnice
 - tijek provjere prikazuje stvarne korake, bez umjetnog kašnjenja, i pojavljuje
   se samo kad obrada stvarno traje dulje od otprilike pola sekunde
 - naziv ima podnaslov koji ide i u naslov kartice i u opis stranice, na 6 jezika
@@ -182,19 +185,66 @@ obradu.** `OwlUV.app.progressTiming()` postoji isključivo zato da automatski
 test može provjeriti mehaniku prikaza bez ovisnosti o brzini stroja; sučelje je
 ne poziva nikad.
 
+### Zašto nema skeniranja pri tipkanju nego upozorenje
+
+Lijevi panel se može uređivati, pa se tekst može izmijeniti nakon skeniranja.
+**Ne skenira se pri svakom pritisku tipke.** To je nepotreban posao koji na
+velikom dokumentu vidljivo usporava rad, a korisniku ne donosi ništa dok još
+piše.
+
+Umjesto toga se čim se sadržaj izmijeni rukom pojavi **crveno upozorenje** da
+prikazani nalazi više ne odgovaraju sadržaju, s gumbom koji ih osvježi.
+Upozorenje se pojavljuje na svaku izmjenu, i na brisanje jednog razmaka: bolje
+javiti previše nego prešutjeti.
+
+Upozorenje nastaje **samo od ljudske izmjene**. Sadržaj koji postavlja sam alat
+ide kroz `setContent()`, koji piše preko `innerHTML`, a to uopće ne okida
+događaj `input`. Zastavica `settingContent` je pojas i tregeri uz to. Zato
+učitavanje datoteke, lijepljenje, primjer i "Novi tekst" nikad ne podižu
+upozorenje.
+
+Stalni gumb "Skeniraj" je zato uklonjen: skeniranje ide samo pri unosu, a ručno
+samo kroz ovo upozorenje, dakle točno onda kad stvarno treba.
+
+### Spremanje .docx-a nema novu knjižnicu
+
+`js/docxout.js` gradi novu `.docx` datoteku sam, koristeći već vendoriranu
+fflate za pakiranje ZIP-a. **Nova knjižnica se ne dodaje.** Gotove knjižnice za
+pisanje Worda teže nekoliko stotina kilobajta, a `test/napravi-testne-docx.js`
+već je pokazao da se valjani `.docx` piše ručno u pedesetak linija.
+
+Popisi se rade pravim Wordovim numeriranjem preko `numbering.xml`, a **ne**
+dopisivanjem znaka za točku ili broja u tekst. Dopisivanje bi značilo dodavanje
+znakova kojih u dokumentu nema, a pravilo je da se ništa ne dodaje.
+
+Spremljena datoteka je **nova**, izvorna se ne dira. Prijelom stranica, margine
+i točan font neće biti identični izvorniku i to je korisniku rečeno uz gumb.
+
 ### Što ulazi u očišćenu kopiju, a što ne
 
 Kopija se gradi u `buildClean()` u `js/app.js`. Iz nje izlazi sve što je bilo
 skriveno formatiranjem, sve s Wordovom oznakom skrivenog teksta, HTML komentari,
-nevidljivi znakovi, i **cijeli aneks** (komentari, obrisani tekst iz praćenja
-izmjena, zaglavlja, fusnote, okviri izvan stranice i svojstva dokumenta).
+nevidljivi znakovi, komentari, obrisani tekst iz praćenja izmjena, okviri izvan
+stranice i **svojstva dokumenta**.
 
-**Zašto cijeli aneks:** aneks je rekonstrukcija koju je alat sam sastavio, s
-vlastitim natpisima ("KOMENTARI", "SVOJSTVA DOKUMENTA") i oznakama autora. Da se
-prepisuje u kopiju, u tekst bi ušle riječi kojih u dokumentu nema, a to bi
-prekršilo pravilo da se ništa ne dodaje. Uz to su svojstva dokumenta čest
-nositelj injekcije, pa bi njihovo zadržavanje provuklo upravo ono zbog čega alat
-postoji. Kopija je dakle ono što čovjek vidi kad čita dokument, bez skrivenog.
+**Zaglavlja, podnožja i fusnote OSTAJU u kopiji.** To je pravi sadržaj koji je
+autor napisao i koji čovjek vidi kad čita dokument. Kopija iz koje tiho
+nedostaje dio dokumenta je pogrešna, a korisnik ne bi ni znao da mu nešto fali.
+Pravilo čišćenja vrijedi i unutar njih: ako je nešto u zaglavlju ili fusnoti
+bilo skriveno, briše se kao i drugdje.
+
+**Svojstva dokumenta ostaju vani.** To nisu riječi dokumenta nego podaci o
+datoteci, i u testnom dokumentu su bila nositelj injekcije.
+
+**Natpisi koje je alat sam dodao ne prepisuju se.** "KOMENTARI", "ZAGLAVLJA I
+PODNOŽJA", ime datoteke, autor komentara - to su riječi kojih u dokumentu nema,
+pa bi njihovo prepisivanje prekršilo pravilo da se ništa ne dodaje. Prenosi se
+samo sadržaj.
+
+**Posljedica koju treba znati:** ako injekcija stoji u zaglavlju ili fusnoti,
+ona je vidljiva na ispisu, dakle nije skrivena, i **ostaje u očišćenoj kopiji**.
+Očišćena kopija jamči da u njoj nema *skrivenog* sadržaja, ne da u njoj nema
+nijedne sumnjive rečenice. Nalazi u desnom panelu i dalje na nju upozoravaju.
 
 U bogatu verziju propuštaju se **samo** `font-weight`, `font-style`,
 `text-decoration` i `text-align`. Boja, veličina fonta, prozirnost i položaj ne
@@ -225,22 +275,14 @@ skripti. Ne crta se nova sova.
 
 ## Sljedeći korak
 
-### ⚠️ Otvoreno — gumb "Skeniraj" i utipkani tekst
+### ✅ Riješeno — 21.08.2026. — gumb "Skeniraj" i utipkani tekst
 
-U v4.4 je traženo da se gumb "Skeniraj" ukloni, jer alat skenira sam. Provjera
-je pokazala da **postoji slučaj u kojem ne skenira sam**, pa je gumb ostao i
-stavka je vraćena vlasniku na odluku.
-
-Lijevi panel je `contenteditable`, ali na njemu **nema nijednog `input`
-slušatelja**. Skeniranje pokreću samo lijepljenje, učitavanje datoteke, primjer
-i sam gumb. Dakle:
-
-- **utipkani tekst se ne skenira sam** (a savjet u sučelju taj put spominje),
-- **naknadna izmjena se ne skenira sam**: obrišeš odlomak nakon lijepljenja i
-  nalazi ostaju stari, pa više ne odgovaraju sadržaju panela.
-
-Popravak je slušatelj na `input` s odgodom od oko 400 ms. Tek kad to postoji,
-gumb je stvarno suvišan i može otići. **Ne uklanjati gumb prije toga.**
+Stavka otvorena u v4.4 zatvorena je u v4.5, ali **drugim rješenjem** od
+predloženog. Nije dodano skeniranje pri tipkanju, jer je to nepotreban posao
+koji na velikom dokumentu usporava rad. Umjesto toga se svaka ručna izmjena
+javlja crvenim upozorenjem s gumbom za ponovno skeniranje, a stalni gumb
+"Skeniraj" je uklonjen. Obrazloženje je gore, u odjeljku *Zašto nema skeniranja
+pri tipkanju nego upozorenje*.
 
 ### Faza 2b — PDF
 
