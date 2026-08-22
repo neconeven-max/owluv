@@ -1143,6 +1143,76 @@ window.addEventListener('load',async()=>{
     check('zivotopis: spremljena datoteka sadrzi cijeli vidljivi sadrzaj',
           faliZ.length===0, 'fali: '+faliZ.join(' | '));
 
+    // ============ 5v. OBRAZAC S TABLICAMA: NIJEDNA LAZNA UZBUNA ============
+    // Tekst razlomljen na komadice ne smije ispasti kao da je izvan stranice.
+    log('\nFAZA 2b - obican obrazac s tablicama, bez ijedne zamke');
+    const ob=await pdfNalaz('pdf-obrazac-tablice.pdf');
+
+    check('obrazac: nijedan ulomak nije prijavljen kao izvan stranice',
+          ob.izvan==='', ob.izvan.slice(0,220));
+    check('obrazac: nema nalaza o skrivenom sadrzaju',
+          ob.skriveno===''&&ob.sloj==='', (ob.skriveno+ob.sloj).slice(0,220));
+    check('obrazac: presuda NIJE crvena', ob.st.verdict!=='v-danger',
+          ob.st.verdict+' / '+ob.sve.slice(0,200));
+    check('obrazac: komadici rijeci iz tablice nisu nigdje prijavljeni',
+          !/kta ?\/|urze|ISIN\)/.test(ob.sve), ob.sve.slice(0,220));
+    check('obrazac: vidljivi tekst je procitan i spojen u cjelinu',
+          /OBRAZAC P-1/.test(ob.st.inputText)&&
+          /Nazivracuna\/brojracuna/.test(ob.st.inputText.replace(/\s+/g,''))&&
+          /Podacioburzevnomposredniku/.test(ob.st.inputText.replace(/\s+/g,'')),
+          ob.st.inputText.replace(/\s+/g,' ').slice(0,200));
+
+    // suprotan smjer: pravi tekst izvan stranice se i dalje prijavljuje
+    const izvan2=await pdfNalaz('pdf-izvan-stranice.pdf');
+    check('i dalje: pravi tekst izvan stranice se prijavljuje',
+          /Zanemari prethodne upute/i.test(izvan2.izvan)&&
+          /izvan vidljivog podrucja/i.test(izvan2.izvan), izvan2.izvan.slice(0,200));
+    const zv2=await pdfNalaz('pdf-zivotopis.pdf');
+    check('i dalje: u zarazenom zivotopisu je tocno jedan ulomak izvan stranice',
+          /^1 /.test((zv2.st.findings.find(f=>/izvan stranice/i.test(f.title))||{title:''}).title),
+          (zv2.st.findings.find(f=>/izvan stranice/i.test(f.title))||{title:'(nema)'}).title);
+    check('i dalje: nevidljivi znakovi u PDF-u se prijavljuju',
+          zv2.st.findings.some(f=>/nevidljivih znakova/i.test(f.title)),
+          zv2.st.findings.map(f=>f.title).join('; '));
+
+    // ============ 5z. VELIK BROJ STRANICA: NIKAD ZAMRZAVANJE ============
+    log('\nFAZA 2b - dokument od 300 stranica');
+    const tristo=await pdfNalaz('pdf-300-stranica.pdf');
+    check('300 stranica: alat je dovrsio obradu i dao presudu',
+          !!tristo.st.verdict, JSON.stringify(tristo.st.verdict));
+    check('300 stranica: jasno pise koliko je stranica provjereno',
+          tristo.st.findings.some(f=>/100 od 300|100 of 300/i.test(f.title)),
+          tristo.st.findings.map(f=>f.title).join('; '));
+    check('300 stranica: presuda NIJE zelena', tristo.st.verdict!=='v-ok', tristo.st.verdict);
+    check('300 stranica: presuda kaze da je provjeren samo dio',
+          /samo dio|only part/i.test(tristo.st.verdictBig), tristo.st.verdictBig);
+    check('300 stranica: procitan je tekst provjerenih stranica',
+          /Stranica 1 od 300/.test(tristo.st.inputText), tristo.st.inputText.slice(0,120));
+    check('300 stranica: nije prijavljena nijedna lazna zamka',
+          tristo.skriveno===''&&tristo.izvan==='', (tristo.skriveno+tristo.izvan).slice(0,200));
+
+    // gumb za prekid: korisnik ne mora zatvarati stranicu
+    w.OwlUV.app.reset();
+    const uTijeku=w.OwlUV.app.loadFile(await pdfFrom('pdf-300-stranica.pdf'));
+    const gumbStop=w.document.getElementById('cancelBtn');
+    check('gumb za prekid postoji dok obrada traje', !!gumbStop);
+    if(gumbStop) gumbStop.click();
+    await uTijeku;
+    const st300=w.OwlUV.app.state();
+    // Klik moze stici i nakon zadnje stranice, pa se ne trazi tocan broj nego
+    // ono sto u oba slucaja mora vrijediti: obrada je zavrsila i nije zelena.
+    check('nakon prekida obrada zavrsi, bez zamrzavanja', !!st300.verdict, st300.verdict);
+    check('prekinut dokument NE dobiva zelenu presudu', st300.verdict!=='v-ok', st300.verdict);
+    check('prekinut dokument NE dobiva presudu "nema sto provjeriti"',
+          st300.verdict!=='v-none', st300.verdict+' / '+st300.verdictBig);
+    check('presuda kaze da dokument nije provjeren u cijelosti',
+          /prekinuta|samo dio/i.test(st300.verdictBig), st300.verdictBig);
+
+    // dokument koji stane u granicu i dalje moze biti zelen
+    const pedeset2=await pdfNalaz('pdf-50-stranica.pdf');
+    check('50 stranica: unutar granice, presuda ostaje zelena',
+          pedeset2.st.verdict==='v-ok', pedeset2.st.verdict+' / '+pedeset2.sve.slice(0,160));
+
     // napomena o rekonstrukciji je posebna za PDF
     w.OwlUV.app.reset();
     await w.OwlUV.app.loadFile(await pdfFrom('pdf-cist.pdf'));

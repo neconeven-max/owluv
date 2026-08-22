@@ -75,7 +75,9 @@ function popisDatoteka(){
   return (r.stdout||'').split('\n').filter(Boolean)
     .filter(f=>!f.startsWith('vendor/'))     // tude knjiznice se ne diraju
     .filter(f=>!BINARNO.test(f))
-    .filter(f=>!NE_PRETRAZUJE_SE.includes(f));
+    .filter(f=>!NE_PRETRAZUJE_SE.includes(f))
+    // datoteka obrisana s diska a jos zapisana u gitu ne smije srusiti provjeru
+    .filter(f=>fs.existsSync(path.join(KORIJEN,f)));
 }
 
 function higijena(){
