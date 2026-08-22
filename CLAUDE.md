@@ -108,12 +108,12 @@ Test se **mora** izvršiti prije nego se prijavi da je nešto gotovo.
 - Promjena se bilježi i u `~/INFRASTRUKTURA.md`.
 - Rad ide naizmjenično s tri stroja, pa se sve zapisuje lokalno.
 
-## Gdje je projekt stao — stanje na 20.08.2026.
+## Gdje je projekt stao — stanje na 22.08.2026.
 
 **Faza 2a i faza 2b su gotove.** Grana `main`, `origin` je
 `git@github.com:neconeven-max/owluv.git`.
 
-Radi i provjereno je testom (**296 provjera, sve prošle**):
+Radi i provjereno je testom (**312 provjera, sve prošle**):
 
 - učitavanje datoteka na četiri načina: povuci-i-pusti, gumb za odabir,
   lijepljenje same datoteke iz međuspremnika (ovisi o pregledniku, pouzdano u
@@ -185,6 +185,31 @@ preskaču, i u nalazima i u desnom panelu. **HTML komentari općenito i dalje
 jesu nalaz** — to je ravnoteža koju ne treba dirati, jer se u komentarima
 stvarno kriju poruke. Test pokriva oba slučaja.
 
+## Što je test pravim zaraženim PDF-om pokazao
+
+**Pravi životopis s osam zamki, 22.08.2026.** Prošlo je odmah: svih šest
+formatiranjem skrivenih tekstova, svojstva dokumenta, sumnjive rečenice bez
+šuma, i očišćena kopija provjerena rukom.
+
+Palo je dvoje, i oboje iz **istog uzroka** — usporedbe dvaju izvora teksta bez
+zajedničkog nazivnika. Opisano je niže, u odjeljku "PDF ima dva izvora teksta".
+Ukratko: vidljiv naslov je lažno prijavljen kao "izvan stranice", a nevidljivi
+znakovi u PDF-u nisu se prijavljivali. Jedan popravak je zatvorio oboje.
+
+Testni PDF `pdf-zivotopis.pdf` je preslika te datoteke i od sada je stalan dio
+testa. Ima sve zamke odjednom, kako se u stvarnosti i pojavljuju, uz običan
+vidljiv životopis oko njih.
+
+**Pri pisanju testnog PDF-a s nevidljivim načinom crtanja:** `3 Tr` se prenosi
+na SAV tekst koji slijedi u istom sadržaju stranice, i preko `BT`/`ET`. Isto
+vrijedi za boju. Funkcija `T()` u generatoru zato **uvijek** izričito zapisuje i
+boju i način crtanja. Bez toga ostatak dokumenta postane nevidljiv i test mjeri
+krivu stvar, a izgleda kao da alat griješi.
+
+**I obrnuto — provjeri je li kriva zamka, a ne alat.** Jednom je proširenje
+sivog polja za 50 točaka gurnulo "bijelo na bijelom" na sivu podlogu, gdje se
+tekst stvarno vidi. Alat je bio u pravu, zamka je bila pokvarena.
+
 ## Odluke koje se ne vraćaju natrag
 
 ### Prikaz tijeka nema prekidač za brzi i spori način
@@ -227,15 +252,71 @@ Tri stvari koje treba znati o izvedbi (`js/pdfread.js`):
    daje razliku od jednog stupnja zbog zaokruživanja pri crtanju, što oko ne
    vidi. Zato se pita "je li razlika zamjetljiva", a ne "je li ikakva". To
    **nije** prag za odbacivanje nalaza, nego donja granica mjerenja.
-3. **Pikseli tuđeg teksta se preskaču.** Kad se mjeri jedan tekst, pikseli koji
-   pripadaju nekom drugom tekstu se ne gledaju. Bez toga bi vidljiv natpis
-   nacrtan preko zakopanog teksta prikrio da je zakopani tekst nevidljiv.
+3. **Preklopljeni tekst se crta ciljano.** Kad su dva teksta nacrtana jedan
+   preko drugoga, iz jednog zajedničkog crtanja se ne može zaključiti čija su
+   slova ostavila trag. Zato se za takav tekst stranica nacrta **još jednom, bez
+   baš tog teksta i sa svime ostalim**, pa se usporedi. To je doslovno ono što
+   provjera vidljivosti znači.
+
+   Preskače se **po rednom broju slova**, ne po okviru. Prvo se prođe crtanje i
+   zapiše gdje je koje slovo palo; slova unutar okvira se razdvoje u neprekinute
+   nizove (prekid je i skok rednog broja i skok položaja unatrag ili u drugi
+   redak), pa se uzme niz koji je duljinom najbliži broju slova tog teksta. Bez
+   podjele po položaju se dva susjedna teksta stope u jedan niz, jer pravokutnik
+   između njih nije poziv za crtanje slova pa redni brojevi teku dalje.
+
+   **Zašto ne stara izvedba:** prije se pri mjerenju preskakalo piksele koji
+   padaju u tuđi okvir. To je davalo lažne uzbune u oba smjera — okvir vidljivog
+   natpisa viši od okvira zakopanog teksta pojeo bi sve piksele koje treba
+   gledati, pa bi vidljiv natpis ispao nevidljiv. Ciljano crtanje nema tu
+   pogrešku jer ne pretpostavlja ništa o okvirima.
+
+   Ako bi preklopljenih tekstova na stranici bilo više od 60, mjerenje bi trajalo
+   predugo, pa se `rez.mjereno` postavlja na `false` i alat pošteno kaže da
+   vidljivost nije izmjerio. Ni pogađanja ni šutnje.
 
 Ono čega na nacrtanoj stranici uopće nema provjera vidljivosti ne može vidjeti,
 pa se čita zasebno: **isključeni slojevi** (tekst koji pdf.js prijavi, a na
 čijem mjestu nije naslikano nijedno slovo), **tekst gurnut izvan stranice**
 (ono što je u popisu naredbi, a čitač teksta ga uopće ne vrati), polja obrasca,
 komentari, svojstva dokumenta i **ugrađeni JavaScript**.
+
+### PDF ima dva izvora teksta i oni se NE uspoređuju neobrađeni
+
+**Ovo je uzrok obiju grešaka nađenih na pravom zaraženom životopisu (v5.0), pa
+neka stoji zapisano da se ne ponovi.**
+
+pdf.js daje tekst iz dva izvora i oni ne pišu isto:
+
+| izvor | ima položaj | ima nevidljive znakove | ima tekst izvan stranice |
+|---|---|---|---|
+| `getTextContent()` — čitač teksta | da | **ne**, izbacuje ih | **ne** |
+| `getOperatorList()` `showText` — popis naredbi | ne, ne upotrebljivo | **da**, svaki znak | **da** |
+
+Ta se dva popisa uspoređivala neobrađena: što je u popisu naredbi, a nije
+pronađeno u čitaču teksta, proglasilo bi se gurnutim izvan stranice. Naslov koji
+u sebi nosi nevidljivi znak zato se **nije pronašao**, pa je vidljiv naslov na
+sredini prve stranice prijavljen kao "izvan stranice" — **lažna uzbuna na nečemu
+što korisnik svojim očima vidi da nije istina**. Istim propustom nevidljivi
+znakovi iz popisa naredbi nikad nisu stigli do alata, pa ih u PDF-u nije
+prijavljivao, iako ih u Wordu i zalijepljenom tekstu prijavljuje uredno. **Jedan
+uzrok, dvije greške.**
+
+Popravak nije zakrpa za taj slučaj nego uklanjanje mogućnosti da se sadržaj i
+položaj raziđu. Popisi se **uparuju po sadržaju**, na zajedničkom nazivniku bez
+nevidljivih znakova i razmaka (`nazivnik()` u `js/pdfread.js`). Kad se stavka
+upari, u tekst se **vrati zapis iz popisa naredbi**, jer je u njemu sačuvan svaki
+znak — tako nevidljivi znakovi dođu do detekcije. Naredbe koje nitko ne preuzme
+nisu na stranici uopće, dakle stvarno jesu gurnute izvan nje.
+
+**Pravilo za dalje:** ako se u čitanju PDF-a ikad bude uspoređivalo dva popisa
+teksta, usporedba ide preko `nazivnik()`, nikad preko sirovog niza znakova.
+
+**Načelo koje ovo ne krši:** OwlUV je radar bez praga i ne prešućuje istinit
+nalaz ma koliko slab bio. Uklanjanje **neistinite** tvrdnje nije uvođenje praga.
+Lažna uzbuna na vidljivom naslovu je ozbiljnija od propuštenog nalaza, jer
+korisnik može sam provjeriti da nije istina i onda prestane vjerovati svemu
+ostalom.
 
 **Ugrađeni JavaScript se NIKAD ne izvršava.** Čita se kao tekst i prijavljuje.
 `isEvalSupported` je isključen i sandbox se nikad ne stvara. Test to provjerava
@@ -421,8 +502,8 @@ pri tipkanju nego upozorenje*.
 
 ### Objava
 
-Faza 2b je gotova. Sljedeće je objava: repozitorij u javni, stranica na
-`owluv.com`.
+Faza 2b je gotova, a v5.1 je zatvorila ono što je pravi zaraženi PDF pokazao.
+Sljedeće je objava: repozitorij u javni, stranica na `owluv.com`.
 
 Prije objave vrijedi provjeriti rukom u pravom pregledniku ono što se bez
 sučelja ne može: da se drugi PDF učita bez ponovnog otvaranja stranice, da

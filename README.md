@@ -208,7 +208,7 @@ Testni dokument `test-skriveno.docx` sadrži sve vrste skrivenog sadržaja
 odjednom. `test-bez-teksta.docx` sadrži samo sliku i nijedno slovo.
 `test-cist.docx` je kontrolni uzorak bez ijedne zamke.
 
-### Rezultat zadnjeg pokretanja: 22.08.2026., 296 provjera, sve prošle
+### Rezultat zadnjeg pokretanja: 22.08.2026., 312 provjera, sve prošle
 
 | Provjera | Rezultat |
 |---|---|
@@ -290,6 +290,12 @@ odjednom. `test-bez-teksta.docx` sadrži samo sliku i nijedno slovo.
 | PDF: skenirani PDF daje sivu presudu, nikad zelenu | prošao |
 | PDF: ugrađeni JavaScript se prijavljuje, a ne izvršava | prošao |
 | PDF: napomena o rekonstrukciji postoji na svih 6 jezika | prošao |
+| PDF: zaraženi životopis, svih šest skrivenih tekstova otkriveno | prošao |
+| PDF: izvan stranice je točno jedan ulomak, i to onaj koji stvarno jest izvan | prošao |
+| PDF: nijedan vidljiv tekst nije prijavljen kao izvan stranice | prošao |
+| PDF: nevidljivi Unicode znakovi u vidljivom naslovu se prijavljuju | prošao |
+| PDF: očišćena kopija nema nijedne riječi iz skrivenog sadržaja, a ima cijeli vidljivi | prošao |
+| PDF: isto vrijedi i za datoteku spremljenu kao Word | prošao |
 
 ## Granice veličine
 
@@ -315,9 +321,23 @@ taj tekst se ne vidi. Nije važno je li skriven bijelom bojom, bojom jednakom
 podlozi, pravokutnikom preko njega, nevidljivim načinom crtanja ili nečim što
 još nitko nije smislio. To se ne može zaobići novim trikom.
 
+Kad su dva teksta nacrtana jedan preko drugoga, iz jednog crtanja se ne može
+zaključiti čija su slova ostavila trag. Za takav se tekst stranica nacrta još
+jednom, **bez baš tog teksta i sa svime ostalim**, pa se usporedi. Tako vidljiv
+natpis ne može prikriti zakopani tekst ispod sebe, ni obrnuto. Ako bi takvih
+preklopljenih tekstova na stranici bilo previše, alat neće ni pogađati ni
+šutjeti, nego kaže da vidljivost nije izmjerio.
+
 Ono čega na nacrtanoj stranici uopće nema provjera vidljivosti ne može vidjeti,
 pa se čita zasebno: isključeni slojevi, tekst gurnut izvan stranice, polja
 obrasca, komentari, svojstva dokumenta i ugrađeni JavaScript.
+
+**Tekst se u PDF-u čita iz dva izvora i oni se ne uspoređuju neobrađeni.** Jedan
+izvor zna gdje slovo stoji ali izbacuje nevidljive znakove, drugi ima svaki znak
+ali ne zna položaj. Uparuju se po sadržaju, na zajedničkom nazivniku bez
+nevidljivih znakova i razmaka, pa se sadržaj i položaj ne mogu razići. Odatle
+dolaze i nevidljivi znakovi u PDF-u i točan popis onoga što je stvarno gurnuto
+izvan stranice.
 
 ### Knjižnica
 
@@ -366,6 +386,7 @@ Svaka zamka ima svoju testnu datoteku u `test/`, napravljenu generatorom
 | skrivena lista vještina bez ijedne naredbe | otkriveno, sva tri retka |
 | čist PDF | nijedan nalaz, zelena presuda |
 | PDF koji je samo slika | siva presuda "nema što provjeriti", nikad zelena |
+| **zaraženi životopis s osam zamki odjednom** | svih šest skrivenih tekstova, točno **jedan** ulomak izvan stranice, oba nevidljiva znaka u vidljivom naslovu, zatrovana svojstva; nijedan vidljiv tekst nije lažno prijavljen |
 
 ## Mjerenje na skupu primjera
 
@@ -578,6 +599,52 @@ stalo do točnog značenja.
 
 ## Povijest izmjena
 
+### 22.08.2026. — v5.1, popravci nakon testa pravim zaraženim PDF-om
+
+Alat je isproban na pravom životopisu s osam zamki. Šest skrivenih tekstova,
+svojstva dokumenta i sumnjive rečenice bili su točni, očišćena kopija također.
+Dvije stvari nisu bile točne, i obje su imale isti uzrok.
+
+**Nema više lažne uzbune na vidljivom naslovu.** Alat je tvrdio da su dva
+ulomka gurnuta izvan stranice, a izvan stranice je bio samo jedan. Drugi je bio
+naslov koji stoji na sredini prve stranice i vidi se golim okom. Takva tvrdnja
+je gora od propuštenog nalaza: korisnik svojim očima vidi da nije istina, pa
+prestane vjerovati i svemu ostalom što alat kaže. Načelo "prikaži sve, bez
+praga" nije time načeto — nijedan istinit nalaz nije uklonjen, uklonjena je
+neistinita tvrdnja.
+
+**Nevidljivi znakovi se sada nalaze i u PDF-u.** Naslov je u sebi nosio dva
+nevidljiva Unicode znaka, koje je alat u Wordovu dokumentu i zalijepljenom
+tekstu uredno prijavljivao, a u PDF-u ne. Sada ih prijavljuje jednako, na sva
+tri puta.
+
+**Uzrok je bio jedan, i popravak je jedan.** PDF daje tekst iz dva izvora, a oni
+ne pišu isto: jedan zna gdje slovo stoji ali izbacuje nevidljive znakove, drugi
+ima svaki znak ali ne zna položaj. Ta su se dva popisa uspoređivala neobrađena.
+Naslov s nevidljivim znakom zato se u prvom popisu nije pronašao, pa je ispao
+"izvan stranice", a nevidljivi znakovi iz drugog popisa nikad nisu stigli do
+alata. Sada se ta dva popisa uparuju po sadržaju, na zajedničkom nazivniku bez
+nevidljivih znakova i razmaka. Sadržaj i položaj se time više ne mogu razići ni
+u ovom slučaju ni u nekom drugom.
+
+**Usput je maknuta još jedna vrsta lažne uzbune.** Kad su dva teksta nacrtana
+jedan preko drugoga, iz jednog crtanja se nije moglo zaključiti čija su slova
+ostavila trag, pa je vidljiv natpis znao prikriti zakopani tekst ispod sebe, ili
+obrnuto. Sada se za takav tekst stranica nacrta još jednom, bez baš tog teksta i
+sa svime ostalim, pa se usporedi. To je doslovno ono što provjera vidljivosti
+znači. Ako bi takvih preklopljenih tekstova na stranici bilo previše, alat neće
+ni pogađati ni šutjeti, nego pošteno kaže da vidljivost nije izmjerio.
+
+**Novi testni PDF** `pdf-zivotopis.pdf` je preslika onoga na kojem su greške
+nađene: bijelo na bijelom, nevidljiv način crtanja, tekst zakopan ispod
+neprozirnog pravokutnika, dva retka u boji jednakoj polju ispod njih (a nije
+bijela), tekst od 1 pt u donjoj margini, tekst gurnut na negativnu koordinatu,
+dva nevidljiva znaka unutar vidljivog naslova, zatrovana svojstva dokumenta, i
+uz sve to običan vidljiv životopis. Provjerava se i da je izvan stranice točno
+jedan ulomak, da nijedan vidljiv tekst nije prijavljen kao izvan stranice, i da
+očišćena kopija — i ona kopirana i ona spremljena kao Word — nema nijedne riječi
+iz skrivenog sadržaja, a ima cijeli vidljivi sadržaj.
+
 ### 22.08.2026. — v5.0, faza 2b: OwlUV čita PDF
 
 **PDF se sada čita, istim putem kojim ide i Word.** Datoteka se učita, pretvori
@@ -618,7 +685,7 @@ zasebnom odjeljku gore.
 
 **Napravljen je generator testnih PDF-ova** i jedanaest testnih datoteka, po
 jedna za svaku vrstu zamke plus čist i skeniran uzorak. Svaka je pokrivena
-provjerom u testu; rezultat je u tablici gore. Ukupno 296 provjera, sve prolaze.
+provjerom u testu; rezultat je u tablici gore. Ukupno 312 provjera, sve prolaze.
 
 ### 21.08.2026. — v4.8: radar ide na samo dno, uz jasnije upozorenje
 
