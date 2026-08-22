@@ -286,6 +286,11 @@
   .progress li .dot{font-family:var(--mono);font-size:11px;width:14px;text-align:center;color:var(--uv)}
   .progress li.done{color:var(--ink)}
   .progress li.now{color:var(--uv);font-weight:700}
+  /* Gumb za prekid: pojavljuje se samo dok posao stvarno traje, da korisnik ne
+     mora zatvarati stranicu ako je ubacio dokument od tristo stranica. */
+  .progress .cancel{display:none;margin-top:10px;border-color:var(--danger);color:var(--danger)}
+  .progress .cancel:hover{background:var(--danger-bg)}
+  .progress.canstop .cancel{display:inline-block}
 
   /* ---- puls na crvenoj presudi ----
      Jedan ciklus 1,6 s (0,6 Hz), najvise tri ciklusa, pa mir. Nikad blizu
@@ -367,7 +372,8 @@
 </header>
 <main class="wrap">
   <div id="verdict" class="verdict"><div class="big" id="verdictBig"></div><div class="sub" id="verdictSub"></div></div>
-  <div id="progress" class="progress"><div class="ph" id="progressH"></div><ol id="progressList"></ol></div>
+  <div id="progress" class="progress"><div class="ph" id="progressH"></div><ol id="progressList"></ol>
+    <button id="cancelBtn" class="btn ghost sm cancel" type="button"></button></div>
   <div class="grid">
     <section class="panel">
       <div class="panel-h">

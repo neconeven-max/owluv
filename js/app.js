@@ -35,6 +35,9 @@
   const toast=$('toast');
   const staleBar=$('staleBar'), staleMsg=$('staleMsg');
   const progress=$('progress'), progressH=$('progressH'), progressList=$('progressList');
+  const cancelBtn=$('cancelBtn');
+  // Zastavica za prekid dugotrajne obrade. Cita je citac PDF-a izmedu stranica.
+  let prekidTrazen=false;
   const metaDesc=document.querySelector('meta[name="description"]');
 
   let hasScanned=false;
@@ -85,6 +88,8 @@
     if(!prog) return;
     const t=T();
     progressH.textContent=t.stepsTitle;
+    cancelBtn.textContent=t.cancelBtn;
+    cancelBtn.title=t.cancelTip;
     progressList.innerHTML=prog.on.map(x=>
       '<li class="'+x.state+'"><span class="dot">'+(x.state==='done'?'✓':'…')+'</span>'+
       esc(t[x.k]||x.k)+'</li>').join('');
@@ -104,7 +109,8 @@
   function progAppear(){
     if(!prog||prog.shown||prog.workDone) return;
     prog.shown=true; progEverShown=true;
-    progress.className='progress on';
+    // Gumb za prekid nudi se samo dok posao stvarno traje.
+    progress.className='progress on'+(prog.mozeStati?' canstop':'');
     progPlay();
   }
   // posao javlja da je zapoceo korak; ne ceka nista
@@ -366,16 +372,32 @@
         const cp=ch.codePointAt(0);
         return !INVISIBLE[cp]&&!isVariation(cp)&&!isTag(cp)&&!/\s/.test(ch);
       }).length;
-      if(loaded&&realChars===0){
+      const danger=findings.some(f=>f.sev==='danger');
+      const warn=findings.some(f=>f.sev==='warn'||f.sev==='uv');
+      const info=findings.some(f=>f.sev==='info');
+
+      // Dokument koji nije provjeren u cijelosti NIKAD ne dobiva zelenu presudu,
+      // po istom pravilu po kojem je ne dobiva ni dokument bez teksta: lazna
+      // sigurnost je gora od nikakve. Presuda to kaze svojim rijecima, da se ne
+      // pomijesa s obicnim upozorenjem o neuobicajenim znakovima.
+      // Ovo stoji IZNAD provjere praznog teksta: prekinut dokument nije dokument
+      // "bez teksta", pa mu se ne smije reci "nema sto provjeriti" - to bi bila
+      // tvrdnja o dokumentu, a alat u njega nije ni usao.
+      const pdf=loaded&&loaded.pdf;
+      const dio=pdf&&pdf.provjereno<pdf.pages;
+      if(dio&&!danger){
+        if(pdf.provjereno===0) setVerdict('v-warn',t.vStoppedBig,t.vStoppedSub(pdf.pages));
+        else setVerdict('v-warn',t.vPartBig,t.vPartSub(pdf.provjereno,pdf.pages));
+        return;
+      }
+
+      if(loaded&&realChars===0&&!dio){
         const sliku=(loaded.docx&&loaded.docx.hasImages)||(loaded.pdf&&loaded.pdf.hasImages);
         setVerdict('v-none',t.vNoneBig,sliku?t.vNoneSubImg:t.vNoneSub);
         return;
       }
-      if(text.trim()===''){ setVerdict('','',''); return; }
+      if(text.trim()===''&&!dio){ setVerdict('','',''); return; }
 
-      const danger=findings.some(f=>f.sev==='danger');
-      const warn=findings.some(f=>f.sev==='warn'||f.sev==='uv');
-      const info=findings.some(f=>f.sev==='info');
       if(danger) setVerdict('v-danger',t.vDangerBig,t.vDangerSub);
       else if(warn) setVerdict('v-warn',t.vWarnBig,t.vWarnSub);
       // zelena uz plave nalaze ne smije tvrditi da nema nicega
@@ -746,15 +768,29 @@
     findCount.textContent='-'; charCount.textContent=t.chars(0);
     hasScanned=false;
   }
+  // Klik na prekid samo podize zastavicu. Posao je sam procita izmedu stranica
+  // i stane uredno, s onim sto je do tada provjerio. Nista se ne prekida nasilno.
+  cancelBtn.addEventListener('click',()=>{
+    prekidTrazen=true;
+    cancelBtn.disabled=true;
+    cancelBtn.textContent=T().cancelDone;
+  });
+
   async function handleFile(file){
     const t=T();
     hidePasteNote('pasteNothing');
     lastError=null;
     setVerdict('v-none',t.reading,file.name);
     owlSweep();
+    prekidTrazen=false;
+    cancelBtn.disabled=false;
     progBegin();
+    // Prekid se nudi samo kod PDF-a: to je jedini put koji na velikom dokumentu
+    // moze trajati dugo, jer se svaka stranica crta.
+    if(prog) prog.mozeStati=(F.kindOf&&F.kindOf(file)==='pdf');
     progStep('stepRead');
-    const res=await F.load(file,t,k=>{ if(typeof k==='string') progStep(k); });
+    const res=await F.load(file,t,k=>{ if(typeof k==='string') progStep(k); },
+                           ()=>prekidTrazen);
     if(!res.ok){ progHide(); fileError(res.msgKey); return; }
     loaded={name:file.name,size:file.size,source:res.source,docx:res.docx||null,pdf:res.pdf||null};
     setContent(res.html);          // jedna datoteka odjednom: zamjenjuje sadrzaj

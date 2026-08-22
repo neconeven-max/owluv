@@ -11,7 +11,7 @@
    Datoteke korisnika ne prolaze kroz radnika: citaju se u pregledniku iz
    memorije i nikad ne odlaze u mrezni sloj. */
 
-const OSTAVA = 'owluv-v6.0';
+const OSTAVA = 'owluv-v6.1';
 
 // Sve sto alat treba za rad. Test i standalone inacica namjerno nisu tu.
 const DATOTEKE = [

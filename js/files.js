@@ -60,7 +60,7 @@
        {ok:true, html, source:'text'|'html'|'docx'|'pdf', docx?:..., pdf?:...}
        {ok:false, msgKey:'errDoc'|'errPdf'|'errPdfRead'|'errType'|'errTooBig'|'errTooLong'
                         |'errRead'|'errDocx'|'errDocxLocked'|'errUnreadable'} */
-  async function load(file,t,onStep){
+  async function load(file,t,onStep,prekinuto){
     if(!file) return {ok:false,msgKey:'errRead'};
     if(file.size>MAX) return {ok:false,msgKey:'errTooBig'};
     const kind=kindOf(file);
@@ -72,7 +72,7 @@
       let parsed;
       try{
         if(typeof onStep==='function') onStep('stepPdfDraw');
-        parsed=await OwlUV.pdf.parse(new Uint8Array(buf),onStep);
+        parsed=await OwlUV.pdf.parse(new Uint8Array(buf),onStep,prekinuto);
       }catch(e){ return {ok:false,msgKey:'errPdfRead'}; }
       const html=OwlUV.pdf.toHtml(parsed,t);
       if(html.length>MAX_TEXT) return {ok:false,msgKey:'errTooLong'};
