@@ -15,7 +15,9 @@
    ociscenog teksta kao nove .docx datoteke.
    v4.6 dodaje: prepoznavanje po signalima (js/signals.js) uz postojeci popis
    fraza, i kvacice kojima korisnik sam bira koje se VIDLJIVE recenice brisu iz
-   kopije. Skriveni sadrzaj se i dalje brise uvijek, bez pitanja. */
+   kopije. Skriveni sadrzaj se i dalje brise uvijek, bez pitanja.
+   v5.0 dodaje citanje PDF-a (js/pdfread.js) s provjerom vidljivosti: stranica
+   se nacrta dvaput i mjeri se vidi li se tekst uopce. */
 (function(){
   const OwlUV = window.OwlUV;
   const D = OwlUV.detect, F = OwlUV.files, I18N = OwlUV.I18N;
@@ -339,6 +341,9 @@
     if(loaded&&loaded.docx) steps.push({k:'stepProps',fn(){
       OwlUV.docx.findings(loaded.docx,t).forEach(f=>g.docx.push(f));
     }});
+    if(loaded&&loaded.pdf) steps.push({k:'stepProps',fn(){
+      OwlUV.pdf.findings(loaded.pdf,t).forEach(f=>g.docx.push(f));
+    }});
 
     function finish(){
       // Popis se slaze po OZBILJNOSTI, a ne po tome kojim su redom izracunati.
@@ -362,7 +367,8 @@
         return !INVISIBLE[cp]&&!isVariation(cp)&&!isTag(cp)&&!/\s/.test(ch);
       }).length;
       if(loaded&&realChars===0){
-        setVerdict('v-none',t.vNoneBig,(loaded.docx&&loaded.docx.hasImages)?t.vNoneSubImg:t.vNoneSub);
+        const sliku=(loaded.docx&&loaded.docx.hasImages)||(loaded.pdf&&loaded.pdf.hasImages);
+        setVerdict('v-none',t.vNoneBig,sliku?t.vNoneSubImg:t.vNoneSub);
         return;
       }
       if(text.trim()===''){ setVerdict('','',''); return; }
@@ -723,7 +729,10 @@
     fileInfo.textContent=loaded.name+' · '+F.fmtSize(loaded.size);
     fileInfo.title=loaded.name;
     fileInfo.style.display='inline-block';
-    reconNote.style.display=(loaded.source==='docx')?'block':'none';
+    const t=T();
+    if(loaded.source==='docx'){ reconNote.textContent=t.noteRecon; reconNote.style.display='block'; }
+    else if(loaded.source==='pdf'){ reconNote.textContent=t.noteReconPdf; reconNote.style.display='block'; }
+    else reconNote.style.display='none';
   }
   function fileError(msgKey,bigKey){
     loaded=null; showFileInfo();
@@ -745,9 +754,9 @@
     owlSweep();
     progBegin();
     progStep('stepRead');
-    const res=await F.load(file,t);      // stvarno cekanje na disk, bez dodatka
+    const res=await F.load(file,t,k=>{ if(typeof k==='string') progStep(k); });
     if(!res.ok){ progHide(); fileError(res.msgKey); return; }
-    loaded={name:file.name,size:file.size,source:res.source,docx:res.docx||null};
+    loaded={name:file.name,size:file.size,source:res.source,docx:res.docx||null,pdf:res.pdf||null};
     setContent(res.html);          // jedna datoteka odjednom: zamjenjuje sadrzaj
     showFileInfo();
     await scanWithProgress();
@@ -810,6 +819,8 @@
     // poruka o gresci se ne racuna ponovno kroz skeniranje, pa se prevodi ovdje
     if(lastError) setVerdict('v-err',t[lastError.bigKey],t[lastError.msgKey]);
     if(loaded&&loaded.docx) setContent(OwlUV.docx.toHtml(loaded.docx,t));  // oznake aneksa na novom jeziku
+    else if(loaded&&loaded.pdf) setContent(OwlUV.pdf.toHtml(loaded.pdf,t));
+    if(loaded) showFileInfo();
     if(isStale()) staleMsg.textContent=t.staleWarn;
     if(!hasScanned){
       viz.innerHTML='<div class="empty">'+esc(t.vizEmpty)+'</div>';
@@ -990,7 +1001,10 @@
     setLang(l){ const b=document.querySelector('.lang[data-lang="'+l+'"]'); if(b) b.click(); },
     state(){ return {
       lang:LANG,
-      file:loaded?{name:loaded.name,size:loaded.size,source:loaded.source}:null,
+      file:loaded?{name:loaded.name,size:loaded.size,source:loaded.source,
+                   pages:loaded.pdf?loaded.pdf.pages:0,
+                   ms:loaded.pdf?loaded.pdf.ms:0,
+                   mjereno:loaded.pdf?loaded.pdf.mjereno:null}:null,
       verdict:verdict.className.replace('verdict','').replace('pulse','').trim(),
       pulsing:verdict.classList.contains('pulse'),
       verdictBig:verdictBig.textContent,
