@@ -1,5 +1,15 @@
 .DS_Store
 *.swp
 node_modules/
+
 # privremene datoteke mjerenja i snimaka
 test/_*.html
+
+# ZASTITA: privatne biljeske nikad ne ulaze u repozitorij.
+# Original je na iMac Serveru, uz INFRASTRUKTURA.md. Ako se takva datoteka
+# slucajno nade u radnoj mapi, git je nece ni ponuditi za dodavanje.
+*PRIVATNO*
+*privatno*
+*PRIVATE*
+*-private.*
+INFRASTRUKTURA.md
