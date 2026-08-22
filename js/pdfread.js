@@ -44,6 +44,31 @@
   const PRAG_BOJE=12;       // najmanja razlika kanala koja se jos vidi
   const PRAG_PIKSELA=3;     // koliko takvih piksela treba da tekst zovemo vidljivim
 
+  // ---------- GRANICE, DA SE ALAT NIKAD NE ZAMRZNE ----------
+  // Granica velicine datoteke ne pomaze, jer posao ne ovisi o bajtovima nego o
+  // tome koliko stranica treba nacrtati. Katalog od 15 MB s puno stranica i
+  // slika zna crtati minutama, a stranica se u meduvremenu ne odaziva.
+  // Zato dvije granice, i obje se korisniku izricito jave:
+  const NAJVISE_STRANICA=100;      // koliko se stranica uopce obraduje
+  const NAJVISE_CILJANIH=60;       // preklopljenih tekstova po stranici
+  const NAJVISE_CILJANIH_UKUPNO=200;  // i po cijelom dokumentu
+
+  // Predah izmedu stranica: bez njega crtanje drzi jedinu dretvu preglednika
+  // od pocetka do kraja, pa se sucelje ne odaziva, prikaz tijeka se ne vidi i
+  // gumb za prekid se ne moze ni pritisnuti.
+  // Predah ide preko MessageChannel, a NE preko setTimeout. Dva razloga:
+  // setTimeout(0) preglednik uspori na oko 4 ms, sto na tristo stranica samo od
+  // sebe pojede vise od sekunde; i pod virtualnim satom (preglednik bez sucelja
+  // u testu) zna se uopce ne ispaliti, pa bi obrada visjela zauvijek.
+  // MessageChannel je obican zadatak petlje dogadaja i ne ovisi ni o kakvom satu.
+  const predah = () => new Promise(r=>{
+    try{
+      const k=new MessageChannel();
+      k.port1.onmessage=()=>r();
+      k.port2.postMessage(0);
+    }catch(e){ setTimeout(r,0); }
+  });
+
   // PDF daje tekst iz DVA izvora, a oni ne pisu isto:
   //  - citac teksta (getTextContent) zna polozaj, ali IZBACUJE nevidljive
   //    Unicode znakove i ne vraca tekst nacrtan izvan stranice
@@ -57,6 +82,8 @@
   // znakovi se vracaju u tekst iz popisa naredbi, gdje su sacuvani.
   const NEVIDLJIVI=/[\u00AD\u061C\u180E\u200B-\u200F\u2060\uFEFF]/g;
   const nazivnik = s => String(s||'').replace(NEVIDLJIVI,'').replace(/\s+/g,'');
+  // ista skupina znakova bez oznake /g, za provjeru bez pamcenja polozaja
+  const IMA_NEVIDLJIVIH=new RegExp(NEVIDLJIVI.source);
 
   // pdf.js je velik (oko 1,5 MB), pa se ucitava TEK kad stigne prvi PDF.
   // Tko lijepi tekst ili ucitava Word ne placi tu cijenu. Ucitava se s diska,
@@ -95,7 +122,8 @@
 
   /* Cita jedan PDF. bytes je Uint8Array.
      onStep se zove s brojem obradenih stranica, radi prikaza tijeka. */
-  async function parse(bytes,onStep){
+  async function parse(bytes,onStep,prekinuto){
+    const stani = () => (typeof prekinuto==='function'&&prekinuto());
     await ensure();
     const pdfjs=lib();
     pdfjs.GlobalWorkerOptions.workerSrc='';    // radnik ne radi s file://, radi se u glavnoj dretvi
@@ -109,9 +137,11 @@
     });
     const doc=await zadatak.promise;
     const rez={
-      pages:doc.numPages, lines:[], hiddenLayers:[], offPage:[], fields:[],
+      pages:doc.numPages, provjereno:0, prekinuto:false,
+      lines:[], hiddenLayers:[], offPage:[], fields:[],
       notes:[], props:[], js:[], layers:[], hasImages:false, mjereno:true, ms:0
     };
+    let ciljanihUkupno=0;
 
     // ---------- svojstva dokumenta ----------
     try{
@@ -157,7 +187,10 @@
     const SLIKE=[OPS.paintImageXObject,OPS.paintInlineImageXObject,OPS.paintImageMaskXObject,
                  OPS.paintJpegXObject].filter(x=>x!==undefined);
 
-    for(let br=1;br<=doc.numPages;br++){
+    const doKuda=Math.min(doc.numPages,NAJVISE_STRANICA);
+    for(let br=1;br<=doKuda;br++){
+      if(stani()){ rez.prekinuto=true; break; }
+      await predah();          // sucelje dobiva zrak izmedu stranica
       const page=await doc.getPage(br);
       const vpMjera=page.getViewport({scale:MJERILO});
       const vb=page.getViewport({scale:1});
@@ -218,29 +251,41 @@
         } else rez.mjereno=false;
       }
 
-      // ---- uparivanje dvaju izvora teksta ----
-      // Svaka naredba se svrsta po zajednickom nazivniku. Kad citac teksta javi
-      // istu recenicu, uzima se zapis iz popisa naredbi, jer je u njemu sacuvan
-      // svaki znak, i nevidljivi. Naredbe koje nitko ne preuzme nisu na
-      // stranici uopce, dakle gurnute su izvan nje.
+      // ---- je li nacrtani tekst uopce na stranici ----
+      // Dva izvora NE LOME tekst na iste komadice. U obrascu slozenom od tablica
+      // jedan se redak crta u vise navrata, pa popis naredbi ima "Naziv ra",
+      // "cuna /", "broj ra", "cuna", a citac teksta sve to spoji u jednu stavku
+      // "Naziv racuna / broj racuna". Podudarnost komadica jedan-na-jedan zato
+      // NIJE dokaz da je tekst na stranici, a njezin izostanak nije dokaz da
+      // nije. Prisutnost se mjeri po SADRZAJU: nalazi li se ono sto je
+      // nacrtano u tekstu stranice uopce.
+      const tekstStranice=nazivnik(tc.items.map(i=>i.str||'').join(''));
+      opTekst.forEach(niz=>{
+        const k=nazivnik(niz);
+        if(k.length>3&&tekstStranice.indexOf(k)<0) rez.offPage.push(niz);
+      });
+
+      // ---- vracanje nevidljivih znakova ----
+      // Citac teksta izbacuje nevidljive Unicode znakove, popis naredbi ih cuva.
+      // Kad se stavka i naredba poklope po zajednickom nazivniku, uzima se zapis
+      // iz naredbe, jer je u njemu sacuvan svaki znak. Ovo je SAMO dopuna
+      // teksta; o tome je li tekst na stranici ne odlucuje nista od ovoga.
       const karta=new Map();
       opTekst.forEach(niz=>{
+        if(!IMA_NEVIDLJIVIH.test(niz)) return;   // dopunjava se samo ono sto ih nosi
         const k=nazivnik(niz);
         if(!k) return;
         if(!karta.has(k)) karta.set(k,[]);
         karta.get(k).push(niz);
       });
-      tc.items.forEach(it=>{
+      if(karta.size) tc.items.forEach(it=>{
         if(typeof it.str!=='string'||!it.str.trim()) return;
         const lista=karta.get(nazivnik(it.str));
         if(lista&&lista.length){
           const izvorni=lista.shift();
-          if(izvorni&&izvorni!==it.str) it.str=izvorni;   // vrati nevidljive znakove
+          if(izvorni&&izvorni!==it.str) it.str=izvorni;
         }
       });
-      karta.forEach(ostatak=>ostatak.forEach(niz=>{
-        if(nazivnik(niz).length>3) rez.offPage.push(niz);
-      }));
 
       // je li na mjestu ovog teksta uopce naslikano ijedno slovo
       const naslikanoTu=(ax,ay,bx,by)=>glifovi.some(g=>
@@ -362,9 +407,14 @@
       // teksta, pa usporedba. Radi se samo za preklopljene tekstove, jer su
       // rijetki; da ih na nekoj stranici bude jako mnogo, mjerenje bi trajalo
       // predugo, pa se tada posteno kaze da vidljivost nije izmjerena.
-      const NAJVISE_CILJANIH=60;
-      if(zaCiljano.length>NAJVISE_CILJANIH) rez.mjereno=false;
+      // Preko granice se ne mjeri, nego se posteno kaze da vidljivost nije
+      // izmjerena. Granica je i po stranici i po cijelom dokumentu: sto vrijedi
+      // za jednu stranicu s puno preklapanja, vrijedi i za sto takvih stranica.
+      if(zaCiljano.length>NAJVISE_CILJANIH||
+         ciljanihUkupno+zaCiljano.length>NAJVISE_CILJANIH_UKUPNO) rez.mjereno=false;
       else for(const stavka of zaCiljano){
+        if(stani()){ rez.prekinuto=true; rez.mjereno=false; break; }
+        ciljanihUkupno++;
         const o=stavka.okvir, r=stavka.raspon;
         if(!r) continue;                      // nema mu se sto preskociti
         const C=platno(vpMjera);
@@ -410,6 +460,7 @@
       }catch(e){}
 
       page.cleanup();
+      rez.provjereno=br;
       if(typeof onStep==='function') onStep(br,doc.numPages);
     }
 
@@ -469,6 +520,11 @@
       items:r.props.map(p=>({q:p.v,n:t.prop[p.k]||p.k}))});
     if(!r.mjereno) f.push({sev:'warn',rank:41,
       title:t.fNoMeasureTitle,why:t.fNoMeasureWhy});
+    // Dokument koji nije provjeren u cijelosti to mora i reci, jednako kao sto
+    // dokument bez teksta ne dobiva zelenu presudu. Nikad tiho.
+    if(r.provjereno<r.pages) f.push({sev:'warn',rank:9,
+      title:t.fPartTitle(r.provjereno,r.pages),
+      why:r.prekinuto?t.fPartWhyStop:t.fPartWhyLimit});
     return f;
   }
 

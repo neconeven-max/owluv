@@ -229,6 +229,92 @@ jednostavan('pdf-cist.pdf',
   zapisi('pdf-zivotopis.pdf',P.build(objs,'/Info 7 0 R'));
 })();
 
+// ============ 13. sluzbeni obrazac s tablicama, BEZ IJEDNE ZAMKE ============
+// Preslika oblika na kojem je v6.0 dala laznu uzbunu: obrazac slozen od tablica
+// s praznim poljima, gdje je tekst razlomljen na komadice jer se svaki redak
+// crta u vise navrata (Tj za Tj, bez novog Td). Citac teksta te komadice spoji
+// u jednu stavku, a popis naredbi ih drzi razdvojene - i upravo iz te razlike
+// je nastala tvrdnja da je vidljivi tekst "izvan stranice".
+//
+// U ovoj datoteci NEMA NIJEDNE ZAMKE. Sve je vidljivo, crno na bijelom. Sadrzaj
+// je izmisljen: izmisljena ustanova, izmisljena oznaka, prazna polja.
+(function(){
+  // Redak razlomljen na komadice, onako kako to rade programi za obrasce.
+  function razlomljen(x,y,komadi,vel){
+    let s='BT 0 0 0 rg 0 Tr /F1 '+(vel||9)+' Tf '+x+' '+y+' Td';
+    komadi.forEach(k=>{ s+=' '+P.str(k)+' Tj'; });
+    return s+' ET';
+  }
+  // Crte tablice, da dokument stvarno izgleda kao obrazac.
+  function okvir(x,y,sirina,visina,redaka){
+    let s='0.45 w 0.4 0.4 0.4 RG\n';
+    s+=x+' '+y+' '+sirina+' '+visina+' re S\n';
+    const korak=visina/redaka;
+    for(let i=1;i<redaka;i++){
+      const yy=(y+i*korak).toFixed(1);
+      s+=x+' '+yy+' m '+(x+sirina)+' '+yy+' l S\n';
+    }
+    s+=(x+sirina*0.45).toFixed(1)+' '+y+' m '+(x+sirina*0.45).toFixed(1)+' '+(y+visina)+' l S\n';
+    return s;
+  }
+
+  const redci=[
+    ['Naziv ra','cuna /',' broj ra','cuna'],
+    ['Oznaka vrijednosnog papira (','ISIN',')'],
+    ['Mjesto i datum ot','varanja ra','cuna'],
+    ['Podaci o b','urze','vnom posredniku'],
+    ['Ukupan iznos u val','uti izda','nja'],
+    ['Broj odob','renja nadle','znog tijela']
+  ];
+
+  const dijelovi=[
+    T(60,795,'OBRAZAC P-1',{vel:15}),
+    T(60,778,'Zahtjev za otvaranje racuna vrijednosnih papira',{vel:10}),
+    T(60,764,'Ustanova za primjer, Sluzba za primjer',{vel:9}),
+    okvir(60,470,470,270,6)
+  ];
+  redci.forEach((k,i)=>{ dijelparts(dijelovi,k,i); });
+  function dijelparts(niz,komadi,i){
+    niz.push(razlomljen(66,725-i*45,komadi));
+  }
+
+  dijelovi.push(T(60,440,'Popunjava podnositelj zahtjeva. Polja koja se ne odnose na',{vel:9}));
+  dijelovi.push(T(60,427,'podnositelja ostavljaju se prazna.',{vel:9}));
+  dijelovi.push(okvir(60,150,470,260,5));
+  dijelovi.push(razlomljen(66,395,['Prezime i ime, odnosno naziv podnos','itelja']));
+  dijelovi.push(razlomljen(66,350,['Adresa, mjesto i pos','tanski broj']));
+  dijelovi.push(razlomljen(66,305,['Drzava por','ezne rezi','dentnosti']));
+  dijelovi.push(razlomljen(66,260,['Kontakt za obavijesti o stanju ra','cuna']));
+  dijelovi.push(razlomljen(66,215,['Potpis podnositelja i datum']));
+  dijelovi.push(T(60,120,'Stranica 1 od 2',{vel:8}));
+
+  const strana2=[
+    T(60,795,'OBRAZAC P-1 - nastavak',{vel:13}),
+    okvir(60,450,470,300,6),
+    razlomljen(66,730,['Vrsta naloga i nacin izv','rsenja']),
+    razlomljen(66,680,['Oznaka trzis','ta i valuta pod','micanja']),
+    razlomljen(66,630,['Napomena o ogranic','enjima raspol','aganja']),
+    razlomljen(66,580,['Podaci o skrbnis','tvu']),
+    razlomljen(66,530,['Suglasnost za elektronic','ku dostavu']),
+    razlomljen(66,480,['Datum i mjesto']),
+    T(60,420,'Obrazac se predaje u dva primjerka.',{vel:9}),
+    T(60,120,'Stranica 2 od 2',{vel:8})
+  ];
+
+  const objs=[
+    '<< /Type /Catalog /Pages 2 0 R >>',
+    '<< /Type /Pages /Kids [3 0 R 6 0 R] /Count 2 >>',
+    '<< /Type /Page /Parent 2 0 R /MediaBox '+A4+
+      ' /Resources << /Font << /F1 5 0 R >> >> /Contents 4 0 R >>',
+    P.stream('<< >>', dijelovi.join('\n')),
+    '<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>',
+    '<< /Type /Page /Parent 2 0 R /MediaBox '+A4+
+      ' /Resources << /Font << /F1 5 0 R >> >> /Contents 7 0 R >>',
+    P.stream('<< >>', strana2.join('\n'))
+  ];
+  zapisi('pdf-obrazac-tablice.pdf',P.build(objs));
+})();
+
 // ==================== 13. vise stranica, za mjerenje brzine ====================
 function viseStranica(ime,n){
   const objs=['<< /Type /Catalog /Pages 2 0 R >>', null,
@@ -255,5 +341,8 @@ function viseStranica(ime,n){
 viseStranica('pdf-1-stranica.pdf',1);
 viseStranica('pdf-10-stranica.pdf',10);
 viseStranica('pdf-50-stranica.pdf',50);
+// Preko granice od 100 stranica: dokazuje da alat ne zamrzne, da kaze koliko je
+// stranica provjerio i da ne dobiva zelenu presudu jer nije provjeren u cijelosti.
+viseStranica('pdf-300-stranica.pdf',300);
 
 console.log('Gotovo.');
