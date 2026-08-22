@@ -17,9 +17,9 @@ try{
   // Chrome zna ostaviti pomocne procese koji drze izlaz otvorenim, zato tvrdi rok
   const res=spawnSync(CHROME,['--headless','--disable-gpu','--no-sandbox','--no-first-run','--no-default-browser-check',
     '--allow-file-access-from-files','--user-data-dir='+profile,
-    '--virtual-time-budget=60000','--dump-dom',page],
+    '--virtual-time-budget=600000','--dump-dom',page],
     {encoding:'utf8',maxBuffer:64*1024*1024,stdio:['ignore','pipe','ignore'],
-     timeout:150000,killSignal:'SIGKILL'});
+     timeout:600000,killSignal:'SIGKILL'});
   dom=res.stdout||'';
 }finally{ fs.rmSync(profile,{recursive:true,force:true}); }
 const m=/<pre id="out">([\s\S]*?)<\/pre>/.exec(dom);

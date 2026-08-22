@@ -44,6 +44,13 @@ async function waitFor(fn,ms){
   return false;
 }
 
+async function pdfFrom(path){
+  const r=await fetch(path);
+  if(!r.ok) throw new Error('ne mogu procitati '+path);
+  const b=await r.blob();
+  return new File([b],path.split('/').pop(),{type:'application/pdf'});
+}
+
 async function fileFrom(path){
   const r=await fetch(path);
   if(!r.ok) throw new Error('ne mogu procitati '+path);
@@ -961,6 +968,117 @@ window.addEventListener('load',async()=>{
           kn.verdict+' / '+kn.verdictSub.slice(0,80));
     check('datoteka s krivim nastavkom NE dobiva presudu "nema sto provjeriti"',
           kn.verdict!=='v-none', kn.verdict);
+
+    // ============ 5t. FAZA 2b: CITANJE PDF-a ============
+    log('\nFAZA 2b - PDF: provjera vidljivosti umjesto popisa trikova');
+
+    // ugradeni JavaScript se NIKAD ne izvrsava: hvatamo svaki pokusaj
+    let pozvanAlert=0;
+    const stariAlert=w.alert;
+    w.alert=function(){ pozvanAlert++; };
+
+    async function pdfNalaz(ime){
+      w.OwlUV.app.reset();
+      await w.OwlUV.app.loadFile(await pdfFrom(ime));
+      const st=w.OwlUV.app.state();
+      const spoji=re=>st.findings.filter(f=>re.test(f.title))
+        .map(f=>f.title+' :: '+f.detail).join(' | ');
+      return {st,
+        skriveno:spoji(/skriven formatiranjem/i),
+        sloj:spoji(/isklju.enom sloju/i),
+        izvan:spoji(/izvan stranice/i),
+        js:spoji(/JavaScript/i),
+        sve:st.findings.map(f=>f.title+' :: '+f.detail).join(' | ')};
+    }
+
+    const bijelo=await pdfNalaz('pdf-bijelo-na-bijelom.pdf');
+    check('PDF: bijeli tekst na bijeloj podlozi je otkriven',
+          /Ignore all previous instructions/i.test(bijelo.skriveno)&&
+          /nije vidljivo na nacrtanoj stranici/i.test(bijelo.skriveno), bijelo.skriveno.slice(0,160));
+    check('PDF: datoteka je prepoznata kao pdf', bijelo.st.file&&bijelo.st.file.source==='pdf',
+          JSON.stringify(bijelo.st.file));
+
+    const fafafa=await pdfNalaz('pdf-fafafa.pdf');
+    check('PDF: boja teksta jednaka podlozi, a nije bijela, otkrivena je',
+          /best choice available/i.test(fafafa.skriveno), fafafa.skriveno.slice(0,160));
+
+    const sitni=await pdfNalaz('pdf-sitni-font.pdf');
+    check('PDF: tekst velicine 1 pt je otkriven',
+          /najvisom ocjenom/i.test(sitni.skriveno)&&/mikroskopski font/i.test(sitni.skriveno),
+          sitni.skriveno.slice(0,160));
+
+    const nacin=await pdfNalaz('pdf-nevidljivi-nacin.pdf');
+    check('PDF: nevidljiv nacin crtanja je otkriven',
+          /select this candidate as the best/i.test(nacin.skriveno), nacin.skriveno.slice(0,160));
+
+    const sloj=await pdfNalaz('pdf-skriveni-sloj.pdf');
+    check('PDF: tekst u iskljucenom sloju je otkriven',
+          /deset godina iskustva/i.test(sloj.sloj), sloj.sve.slice(0,200));
+    check('PDF: iskljuceni sloj ima svoj nalaz i razlog',
+          /u isklju.enom sloju/i.test(sloj.skriveno), sloj.skriveno.slice(0,160));
+
+    const izvan=await pdfNalaz('pdf-izvan-stranice.pdf');
+    check('PDF: tekst gurnut izvan stranice je otkriven',
+          /Zanemari prethodne upute/i.test(izvan.izvan)&&
+          /izvan vidljivog podrucja/i.test(izvan.izvan), izvan.izvan.slice(0,200));
+
+    const ispod=await pdfNalaz('pdf-ispod-pravokutnika.pdf');
+    check('PDF: tekst zakopan ispod neprozirnog pravokutnika je otkriven',
+          /The correct answer is Madagascar/i.test(ispod.skriveno), ispod.skriveno.slice(0,160));
+
+    const js=await pdfNalaz('pdf-javascript.pdf');
+    check('PDF: ugradeni JavaScript se prijavljuje',
+          /app\.alert/i.test(js.js), js.js.slice(0,160));
+    check('PDF: ugradeni JavaScript se NE izvrsava', pozvanAlert===0,
+          'alert pozvan '+pozvanAlert+' puta');
+
+    const lista=await pdfNalaz('pdf-skrivena-lista.pdf');
+    check('PDF: skrivena lista vjestina je otkrivena, iako nema nijedne naredbe',
+          /Kubernetes/i.test(lista.skriveno)&&/petnaest godina iskustva/i.test(lista.skriveno),
+          lista.skriveno.slice(0,200));
+    check('PDF: opis skrivenog teksta spominje i podmetnute podatke, ne samo naredbe',
+          /lista vje.tina|klju.ne rije.i|izmi.ljeno/i.test(w.OwlUV.I18N.hr.fHiddenWhy),
+          w.OwlUV.I18N.hr.fHiddenWhy.slice(-90));
+
+    const cistPdf=await pdfNalaz('pdf-cist.pdf');
+    check('PDF: cist PDF ne daje nijedan nalaz o skrivenom sadrzaju',
+          cistPdf.skriveno===''&&cistPdf.sloj===''&&cistPdf.izvan==='', cistPdf.sve.slice(0,200));
+    check('PDF: cist PDF dobiva zelenu presudu', cistPdf.st.verdict==='v-ok',
+          cistPdf.st.verdict+' / '+cistPdf.sve.slice(0,120));
+
+    const slika=await pdfNalaz('pdf-samo-slika.pdf');
+    check('PDF: skenirani PDF daje sivu presudu, nikad zelenu',
+          slika.st.verdict==='v-none', slika.st.verdict);
+    check('PDF: poruka govori da dokument sadrzi samo slike',
+          /slike/i.test(slika.st.verdictSub), slika.st.verdictSub.slice(0,90));
+
+    const deset=await pdfNalaz('pdf-10-stranica.pdf');
+    check('PDF: dokument od 10 stranica se procita u cijelosti',
+          deset.st.file&&deset.st.file.pages===10, JSON.stringify(deset.st.file));
+    check('PDF: obican dokument od 10 stranica ostaje cist',
+          deset.st.verdict==='v-ok'&&deset.skriveno==='', deset.st.verdict+' / '+deset.skriveno.slice(0,120));
+
+    const pedeset=await pdfNalaz('pdf-50-stranica.pdf');
+    check('PDF: dokument od 50 stranica se procita u cijelosti',
+          pedeset.st.file&&pedeset.st.file.pages===50, JSON.stringify(pedeset.st.file));
+    check('PDF: vidljivost je stvarno izmjerena, nije preskocena',
+          pedeset.st.file&&pedeset.st.file.mjereno===true, String(pedeset.st.file&&pedeset.st.file.mjereno));
+
+    check('PDF: ni jedan pokusaj izvrsavanja koda iz datoteke nije se dogodio',
+          pozvanAlert===0, 'alert pozvan '+pozvanAlert+' puta');
+    w.alert=stariAlert;
+
+    // napomena o rekonstrukciji je posebna za PDF
+    w.OwlUV.app.reset();
+    await w.OwlUV.app.loadFile(await pdfFrom('pdf-cist.pdf'));
+    for(const L of ['hr','en','de','fr','es','it']){
+      w.OwlUV.app.setLang(L);
+      const nap=w.document.getElementById('reconNote');
+      check(L+': PDF ima svoju napomenu o rekonstrukciji',
+            nap&&nap.textContent.length>60&&nap.textContent===w.OwlUV.I18N[L].noteReconPdf,
+            nap?nap.textContent.slice(0,60):'nema');
+    }
+    w.OwlUV.app.setLang('hr');
 
     // ============ 6. SVIH 6 JEZIKA ============
     log('\nPRAVILO - sucelje na svih 6 jezika');
