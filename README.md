@@ -414,10 +414,10 @@ takes about ten minutes, because the full suite runs twice.
 
 | Pass | Result |
 |---|---|
-| Repository hygiene | 35 checks, all passed |
+| Repository hygiene | 32 checks, all passed |
 | Tool from a folder (`file://`) | 312 checks, all passed |
 | Tool served over http | 312 checks, all passed |
-| Comparison of the two | identical |
+| Comparison of the two | 3 checks, identical |
 | **Total** | **659 checks, all passed** |
 
 What is covered, in short: every kind of trap in Word and in PDF, each with its

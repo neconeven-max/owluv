@@ -268,6 +268,7 @@ function podigniPosluzitelj(){
   reci('  (posluzeno s http://127.0.0.1:'+luka+', posluzitelj ugasen nakon testa)');
 
   reci('\nUSPOREDBA DVAJU NACINA');
+  const higijenaProslo=ukupnoProslo, higijenaPalo=ukupnoPalo;
   provjera('alat iz mape: sve provjere prolaze',
            izMape.palo===0, izMape.palo+' palo');
   provjera('alat s posluzitelja: sve provjere prolaze',
@@ -279,9 +280,11 @@ function podigniPosluzitelj(){
   const sve=ukupnoProslo+izMape.proslo+sPosluzitelja.proslo;
   const palo=ukupnoPalo+izMape.palo+sPosluzitelja.palo;
   reci('\n'+'='.repeat(50));
-  reci('higijena repozitorija: '+ukupnoProslo+' proslo, '+ukupnoPalo+' palo');
+  reci('higijena repozitorija: '+higijenaProslo+' proslo, '+higijenaPalo+' palo');
   reci('alat iz mape:          '+izMape.proslo+' proslo, '+izMape.palo+' palo');
   reci('alat s posluzitelja:   '+sPosluzitelja.proslo+' proslo, '+sPosluzitelja.palo+' palo');
+  reci('usporedba dvaju nacina: '+(ukupnoProslo-higijenaProslo)+' proslo, '+
+       (ukupnoPalo-higijenaPalo)+' palo');
   reci('UKUPNO: '+sve+' proslo, '+palo+' palo');
   reci('REZULTAT: '+(palo===0?'PROSAO':'PAO'));
   process.exit(palo===0?0:1);

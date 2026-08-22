@@ -412,10 +412,10 @@ jer se puni test vrti dvaput.
 
 | Prolaz | Rezultat |
 |---|---|
-| Higijena repozitorija | 35 provjera, sve prošle |
+| Higijena repozitorija | 32 provjere, sve prošle |
 | Alat iz mape (`file://`) | 312 provjera, sve prošle |
 | Alat poslužen preko http | 312 provjera, sve prošle |
-| Usporedba dvaju načina | identično |
+| Usporedba dvaju načina | 3 provjere, identično |
 | **Ukupno** | **659 provjera, sve prošle** |
 
 Što je pokriveno, ukratko: svaka vrsta zamke u Wordu i u PDF-u, svaka sa svojom
