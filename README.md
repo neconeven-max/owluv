@@ -410,15 +410,15 @@ Passes 2 and 3 must produce **identical** results. That is what proves the tool
 works the same as a page on a website and as a folder on disk. The whole thing
 takes about ten minutes, because the full suite runs twice.
 
-### Result of the last run: 22.08.2026.
+### Result of the last run: 23.08.2026.
 
 | Pass | Result |
 |---|---|
 | Repository hygiene | 32 checks, all passed |
-| Tool from a folder (`file://`) | 312 checks, all passed |
-| Tool served over http | 312 checks, all passed |
+| Tool from a folder (`file://`) | 332 checks, all passed |
+| Tool served over http | 332 checks, all passed |
 | Comparison of the two | 3 checks, identical |
-| **Total** | **659 checks, all passed** |
+| **Total** | **699 checks, all passed** |
 
 What is covered, in short: every kind of trap in Word and in PDF, each with its
 own fixture file; the four verdicts; all 6 languages with no missing key and no
@@ -429,17 +429,48 @@ no external network request at any point.
 
 ### Measured processing time
 
-Measured in a real browser on a mid-range laptop, average of three runs:
+Measured in a real browser on a mid-range laptop, best of three runs, on text
+heavy pages:
 
 | Document | Time |
 |---|---|
-| 1 page | about 90 ms |
-| 10 pages | about 225 ms |
-| 50 pages | about 1 second |
+| 1 page | about 20 ms |
+| 10 pages | about 105 ms |
+| 50 pages | about 440 ms |
+| 100 pages | about 880 ms |
+| 300 pages | about 900 ms - the first 100 pages are processed, see below |
+
+**Why the limit is 100 pages.** The work does not depend on the size of the
+file but on how many pages have to be drawn, and every page is drawn twice.
+Around 100 pages the wait is still under a second on plain pages, and a few
+seconds on a catalogue full of images - long enough to notice, short enough to
+sit through. Beyond that the wait grows without a ceiling, and a tool that
+freezes is worse than a tool that says what it did not do.
+
+So a document with more pages than that is **processed up to the limit and then
+says so**, plainly: "100 of 300 pages were checked". It never goes quiet, and
+it never gets the green verdict, for the same reason a scanned page with no
+text does not get it: false safety is worse than none.
+
+**Processing never blocks the browser.** The page yields between documents
+pages, so the interface stays alive, the progress display is actually visible,
+and a **Stop the check** button is there to press. Stopping shows everything
+found up to that point and says clearly that the rest was not checked.
 
 The progress display only appears when processing genuinely takes longer than
 about half a second, so on a small document it never appears at all. It never
 slows the work down: the work runs at full speed and the display lags behind it.
+
+To measure it yourself, serve the folder over http (any static server), open
+the page, and run this in the browser console:
+
+```js
+const b = await (await fetch('test/pdf-50-stranica.pdf')).arrayBuffer();
+OwlUV.app.reset();
+const t0 = performance.now();
+await OwlUV.app.loadFile(new File([b], 'x.pdf', {type: 'application/pdf'}));
+console.log(Math.round(performance.now() - t0) + ' ms');
+```
 
 ### Measurement on a sample set
 
@@ -533,6 +564,44 @@ which is worse for search engines.
 ---
 
 ## Change history
+
+### 23.08.2026. - v6.1, two bugs found on real documents
+
+**A perfectly ordinary form no longer raises a false alarm.** An official form
+made of tables, with no trap in it at all, was getting a red verdict and 21
+findings about "text pushed off the page". The findings were fragments of
+ordinary words from a visible table: `kta /`, `urze`, `ISIN)`.
+
+The cause was the same class of bug as in v5.1, turned around. A PDF gives text
+from two sources, and they **do not break it into the same pieces**: in a form,
+one line is drawn in several goes, so one source has "Naziv ra", "cuna /",
+"broj ra", "cuna" while the other joins it all into "Naziv racuna / broj
+racuna". The tool paired those pieces one to one, and whatever failed to pair
+was declared off the page.
+
+Pairing piece by piece is now gone from that decision entirely. Whether text is
+on the page is decided **by content**: the page text is reduced to a common
+denominator and the question is simply whether what was drawn appears in it.
+How the text happens to be chopped up no longer matters. This is not a
+threshold - no true finding was dropped, an untrue claim was. Text genuinely
+pushed off the page is still reported, and the test checks both directions.
+
+**The tool no longer freezes on a large PDF.** A catalogue of about 15 MB with
+many pages used to lock the page up until the browser offered to close it. The
+file size limit did not help, because the work depends on the number of pages
+to draw, not on bytes. Three things fixed it: a limit of **100 pages**, a
+**pause between pages** so the browser stays responsive, and a ceiling on the
+extra drawing done for overlapping text across the whole document, not just per
+page.
+
+A document longer than the limit is processed up to it and **says so**: "100 of
+300 pages were checked". It never gets the green verdict when it has not been
+checked in full. There is now a **Stop the check** button, so nobody has to
+close the page; stopping shows what was found so far and states plainly that
+the tool claims nothing about the rest.
+
+**Removed:** the old timing script, which no longer produced a reliable number.
+The measuring procedure is written out above instead, so anyone can repeat it.
 
 ### 22.08.2026. - v6.0, ready for publication
 

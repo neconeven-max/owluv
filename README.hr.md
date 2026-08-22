@@ -408,15 +408,15 @@ Prolazi 2 i 3 moraju dati **identičan** rezultat. Time je dokazano da alat radi
 jednako kao stranica na webu i kao mapa na disku. Cijelo traje oko deset minuta,
 jer se puni test vrti dvaput.
 
-### Rezultat zadnjeg pokretanja: 22.08.2026.
+### Rezultat zadnjeg pokretanja: 23.08.2026.
 
 | Prolaz | Rezultat |
 |---|---|
 | Higijena repozitorija | 32 provjere, sve prošle |
-| Alat iz mape (`file://`) | 312 provjera, sve prošle |
-| Alat poslužen preko http | 312 provjera, sve prošle |
+| Alat iz mape (`file://`) | 332 provjere, sve prošle |
+| Alat poslužen preko http | 332 provjere, sve prošle |
 | Usporedba dvaju načina | 3 provjere, identično |
-| **Ukupno** | **659 provjera, sve prošle** |
+| **Ukupno** | **699 provjera, sve prošle** |
 
 Što je pokriveno, ukratko: svaka vrsta zamke u Wordu i u PDF-u, svaka sa svojom
 testnom datotekom; sve četiri presude; svih 6 jezika bez ijednog ključa koji
@@ -427,18 +427,47 @@ prevelika, više odjednom); kretanje kroz pojave; nema vodoravnog prelijevanja n
 
 ### Izmjereno trajanje obrade
 
-Mjereno u pravom pregledniku, na prijenosnom računalu srednje snage, prosjek
-tri obrade:
+Mjereno u pravom pregledniku, na prijenosnom računalu srednje snage, najbolje
+od tri obrade, na stranicama punim teksta:
 
 | Dokument | Trajanje |
 |---|---|
-| 1 stranica | oko 90 ms |
-| 10 stranica | oko 225 ms |
-| 50 stranica | oko 1 sekundu |
+| 1 stranica | oko 20 ms |
+| 10 stranica | oko 105 ms |
+| 50 stranica | oko 440 ms |
+| 100 stranica | oko 880 ms |
+| 300 stranica | oko 900 ms - obradi se prvih 100 stranica, vidi niže |
+
+**Zašto je granica baš 100 stranica.** Posao ne ovisi o veličini datoteke nego
+o tome koliko stranica treba nacrtati, a svaka se crta dvaput. Oko 100 stranica
+čekanje je još uvijek ispod sekunde na običnim stranicama, a nekoliko sekundi na
+katalogu punom slika - dovoljno dugo da se primijeti, dovoljno kratko da se
+izdrži. Iznad toga čekanje raste bez gornje granice, a alat koji se zamrzne gori
+je od alata koji kaže što nije napravio.
+
+Zato se dokument s više stranica **obradi do granice i to izričito kaže**:
+"Provjereno je 100 od 300 stranica". Nikad ne prešuti, i nikad ne dobiva zelenu
+presudu, iz istog razloga iz kojeg je ne dobiva ni skenirana stranica bez
+teksta: lažna sigurnost je gora od nikakve.
+
+**Obrada nikad ne blokira preglednik.** Između stranica se pušta dah, pa sučelje
+ostaje živo, prikaz tijeka se stvarno vidi, a tu je i gumb **Prekini provjeru**.
+Prekid prikaže sve nađeno do tog trenutka i jasno kaže da ostatak nije provjeren.
 
 Prikaz tijeka pojavljuje se samo ako obrada stvarno traje dulje od otprilike pola
 sekunde, pa se na malom dokumentu ne pojavljuje uopće. Nikad ne usporava posao:
 posao ide punom brzinom, a prikaz zaostaje za njim.
+
+Ako želiš sam izmjeriti, posluži mapu preko http (bilo kojim statičnim
+poslužiteljem), otvori stranicu i u konzoli preglednika pokreni:
+
+```js
+const b = await (await fetch('test/pdf-50-stranica.pdf')).arrayBuffer();
+OwlUV.app.reset();
+const t0 = performance.now();
+await OwlUV.app.loadFile(new File([b], 'x.pdf', {type: 'application/pdf'}));
+console.log(Math.round(performance.now() - t0) + ' ms');
+```
 
 ### Mjerenje na skupu primjera
 
@@ -533,6 +562,42 @@ lošije za tražilice.
 ---
 
 ## Povijest izmjena
+
+### 23.08.2026. - v6.1, dva buga nađena na pravim dokumentima
+
+**Posve običan obrazac više ne diže lažnu uzbunu.** Službeni obrazac složen od
+tablica, bez ijedne zamke u sebi, dobivao je crvenu presudu i 21 nalaz o tekstu
+"gurnutom izvan stranice". Ti nalazi bili su komadići običnih riječi iz vidljive
+tablice: `kta /`, `urze`, `ISIN)`.
+
+Uzrok je isti razred greške kao u v5.1, samo obrnut. PDF daje tekst iz dva
+izvora, a oni ga **ne lome na iste komadiće**: u obrascu se jedan redak crta u
+više navrata, pa jedan izvor ima "Naziv ra", "cuna /", "broj ra", "cuna", a drugi
+sve to spoji u "Naziv racuna / broj racuna". Alat je te komadiće uparivao jedan
+na jedan, i što se ne bi uparilo, proglasio bi gurnutim izvan stranice.
+
+Uparivanje komadića je iz te odluke sada potpuno izbačeno. Je li tekst na
+stranici odlučuje se **po sadržaju**: tekst stranice se svede na zajednički
+nazivnik i pita se jednostavno nalazi li se ono što je nacrtano u njemu. Kako je
+tekst slučajno izlomljen više nije važno. Ovo nije prag - nijedan istinit nalaz
+nije uklonjen, uklonjena je neistinita tvrdnja. Tekst stvarno gurnut izvan
+stranice i dalje se prijavljuje, a test provjerava oba smjera.
+
+**Alat se više ne zamrzava na velikom PDF-u.** Katalog od otprilike 15 MB s puno
+stranica zaglavio bi stranicu dok preglednik ne ponudi zatvaranje. Granica
+veličine datoteke nije pomagala, jer posao ovisi o broju stranica koje treba
+nacrtati, a ne o bajtovima. Tri stvari su to riješile: granica od **100
+stranica**, **predah između stranica** da preglednik ostane živ, i gornja
+granica dodatnog crtanja za preklopljene tekstove po cijelom dokumentu, a ne
+samo po stranici.
+
+Dokument duži od granice obradi se do nje i **to kaže**: "Provjereno je 100 od
+300 stranica". Nikad ne dobiva zelenu presudu ako nije provjeren u cijelosti. Tu
+je i gumb **Prekini provjeru**, da nitko ne mora zatvarati stranicu; prekid
+prikaže nađeno do tog trenutka i izričito kaže da o ostatku alat ne tvrdi ništa.
+
+**Uklonjeno:** stara skripta za mjerenje, koja više nije davala pouzdan broj.
+Umjesto nje je gore ispisan postupak mjerenja, da ga svatko može ponoviti.
 
 ### 22.08.2026. - v6.0, spremno za objavu
 

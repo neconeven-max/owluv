@@ -216,6 +216,86 @@ krivu stvar, a izgleda kao da alat griješi.
 sivog polja za 50 točaka gurnulo "bijelo na bijelom" na sivu podlogu, gdje se
 tekst stvarno vidi. Alat je bio u pravu, zamka je bila pokvarena.
 
+## Što su pokazala dva prava dokumenta (v6.1)
+
+**Oba buga nađena su na stvarnim poslovnim dokumentima. Ti dokumenti nisu i ne
+smiju biti u repozitoriju.** Testne datoteke su izmišljene preslike njihovog
+oblika, ne njihovog sadržaja.
+
+### Uzrok 1: komadići vidljivog teksta prijavljeni kao "izvan stranice"
+
+Običan službeni obrazac složen od tablica, bez ijedne zamke, dobio je **crvenu
+presudu i 21 nalaz o tekstu izvan stranice**. Ulomci su bili komadići običnih
+riječi iz vidljive tablice: `kta /`, `urze`, `ISIN)`.
+
+**Uzrok je isti razred greške kao u v5.1, samo obrnut.** Popis naredbi i čitač
+teksta **ne lome tekst na iste komadiće**. U obrascu se jedan redak crta u više
+navrata (`Tj` pa opet `Tj`, bez novog `Td`), pa popis naredbi ima "Naziv ra",
+"cuna /", "broj ra", "cuna", a čitač teksta sve to spoji u jednu stavku "Naziv
+racuna / broj racuna". v5.1 je uparivala komadiće **jedan-na-jedan** po
+zajedničkom nazivniku; što se ne bi uparilo, proglasilo bi se gurnutim izvan
+stranice.
+
+**Pravilo koje iz toga slijedi:** podudarnost komadića jedan-na-jedan **nije
+dokaz** da je tekst na stranici, a njezin izostanak **nije dokaz** da nije. Iz
+neuspjelog uparivanja se ne smije zaključiti ništa.
+
+**Popravak.** Prisutnost se mjeri po **sadržaju**: tekst cijele stranice svede
+se na zajednički nazivnik (bez nevidljivih znakova i razmaka) i za svaku
+naredbu se pita nalazi li se njezin sadržaj u tom tekstu uopće. Lomljenje na
+komadiće time prestaje biti važno. Uparivanje po nazivniku je ostalo, ali
+**samo za vraćanje nevidljivih znakova** u tekst - o tome je li tekst na
+stranici ne odlučuje više ništa od toga.
+
+**Cijena koju treba znati:** ulomak gurnut izvan stranice koji doslovno
+ponavlja tekst koji na stranici već piše neće se prijaviti kao izvan stranice.
+Takav ulomak ne nosi nikakav skriveni sadržaj, jer je isti tekst ionako
+vidljiv. Lažna uzbuna na vidljivom tekstu je puno skuplja od toga.
+
+### Uzrok 2: alat se zamrznuo na katalogu od 15 MB
+
+Granica veličine datoteke nije pomogla jer **posao ne ovisi o bajtovima nego o
+broju stranica koje treba nacrtati**. Preglednik je javio "Stranica ne reagira".
+
+Tri stvari su to izazivale zajedno:
+
+1. **Nije bilo granice broja stranica.** Sada `NAJVISE_STRANICA` (100).
+2. **Ništa nije puštalo dretvu.** Crtanje je od početka do kraja držalo jedinu
+   dretvu preglednika, pa se sučelje nije odazivalo, prikaz tijeka se nije
+   vidio, a gumb se ne bi mogao ni pritisnuti. Sada se između stranica radi
+   **predah**.
+3. **Ciljano crtanje preklopljenih tekstova bilo je ograničeno samo po
+   stranici** (60). Sto takvih stranica značilo je šest tisuća crtanja. Sada
+   postoji i granica po dokumentu: `NAJVISE_CILJANIH_UKUPNO` (200).
+
+**Predah ide preko `MessageChannel`, NE preko `setTimeout(0)`.** Dva razloga:
+preglednik `setTimeout(0)` uspori na oko 4 ms, što na tristo stranica samo od
+sebe pojede više od sekunde; i pod virtualnim satom, kakav koristi preglednik
+bez sučelja u testu, `setTimeout` se zna uopće ne ispaliti, pa obrada visi
+zauvijek. To se dogodilo i provjereno je: sa `setTimeout` je mjerenje visjelo
+punih deset minuta, s `MessageChannel` prolazi.
+
+**Dokument koji nije provjeren u cijelosti NIKAD ne dobiva zelenu presudu**, po
+istom pravilu po kojem je ne dobiva ni dokument bez teksta.
+
+**Presuda o prekidu stoji IZNAD provjere praznog teksta.** Prvo je bilo
+obrnuto, pa je dokument prekinut prije prve stranice dobivao sivo "Nema što
+provjeriti" - a to je tvrdnja o dokumentu, u koji alat nije ni ušao. Sada takav
+dokument dobiva "Provjera je prekinuta" i izričito piše da alat o njemu ne
+tvrdi ništa.
+
+### Zamka pri razvoju: ostava servisnog radnika
+
+Dok se radi na alatu posluženom preko `http`, servisni radnik poslužuje
+**staru** verziju datoteka iz ostave dok god se ne promijeni broj verzije u
+`sw.js`. Izmjene u `js/` naizgled nemaju učinka. Pri provjeri u pregledniku
+prvo odjaviti radnika i obrisati ostavu:
+
+```js
+(await navigator.serviceWorker.getRegistrations()).forEach(r=>r.unregister());
+(await caches.keys()).forEach(k=>caches.delete(k));
+```
+
 ## Odluke koje se ne vraćaju natrag
 
 ### Prikaz tijeka nema prekidač za brzi i spori način
@@ -308,14 +388,23 @@ prijavljivao, iako ih u Wordu i zalijepljenom tekstu prijavljuje uredno. **Jedan
 uzrok, dvije greške.**
 
 Popravak nije zakrpa za taj slučaj nego uklanjanje mogućnosti da se sadržaj i
-položaj raziđu. Popisi se **uparuju po sadržaju**, na zajedničkom nazivniku bez
-nevidljivih znakova i razmaka (`nazivnik()` u `js/pdfread.js`). Kad se stavka
-upari, u tekst se **vrati zapis iz popisa naredbi**, jer je u njemu sačuvan svaki
-znak — tako nevidljivi znakovi dođu do detekcije. Naredbe koje nitko ne preuzme
-nisu na stranici uopće, dakle stvarno jesu gurnute izvan nje.
+položaj raziđu. Sve ide preko zajedničkog nazivnika bez nevidljivih znakova i
+razmaka (`nazivnik()` u `js/pdfread.js`).
+
+**Ta prva izvedba je uparivala komadiće jedan-na-jedan, i to je u v6.1 palo** na
+obrascu složenom od tablica, gdje dva izvora tekst ne lome na iste komadiće.
+Zato danas vrijedi ovo:
+
+- **Je li tekst na stranici** odlučuje se po **sadržaju cijele stranice**: tekst
+  svih stavki se svede na nazivnik i pita se nalazi li se ono što je nacrtano u
+  njemu uopće. Lomljenje na komadiće time prestaje biti važno.
+- **Uparivanje po nazivniku ostalo je samo za vraćanje nevidljivih znakova** u
+  tekst, jer su u popisu naredbi sačuvani. O tome je li tekst na stranici ne
+  odlučuje ništa od toga.
 
 **Pravilo za dalje:** ako se u čitanju PDF-a ikad bude uspoređivalo dva popisa
-teksta, usporedba ide preko `nazivnik()`, nikad preko sirovog niza znakova.
+teksta, usporedba ide preko `nazivnik()`, nikad preko sirovog niza znakova, i
+**nikad se ništa ne zaključuje iz toga što se dva komadića nisu uparila**.
 
 **Načelo koje ovo ne krši:** OwlUV je radar bez praga i ne prešućuje istinit
 nalaz ma koliko slab bio. Uklanjanje **neistinite** tvrdnje nije uvođenje praga.
