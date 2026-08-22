@@ -57,16 +57,27 @@
   });
 
   /* Vraca:
-       {ok:true, html, source:'text'|'html'|'docx', docx?:parsedResult}
-       {ok:false, msgKey:'errDoc'|'errPdf'|'errType'|'errTooBig'|'errTooLong'|'errRead'
-                        |'errDocx'|'errDocxLocked'|'errUnreadable'} */
-  async function load(file,t){
+       {ok:true, html, source:'text'|'html'|'docx'|'pdf', docx?:..., pdf?:...}
+       {ok:false, msgKey:'errDoc'|'errPdf'|'errPdfRead'|'errType'|'errTooBig'|'errTooLong'
+                        |'errRead'|'errDocx'|'errDocxLocked'|'errUnreadable'} */
+  async function load(file,t,onStep){
     if(!file) return {ok:false,msgKey:'errRead'};
     if(file.size>MAX) return {ok:false,msgKey:'errTooBig'};
     const kind=kindOf(file);
     if(kind==='doc')   return {ok:false,msgKey:'errDoc'};
-    if(kind==='pdf')   return {ok:false,msgKey:'errPdf'};
     if(kind==='other') return {ok:false,msgKey:'errType'};
+    if(kind==='pdf'){
+      if(!OwlUV.pdf) return {ok:false,msgKey:'errPdf'};
+      const buf=await readAs(file,'buf');
+      let parsed;
+      try{
+        if(typeof onStep==='function') onStep('stepPdfDraw');
+        parsed=await OwlUV.pdf.parse(new Uint8Array(buf),onStep);
+      }catch(e){ return {ok:false,msgKey:'errPdfRead'}; }
+      const html=OwlUV.pdf.toHtml(parsed,t);
+      if(html.length>MAX_TEXT) return {ok:false,msgKey:'errTooLong'};
+      return {ok:true,source:'pdf',pdf:parsed,html};
+    }
     try{
       if(kind==='docx'){
         const buf=await readAs(file,'buf');
