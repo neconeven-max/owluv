@@ -122,7 +122,7 @@
       stepPdfDraw:'Crtanje stranica i mjerenje vidljivosti',
       fOffTitle:n=>n+' ulomaka gurnutih izvan stranice',
       fOffWhy:'Tekst je nacrtan izvan vidljivog područja stranice, pa ga čovjek ne vidi ni na ekranu ni na ispisu. Obični čitači teksta ga preskaču, ali je u datoteci i stroj ga čita.',
-      footer:'OwlUV v5.0 · open source alat · radi potpuno lokalno, bez slanja podataka'
+      footer:'OwlUV v5.1 · open source alat · radi potpuno lokalno, bez slanja podataka'
     },
     en:{
       eyebrow:'Text and document inspection tool', intro:'Paste text or drop in a file: an assignment, job description or CV. The scanner reveals invisible characters, text hidden via color or font size, and phrases designed to mislead AI. Everything runs in your browser, nothing is sent anywhere.',
@@ -235,7 +235,7 @@
       stepPdfDraw:'Drawing pages and measuring visibility',
       fOffTitle:n=>n+' passages pushed off the page',
       fOffWhy:'The text is drawn outside the visible area of the page, so nobody sees it on screen or in print. Ordinary text readers skip it, but it is in the file and a machine reads it.',
-      footer:'OwlUV v5.0 · open source tool · runs fully locally, no data sent'
+      footer:'OwlUV v5.1 · open source tool · runs fully locally, no data sent'
     },
     de:{
       eyebrow:'Werkzeug zur Text- und Dokumentprüfung', intro:'Text einfügen oder Datei ablegen: Aufgabe, Stellenbeschreibung oder Lebenslauf. Der Scanner zeigt unsichtbare Zeichen, per Farbe oder Schriftgröße versteckten Text und Phrasen, die eine KI in die Irre führen sollen. Alles läuft im Browser, nichts wird gesendet.',
@@ -348,7 +348,7 @@
       stepPdfDraw:'Seiten zeichnen und Sichtbarkeit messen',
       fOffTitle:n=>n+' Abschnitte außerhalb der Seite',
       fOffWhy:'Der Text ist außerhalb des sichtbaren Seitenbereichs gezeichnet, niemand sieht ihn also am Bildschirm oder im Druck. Gewöhnliche Textleser überspringen ihn, aber er steht in der Datei und eine Maschine liest ihn.',
-      footer:'OwlUV v5.0 · Open-Source-Werkzeug · läuft vollständig lokal, keine Datenübertragung'
+      footer:'OwlUV v5.1 · Open-Source-Werkzeug · läuft vollständig lokal, keine Datenübertragung'
     },
     fr:{
       eyebrow:'Outil de vérification de textes et documents', intro:"Collez un texte ou déposez un fichier : devoir, offre d'emploi ou CV. Le scanner révèle les caractères invisibles, le texte masqué par la couleur ou la taille de police, et les phrases conçues pour induire une IA en erreur. Tout se passe dans votre navigateur, rien n'est envoyé.",
@@ -461,7 +461,7 @@
       stepPdfDraw:'Dessin des pages et mesure de la visibilité',
       fOffTitle:n=>n+' passages poussés hors de la page',
       fOffWhy:"Le texte est dessiné hors de la zone visible de la page, personne ne le voit donc à l'écran ni à l'impression. Les lecteurs de texte ordinaires l'ignorent, mais il est dans le fichier et une machine le lit.",
-      footer:'OwlUV v5.0 · outil open source · fonctionne entièrement en local, aucune donnée envoyée'
+      footer:'OwlUV v5.1 · outil open source · fonctionne entièrement en local, aucune donnée envoyée'
     },
     es:{
       eyebrow:'Herramienta de verificación de textos y documentos', intro:'Pega un texto o suelta un archivo: una tarea, una oferta de empleo o un CV. El escáner revela caracteres invisibles, texto oculto por color o tamaño de fuente y frases diseñadas para engañar a una IA. Todo se procesa en tu navegador, no se envía nada.',
@@ -574,7 +574,7 @@
       stepPdfDraw:'Dibujado de páginas y medición de visibilidad',
       fOffTitle:n=>n+' fragmentos empujados fuera de la página',
       fOffWhy:'El texto está dibujado fuera del área visible de la página, así que nadie lo ve en pantalla ni impreso. Los lectores de texto corrientes lo saltan, pero está en el archivo y una máquina lo lee.',
-      footer:'OwlUV v5.0 · herramienta de código abierto · funciona totalmente en local, sin enviar datos'
+      footer:'OwlUV v5.1 · herramienta de código abierto · funciona totalmente en local, sin enviar datos'
     },
     it:{
       eyebrow:'Strumento di verifica di testi e documenti', intro:'Incolla un testo o trascina un file: un compito, un annuncio di lavoro o un CV. Lo scanner rivela caratteri invisibili, testo nascosto tramite colore o dimensione del carattere e frasi pensate per ingannare una IA. Tutto viene elaborato nel browser, nulla viene inviato.',
@@ -687,7 +687,7 @@
       stepPdfDraw:'Disegno delle pagine e misura della visibilità',
       fOffTitle:n=>n+' passaggi spinti fuori dalla pagina',
       fOffWhy:"Il testo è disegnato fuori dall\u2019area visibile della pagina, quindi nessuno lo vede a schermo né in stampa. I lettori di testo comuni lo saltano, ma è nel file e una macchina lo legge.",
-      footer:'OwlUV v5.0 · strumento open source · funziona interamente in locale, nessun dato inviato'
+      footer:'OwlUV v5.1 · strumento open source · funziona interamente in locale, nessun dato inviato'
     }
   };
 })();
