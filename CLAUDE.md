@@ -61,10 +61,12 @@ js/detect.js               detekcijska jezgra (iz v3.3)
 js/docx.js                 čitač .docx datoteka, izravno iz XML-a
 js/files.js                ulaz za datoteke: povuci-i-pusti, odabir, formati
 js/app.js                  sučelje, tijek skeniranja, presuda
+js/pdfread.js              čitač PDF-a s provjerom vidljivosti
 js/signals.js              prepoznavanje AI manipulacije po signalima
 js/docxout.js              gradnja nove .docx datoteke iz očišćenog teksta
 assets/                    logo, sova i ikone SOVA WEB (u repozitoriju, ne s OneDrivea)
 vendor/fflate/             raspakiravanje ZIP-a (MIT), vendorirano
+vendor/pdfjs/              pdf.js (Apache-2.0), vendoriran, učitava se tek na PDF
 standalone/                zamrznuta v3.3, jedna datoteka za slanje mailom
 test/                      generator testnih .docx i automatski test
 ```
@@ -108,11 +110,10 @@ Test se **mora** izvršiti prije nego se prijavi da je nešto gotovo.
 
 ## Gdje je projekt stao — stanje na 20.08.2026.
 
-**Faza 2a je gotova, provjerena pravim Wordovim dokumentom i dopunjena
-verzijama v4.1 do v4.8.** Grana `main`, `origin` je
+**Faza 2a i faza 2b su gotove.** Grana `main`, `origin` je
 `git@github.com:neconeven-max/owluv.git`.
 
-Radi i provjereno je testom (**268 provjera, sve prošle**):
+Radi i provjereno je testom (**296 provjera, sve prošle**):
 
 - učitavanje datoteka na četiri načina: povuci-i-pusti, gumb za odabir,
   lijepljenje same datoteke iz međuspremnika (ovisi o pregledniku, pouzdano u
@@ -136,6 +137,8 @@ Radi i provjereno je testom (**268 provjera, sve prošle**):
 - prepoznavanje po signalima uz postojeći popis fraza, uz objašnjenje koji su
   signali pronađeni
 - kvačice kojima korisnik sam bira koje se vidljive rečenice brišu iz kopije
+- **PDF**: provjera vidljivosti crtanjem stranice, isključeni slojevi, tekst
+  izvan stranice, polja obrasca, komentari, svojstva i ugrađeni JavaScript
 - tijek provjere prikazuje stvarne korake, bez umjetnog kašnjenja, i pojavljuje
   se samo kad obrada stvarno traje dulje od otprilike pola sekunde
 - naziv ima podnaslov koji ide i u naslov kartice i u opis stranice, na 6 jezika
@@ -198,6 +201,45 @@ prikaz zaostaje i nestane nešto kasnije. **Nikad se ne dodaje kašnjenje u samu
 obradu.** `OwlUV.app.progressTiming()` postoji isključivo zato da automatski
 test može provjeriti mehaniku prikaza bez ovisnosti o brzini stroja; sučelje je
 ne poziva nikad.
+
+### PDF: ne lovimo trikove, lovimo nevidljivost
+
+**Ovo je najvažnija odluka u čitanju PDF-a.** Popis poznatih trikova uvijek
+kasni za napadačem: netko smisli novi način skrivanja i alat ga ne vidi dok mu
+se ne doda pravilo. Zato se ne provjerava popis trikova, nego **sama
+nevidljivost**.
+
+Postupak: stranica se nacrta **dvaput**, jednom sa svim sadržajem i jednom bez
+teksta. Ako se na mjestu nekog teksta ništa zamjetljivo ne razlikuje, taj tekst
+se ne vidi, bez obzira kojim je trikom to postignuto. Iz iste provjere ispadaju
+bijelo na bijelom, boja jednaka podlozi koja nije bijela, crno na crnom, tekst
+ispod neprozirnog pravokutnika ili slike, nevidljiv način crtanja, prozirnost
+blizu nule, **i svaki budući trik koji nitko još nije smislio.**
+
+Tri stvari koje treba znati o izvedbi (`js/pdfread.js`):
+
+1. **Crta se s `intent:'print'`.** Razlog nije ispis nego raspored posla: pri
+   `display` pdf.js nastavlja crtanje kroz `requestAnimationFrame`, što na
+   skrivenom platnu i u pregledniku bez sučelja zna stati zauvijek. Pri `print`
+   koristi mikrozadatke i crtanje je pouzdano. Vidljivost slojeva se svejedno
+   uzima iz zaslonske postavke, pa se mjeri ono što čovjek vidi.
+2. **Prag zamjetljivosti, ne stroga jednakost.** Boja `#FAFAFA` na `#FAFAFA`
+   daje razliku od jednog stupnja zbog zaokruživanja pri crtanju, što oko ne
+   vidi. Zato se pita "je li razlika zamjetljiva", a ne "je li ikakva". To
+   **nije** prag za odbacivanje nalaza, nego donja granica mjerenja.
+3. **Pikseli tuđeg teksta se preskaču.** Kad se mjeri jedan tekst, pikseli koji
+   pripadaju nekom drugom tekstu se ne gledaju. Bez toga bi vidljiv natpis
+   nacrtan preko zakopanog teksta prikrio da je zakopani tekst nevidljiv.
+
+Ono čega na nacrtanoj stranici uopće nema provjera vidljivosti ne može vidjeti,
+pa se čita zasebno: **isključeni slojevi** (tekst koji pdf.js prijavi, a na
+čijem mjestu nije naslikano nijedno slovo), **tekst gurnut izvan stranice**
+(ono što je u popisu naredbi, a čitač teksta ga uopće ne vrati), polja obrasca,
+komentari, svojstva dokumenta i **ugrađeni JavaScript**.
+
+**Ugrađeni JavaScript se NIKAD ne izvršava.** Čita se kao tekst i prijavljuje.
+`isEvalSupported` je isključen i sandbox se nikad ne stvara. Test to provjerava
+tako da presretne svaki poziv `alert` i traži da ih bude nula.
 
 ### Redoslijed nalaza je po ozbiljnosti, ne po redu izračuna
 
@@ -377,12 +419,14 @@ javlja crvenim upozorenjem s gumbom za ponovno skeniranje, a stalni gumb
 "Skeniraj" je uklonjen. Obrazloženje je gore, u odjeljku *Zašto nema skeniranja
 pri tipkanju nego upozorenje*.
 
-### Faza 2b — PDF
+### Objava
 
-Sučelje već ima poruku da PDF nije podržan, pa korisnik dotad ne dobiva lažnu
-presudu. Prije bilo čega drugog treba odlučiti kako se PDF čita, uz isto
-pravilo kao kod Worda: cilj nije prikazati dokument kakav izgleda, nego vidjeti
-sve što je u datoteci.
+Faza 2b je gotova. Sljedeće je objava: repozitorij u javni, stranica na
+`owluv.com`.
+
+Prije objave vrijedi provjeriti rukom u pravom pregledniku ono što se bez
+sučelja ne može: da se drugi PDF učita bez ponovnog otvaranja stranice, da
+spremanje datoteke na disk radi, i da potvrda o kopiranju iskoči.
 
 ### Namjerno izostavljeno
 

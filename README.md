@@ -29,6 +29,18 @@ poslužitelje, nema CDN-a.** Alat radi bez interneta, s USB-a i iz mape na disku
 - Wordova oznaka skrivenog teksta (`w:vanish`) i oznaka "skriveno na webu"
 - skrivanje kroz definiciju stila, ne izravnim formatiranjem
 
+**Skriveno u PDF-u**
+- **provjera vidljivosti**: stranica se nacrta dvaput, sa svim sadržajem i bez
+  teksta, pa se izmjeri vidi li se tekst uopće. Time odjednom ispadaju bijelo na
+  bijelom, boja jednaka podlozi koja nije bijela, tekst ispod neprozirnog
+  pravokutnika ili slike, nevidljiv način crtanja, prozirnost blizu nule i svaki
+  budući trik koji nitko još nije smislio
+- tekst u sloju kojemu je vidljivost isključena
+- tekst gurnut izvan vidljivog područja stranice
+- mikroskopski font
+- polja obrasca, komentari i svojstva dokumenta
+- ugrađeni JavaScript, koji se **nikad ne izvršava**, samo prijavljuje
+
 **Skriveno u strukturi datoteke** (Word)
 - komentari
 - obrisani tekst iz praćenja izmjena, koji je i dalje u datoteci
@@ -90,9 +102,8 @@ tekst skriven Wordovom oznakom skrivenog teksta, ni komentare, ni obrisani
 tekst iz praćenja izmjena, ni svojstva dokumenta. Povlačenje, gumb i lijepljenje
 same datoteke daju potpun i vjeran rezultat.
 
-**Podržani formati:** obični tekst, HTML, Word `.docx`.
+**Podržani formati:** obični tekst, HTML, Word `.docx`, PDF.
 Stari `.doc` nije podržan — alat javlja da dokument treba spremiti kao `.docx`.
-PDF još nije podržan — alat to jasno kaže umjesto da se pravi da je pregledao.
 
 Ako tek postavljaš alat na drugom računalu, vidi odjeljak
 [Nastavak rada na drugom stroju](#nastavak-rada-na-drugom-stroju).
@@ -103,6 +114,7 @@ Ako tek postavljaš alat na drugom računalu, vidi odjeljak
 index.html                    glavni alat
 js/
   i18n.js                     prijevodi sučelja, 6 jezika
+  pdfread.js                  čitač PDF-a s provjerom vidljivosti
   signals.js                  prepoznavanje AI manipulacije po signalima
   docxout.js                  gradnja nove .docx datoteke iz očišćenog teksta
   detect.js                   detekcijska jezgra (prenesena iz v3.3)
@@ -117,6 +129,7 @@ assets/
   izdvoji-sovu.py             skripta koja je izrezala glavu sove iz logotipa
 vendor/
   fflate/                     raspakiravanje ZIP-a (MIT licenca), u repozitoriju
+  pdfjs/                      pdf.js (Apache-2.0), u repozitoriju
 standalone/
   uv-skener-v3.3.html         zamrznuta jedna datoteka, samo lijepljenje teksta
 test/
@@ -183,6 +196,7 @@ svih 6 jezika. Uz to funkcija čita i atribut `data-uv-reason`, kojim čitač
 
 ```
 node test/napravi-testne-docx.js     # napravi testne .docx (već su u repozitoriju)
+node test/napravi-testne-pdf.js      # napravi testne .pdf  (već su u repozitoriju)
 node test/pokreni-test.js            # pokrene test i ispiše rezultat
 ```
 
@@ -194,7 +208,7 @@ Testni dokument `test-skriveno.docx` sadrži sve vrste skrivenog sadržaja
 odjednom. `test-bez-teksta.docx` sadrži samo sliku i nijedno slovo.
 `test-cist.docx` je kontrolni uzorak bez ijedne zamke.
 
-### Rezultat zadnjeg pokretanja: 21.08.2026., 268 provjera, sve prošle
+### Rezultat zadnjeg pokretanja: 22.08.2026., 296 provjera, sve prošle
 
 | Provjera | Rezultat |
 |---|---|
@@ -271,6 +285,11 @@ odjednom. `test-bez-teksta.docx` sadrži samo sliku i nijedno slovo.
 | svojstva dokumenta se ne pojavljuju u popisu rečenica | prošao |
 | rečenica koja spominje "prometni sustav" ne okida signal obraćanja stroju | prošao |
 | rečenica koja se stvarno obraća AI-ju i dalje okida | prošao |
+| PDF: svaka od jedanaest testnih zamki je otkrivena | prošao |
+| PDF: čist PDF ne daje nijedan nalaz o skrivenom sadržaju | prošao |
+| PDF: skenirani PDF daje sivu presudu, nikad zelenu | prošao |
+| PDF: ugrađeni JavaScript se prijavljuje, a ne izvršava | prošao |
+| PDF: napomena o rekonstrukciji postoji na svih 6 jezika | prošao |
 
 ## Granice veličine
 
@@ -282,6 +301,71 @@ odjednom. `test-bez-teksta.docx` sadrži samo sliku i nijedno slovo.
 Iznad granice alat daje jasnu poruku i **ne pokušava obraditi**. Prije je
 pokušavao, pa je preglednik na vrlo velikoj datoteci znao stati bez ijedne
 riječi objašnjenja, što je izgledalo kao da je alat pokvaren.
+
+## PDF: kako se traži nevidljivo
+
+**Ne lovimo pojedine trikove, lovimo samu nevidljivost.** Popis poznatih trikova
+uvijek kasni za napadačem: netko smisli novi način skrivanja i alat ga ne vidi
+dok mu se ne doda pravilo. Zato OwlUV ne provjerava popis trikova, nego mjeri
+ono što je važno: **vidi li se tekst uopće.**
+
+Postupak je jednostavan. Stranica se nacrta dvaput, jednom sa svim sadržajem i
+jednom bez teksta. Ako se na mjestu nekog teksta ništa zamjetljivo ne razlikuje,
+taj tekst se ne vidi. Nije važno je li skriven bijelom bojom, bojom jednakom
+podlozi, pravokutnikom preko njega, nevidljivim načinom crtanja ili nečim što
+još nitko nije smislio. To se ne može zaobići novim trikom.
+
+Ono čega na nacrtanoj stranici uopće nema provjera vidljivosti ne može vidjeti,
+pa se čita zasebno: isključeni slojevi, tekst gurnut izvan stranice, polja
+obrasca, komentari, svojstva dokumenta i ugrađeni JavaScript.
+
+### Knjižnica
+
+Za čitanje PDF-a koristi se **pdf.js**, knjižnica koju održava Mozilla i koja
+pokreće prikaz PDF-a u Firefoxu. Odabrana je zato što jedina daje oboje što
+ovdje treba: položaj, boju i veličinu svakog znaka, **i** crtanje stranice u
+sliku. Bez crtanja nema provjere vidljivosti.
+
+- Verzija: **3.11.174**, gradnja `legacy` (radi kroz običnu `<script>` oznaku,
+  pa i s `file://`, gdje moduli ne prolaze)
+- Licenca: **Apache-2.0**, u `vendor/pdfjs/LICENSE`
+- Sve leži u repozitoriju, ništa se ne dohvaća s mreže
+- **Učitava se tek kad stigne prvi PDF**, jer je oko 1,5 MB. Tko lijepi tekst
+  ili učitava Word tu cijenu ne plaća.
+
+### Koliko traje
+
+Mjereno u pravom pregledniku, na MacBook Airu M3, prosjek tri obrade:
+
+| Dokument | Trajanje |
+|---|---|
+| 1 stranica | oko 90 ms |
+| 10 stranica | oko 225 ms |
+| 50 stranica | oko 1 sekundu |
+
+Crtanje se radi samo za stranice koje uopće imaju teksta, i to u jednom prolazu
+po stranici, ne po svakom retku. Prikaz tijeka provjere pojavljuje se po istom
+pravilu kao i dosad, dakle tek kad obrada prijeđe pola sekunde, pa se na malom
+dokumentu ne pojavljuje uopće.
+
+### Rezultat na testnim PDF-ovima
+
+Svaka zamka ima svoju testnu datoteku u `test/`, napravljenu generatorom
+`test/napravi-testne-pdf.js`. Rezultat, 22.08.2026.:
+
+| Testna datoteka | Rezultat |
+|---|---|
+| bijeli tekst na bijeloj podlozi | otkriveno, "nije vidljivo na nacrtanoj stranici" |
+| tekst #FAFAFA na podlozi #FAFAFA | otkriveno |
+| tekst veličine 1 pt | otkriveno, "mikroskopski font (1pt)" |
+| nevidljiv način crtanja | otkriveno |
+| tekst u isključenom sloju | otkriveno, zaseban nalaz o sloju |
+| tekst gurnut izvan stranice | otkriveno, oba ulomka |
+| tekst ispod neprozirnog pravokutnika | otkriveno |
+| ugrađeni JavaScript | prijavljen, **nijednom izvršen** |
+| skrivena lista vještina bez ijedne naredbe | otkriveno, sva tri retka |
+| čist PDF | nijedan nalaz, zelena presuda |
+| PDF koji je samo slika | siva presuda "nema što provjeriti", nikad zelena |
 
 ## Mjerenje na skupu primjera
 
@@ -493,6 +577,48 @@ stalo do točnog značenja.
 ---
 
 ## Povijest izmjena
+
+### 22.08.2026. — v5.0, faza 2b: OwlUV čita PDF
+
+**PDF se sada čita, istim putem kojim ide i Word.** Datoteka se učita, pretvori
+u tekst i prikaže lijevo, a sve postojeće provjere rade dalje same od sebe.
+Lijevi prikaz je kod PDF-a još grublja rekonstrukcija nego kod Worda, jer PDF
+nema naslove ni odlomke, nego samo slova raspoređena po stranici. To piše i uz
+sam panel.
+
+**Najvažnije: ne traže se pojedini trikovi, nego sama nevidljivost.** Popis
+poznatih trikova uvijek kasni za napadačem. Umjesto toga se stranica nacrta
+dvaput, jednom sa svim sadržajem i jednom bez teksta, pa se izmjeri vidi li se
+tekst uopće. Time odjednom ispadaju bijelo na bijelom, boja jednaka podlozi koja
+nije bijela, crno na crnom, tekst ispod neprozirnog pravokutnika ili slike,
+nevidljiv način crtanja, prozirnost blizu nule, i svaki budući trik koji nitko
+još nije smislio. To se ne može zaobići novim trikom.
+
+**Ono čega na stranici uopće nema čita se zasebno**, jer ga crtanje ne može
+vidjeti: tekst u sloju kojemu je vidljivost isključena (posebno podmuklo, jer ga
+većina alata uopće ne pokaže), tekst gurnut izvan stranice, polja obrasca,
+komentari, svojstva dokumenta i ugrađeni JavaScript.
+
+**Ugrađeni JavaScript se nikad ne izvršava.** Čita se kao tekst i prijavljuje,
+da vidiš što piše. Test to provjerava tako da presretne svaki pokušaj i traži da
+ih bude nula.
+
+**Skenirani PDF ne može dobiti zelenu presudu.** PDF koji je fotografija papira
+nema teksta, pa dobiva postojeću sivu presudu "nema što provjeriti". To pravilo
+je od prije, ovdje je samo provjereno da vrijedi i za PDF.
+
+**Opis nalaza o skrivenom tekstu dopunjen je**, jer se u životopise ne skrivaju
+samo naredbe nego i podaci: duge liste vještina, ključne riječi prepisane iz
+natječaja, izmišljeno radno iskustvo. Tu nema nijedne naredbe pa je radar nikad
+ne bi prijavio, ali skriveno se hvata uvijek. Sada to i piše.
+
+**Knjižnica:** pdf.js (Mozilla, Apache-2.0), vendorirana u repozitorij i
+učitana tek kad stigne prvi PDF. Pojedinosti i izmjereno trajanje obrade su u
+zasebnom odjeljku gore.
+
+**Napravljen je generator testnih PDF-ova** i jedanaest testnih datoteka, po
+jedna za svaku vrstu zamke plus čist i skeniran uzorak. Svaka je pokrivena
+provjerom u testu; rezultat je u tablici gore. Ukupno 296 provjera, sve prolaze.
 
 ### 21.08.2026. — v4.8: radar ide na samo dno, uz jasnije upozorenje
 
@@ -900,5 +1026,4 @@ i detekcija fraza na svih 6 jezika. Ta je verzija sačuvana u `standalone/`.
 
 ## Sljedeći korak
 
-Faza 2b: PDF. Sučelje već ima poruku da PDF nije podržan, pa korisnik ne dobiva
-lažnu presudu dok ga ne dodamo.
+Objava: repozitorij u javni, stranica na `owluv.com`.
