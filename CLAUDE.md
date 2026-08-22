@@ -14,8 +14,10 @@ Tipični slučajevi: profesor sakrije zamku u zadaću da otkrije tko je slijepo
 kopirao u chat; kandidat sakrije u životopis uputu da ga AI izabere kao
 najboljeg.
 
-Repozitorij: `github.com/neconeven-max/OwlUV` (privatan). Domena kasnije:
-`owluv.com`.
+Repozitorij: `github.com/neconeven-max/owluv` (javan). Stranica: `owluv.com`.
+
+Privatna bilješka o projektu, koja namjerno nije u repozitoriju, stoji na iMac
+Serveru uz `INFRASTRUKTURA.md`.
 
 ## Pravila koja se ne krše
 
@@ -64,11 +66,15 @@ js/app.js                  sučelje, tijek skeniranja, presuda
 js/pdfread.js              čitač PDF-a s provjerom vidljivosti
 js/signals.js              prepoznavanje AI manipulacije po signalima
 js/docxout.js              gradnja nove .docx datoteke iz očišćenog teksta
-assets/                    logo, sova i ikone SOVA WEB (u repozitoriju, ne s OneDrivea)
+assets/                    logo, sova i ikone SOVA WEB
 vendor/fflate/             raspakiravanje ZIP-a (MIT), vendorirano
 vendor/pdfjs/              pdf.js (Apache-2.0), vendoriran, učitava se tek na PDF
 standalone/                zamrznuta v3.3, jedna datoteka za slanje mailom
-test/                      generator testnih .docx i automatski test
+test/                      generatori testnih datoteka i automatski test
+sw.js                      rad bez interneta na telefonu
+manifest.webmanifest       podaci za dodavanje na početni zaslon
+CNAME, .nojekyll           posluživanje stranice s GitHuba
+LICENSE, NOTICE.md         dozvola i napomena o robnoj marki
 ```
 
 `standalone/uv-skener-v3.3.html` je **zamrznut**. Ostaje verzija za brzo slanje
@@ -96,24 +102,28 @@ Alat: otvori `index.html` u pregledniku. Ne treba poslužitelj.
 Test:
 ```
 node test/napravi-testne-docx.js     # napravi testne .docx (već su u repou)
-node test/pokreni-test.js            # pokrene Chrome bez sučelja i ispiše rezultat
+node test/napravi-testne-pdf.js      # napravi testne PDF-ove (već su u repou)
+node test/pokreni-test.js            # cijeli test, ispiše rezultat
 ```
+`pokreni-test.js` radi tri prolaza: higijenu repozitorija (čita datoteke s
+diska), alat otvoren iz mape (`file://`) i isti alat poslužen preko `http` s
+privremenog lokalnog poslužitelja koji se poslije gasi. Zadnja dva moraju dati
+**isti** rezultat. Traje oko deset minuta jer se cijeli test vrti dvaput.
+
 Test se **mora** izvršiti prije nego se prijavi da je nešto gotovo.
 
 ## Radni tijek
 
 - Jedan datirani commit po dovršenoj cjelini.
 - Svaka dovršena promjena dobiva unos u README, odjeljak "Povijest izmjena",
-  jednostavnim jezikom: što je napravljeno i zašto.
-- Promjena se bilježi i u `~/INFRASTRUKTURA.md`.
-- Rad ide naizmjenično s tri stroja, pa se sve zapisuje lokalno.
+  jednostavnim jezikom: što je napravljeno i zašto. README je engleski, a
+  `README.hr.md` je hrvatska inačica; oba se ažuriraju zajedno.
 
-## Gdje je projekt stao — stanje na 22.08.2026.
+## Gdje je projekt stao - stanje na 22.08.2026.
 
-**Faza 2a i faza 2b su gotove.** Grana `main`, `origin` je
-`git@github.com:neconeven-max/owluv.git`.
+**Faza 2a i faza 2b su gotove, projekt je spreman za javnu objavu.** Grana `main`.
 
-Radi i provjereno je testom (**312 provjera, sve prošle**):
+Radi i provjereno je testom (rezultat i brojevi su u README-u):
 
 - učitavanje datoteka na četiri načina: povuci-i-pusti, gumb za odabir,
   lijepljenje same datoteke iz međuspremnika (ovisi o pregledniku, pouzdano u
@@ -144,10 +154,6 @@ Radi i provjereno je testom (**312 provjera, sve prošle**):
 - naziv ima podnaslov koji ide i u naslov kartice i u opis stranice, na 6 jezika
 - uz naziv je sova s UV zrakom, crtana i animirana u stranici, ne gif
 - sve sučelje na 6 jezika, test pada ako neki jezik nešto nema
-
-Rad se vodi **s MacBook Aira**, repozitorij je kloniran u `~/owluv`. Sva tri
-stroja imaju vlastiti SSH ključ na GitHubu (stavka O-7 u INFRASTRUKTURI je
-zatvorena 20.08.2026.).
 
 ## Što je test pravim Wordom pokazao
 
@@ -218,8 +224,7 @@ Prikaz koraka pojavljuje se samo ako obrada traje dulje od praga
 (`PROG_APPEAR_MS` u `js/app.js`, 500 ms). To je **namjerno riješeno pragom, a ne
 postavkom.** Prekidač koji ne mijenja rezultat daje korisniku odluku bez
 koristi, a kod obrade više datoteka takav prikaz ionako postaje popis obrađenih
-datoteka, pa bi se prekidač morao ukinuti čim se to doda. Obrazloženje u cijelosti
-je u README-u, odjeljak *Zašto nema prekidača za brzi i spori način*.
+datoteka, pa bi se prekidač morao ukinuti čim se to doda.
 
 Prikaz je odvojen od posla: posao upisuje korake u red i ide punom brzinom,
 prikaz zaostaje i nestane nešto kasnije. **Nikad se ne dodaje kašnjenje u samu
@@ -474,8 +479,7 @@ riječi u pregledniku: svaki klik vodi na sljedeću, nakon zadnje na prvu, broja
 pokazuje položaj. **Popis je namjerno odbačen** jer kod stotinu pojava nitko ne
 čita popis, a stranica naraste toliko da se u njoj više ne snalaziš. Iznad
 `MANY_HITS` (50) uz brojač ide kratka napomena; kod dugih crtica ona kaže i da
-toliki broj obično znači AI, a ne skrivanje. Obrazloženje u cijelosti je u
-README-u, odjeljak *Zašto se kroz pojave ide klikom, a ne popisom*.
+toliki broj obično znači AI, a ne skrivanje.
 
 **Broj u naslovu i ukupan broj u brojaču ne moraju biti isti.** Naslov broji
 koliko je puta pravilo okinulo nad tekstom, brojač koliko ima označenih mjesta u
@@ -483,32 +487,52 @@ desnom panelu. Oznake se crtaju po tekstualnom čvoru, pa se fraza prelomljena
 formatiranjem pojavi kao dvije oznake. To **nije kvar** i ne popravlja se
 diranjem detekcije ni načina označavanja, jer bi to bio zahvat u jezgru.
 
+### Rad bez interneta na telefonu ide preko radnika, ne preko nove knjižnice
+
+`sw.js` je pisan ručno, pedesetak linija, bez ijedne knjižnice. Sprema popis
+datoteka iz repozitorija u lokalnu ostavu i poslije ih čita odande. **Ne dohvaća
+ništa izvana**: zahtjev prema drugom poslužiteljskom imenu radnik uopće ne dira,
+pa ga ne može ni napraviti umjesto stranice. Datoteke korisnika kroz njega ne
+prolaze, jer se čitaju u pregledniku iz memorije i nikad ne odlaze u mrežni sloj.
+
+Radnik se prijavljuje **samo preko `http`/`https`**. Otvoren iz mape (`file://`)
+preglednik ga ne dopušta, a alat i tako već radi iz mape. Ako prijava ne uspije,
+ništa se ne mijenja: alat radi dalje, samo bez ostave.
+
+Naziv ostave nosi broj verzije (`owluv-v6.0`). Pri svakoj novoj verziji taj se
+broj mora podići, inače telefon zadrži stari kod. Stare ostave se pri
+pokretanju brišu.
+
+### Dozvola je GPL-3.0, a ime i znak nisu njome obuhvaćeni
+
+Traženo je da onaj tko objavi izmijenjenu verziju mora objaviti i svoj kod pod
+istim uvjetima. Za alat koji je u cijelosti JavaScript koji se isporučuje u
+preglednik korisnika, GPL-3.0 to postiže: tko objavi izmijenjenu verziju, njezin
+kod time i isporučuje, pa ga mora ponuditi pod istim uvjetima.
+
+Ime "OwlUV" i logo SOVA WEB **nisu** obuhvaćeni dozvolom. To stoji u `NOTICE.md`
+i jednom rečenicom u README-u, da se ne mora čitati pravni tekst. Tko objavi
+ogranak, mijenja ime i grafiku u `assets/`.
+
+Tekst u `LICENSE` je **doslovan službeni tekst GPL-3.0** (otisak MD5
+`1ebbd3e34237af26da5dc08a4e440464`). Ne prepisuje se i ne skraćuje.
+
 ### Sova uz naziv se ne crta iznova
 
 Glava sove izrezana je iz postojećeg logotipa SOVA WEB skriptom
 `assets/izdvoji-sovu.py`. Ako zatreba drugi izrez, mijenja se `BOX` u toj
 skripti. Ne crta se nova sova.
 
-## Sljedeći korak
+## Objava
 
-### ✅ Riješeno — 21.08.2026. — gumb "Skeniraj" i utipkani tekst
+Repozitorij je javan, kod je pod GPL-3.0 (`LICENSE`), a ime "OwlUV" i logo
+SOVA WEB nisu njome obuhvaćeni (`NOTICE.md`). Stranicu poslužuje GitHub Pages s
+grane `main`, domena je u datoteci `CNAME`.
 
-Stavka otvorena u v4.4 zatvorena je u v4.5, ali **drugim rješenjem** od
-predloženog. Nije dodano skeniranje pri tipkanju, jer je to nepotreban posao
-koji na velikom dokumentu usporava rad. Umjesto toga se svaka ručna izmjena
-javlja crvenim upozorenjem s gumbom za ponovno skeniranje, a stalni gumb
-"Skeniraj" je uklonjen. Obrazloženje je gore, u odjeljku *Zašto nema skeniranja
-pri tipkanju nego upozorenje*.
+Ono što se bez sučelja ne može provjeriti, provjerava se rukom u pravom
+pregledniku: da se drugi PDF učita bez ponovnog otvaranja stranice, da spremanje
+datoteke na disk radi, i da potvrda o kopiranju iskoči.
 
-### Objava
-
-Faza 2b je gotova, a v5.1 je zatvorila ono što je pravi zaraženi PDF pokazao.
-Sljedeće je objava: repozitorij u javni, stranica na `owluv.com`.
-
-Prije objave vrijedi provjeriti rukom u pravom pregledniku ono što se bez
-sučelja ne može: da se drugi PDF učita bez ponovnog otvaranja stranice, da
-spremanje datoteke na disk radi, i da potvrda o kopiranju iskoči.
-
-### Namjerno izostavljeno
+## Namjerno izostavljeno
 
 Stari `.doc` (poruka korisniku da spremi kao `.docx`), `.odt`, `.rtf`.
