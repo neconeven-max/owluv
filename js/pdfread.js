@@ -11,6 +11,12 @@
    neprozirnog pravokutnika, nevidljiv nacin crtanja, prozirnost blizu nule i
    svaki buduci trik koji nitko jos nije smislio.
 
+   Kad su dva teksta nacrtana jedan preko drugoga, iz jednog zajednickog crtanja
+   se ne moze zakljuciti cija su slova ostavila trag. Takav se tekst crta
+   CILJANO: stranica jos jednom, bez bas tog teksta i sa svime ostalim. Preskace
+   se po rednom broju slova, ne po okviru, jer okviri susjednih tekstova ulaze
+   jedan u drugi.
+
    Uz to se cita ono cega na nacrtanoj stranici UOPCE NEMA, pa ga provjera
    vidljivosti ne moze vidjeti: iskljuceni slojevi, tekst izvan stranice, polja
    obrasca, komentari, svojstva dokumenta i ugradeni JavaScript.
@@ -37,6 +43,20 @@
   // nalaza, nego donja granica mjerenja: ispod nje se ne vidi nista.
   const PRAG_BOJE=12;       // najmanja razlika kanala koja se jos vidi
   const PRAG_PIKSELA=3;     // koliko takvih piksela treba da tekst zovemo vidljivim
+
+  // PDF daje tekst iz DVA izvora, a oni ne pisu isto:
+  //  - citac teksta (getTextContent) zna polozaj, ali IZBACUJE nevidljive
+  //    Unicode znakove i ne vraca tekst nacrtan izvan stranice
+  //  - popis naredbi (getOperatorList) ima sve znakove i sav tekst, ali bez
+  //    upotrebljivog polozaja
+  // Ta se dva popisa NE SMIJU usporedivati neobradena. Ako se usporeduju, naslov
+  // koji u sebi nosi nevidljivi znak ne pronade se u citacu teksta, pa ispadne
+  // da je "izvan stranice" iako je na sredini stranice i vidi se golim okom.
+  // Zato se uparuju po SADRZAJU, na zajednickom nazivniku bez nevidljivih
+  // znakova i razmaka. Tako se sadrzaj i polozaj ne mogu raziti, a nevidljivi
+  // znakovi se vracaju u tekst iz popisa naredbi, gdje su sacuvani.
+  const NEVIDLJIVI=/[\u00AD\u061C\u180E\u200B-\u200F\u2060\uFEFF]/g;
+  const nazivnik = s => String(s||'').replace(NEVIDLJIVI,'').replace(/\s+/g,'');
 
   // pdf.js je velik (oko 1,5 MB), pa se ucitava TEK kad stigne prvi PDF.
   // Tko lijepi tekst ili ucitava Word ne placi tu cijenu. Ucitava se s diska,
@@ -183,7 +203,7 @@
           try{
             const m=this.getTransform();
             glifovi.push({px:m.a*zx+m.c*zy+m.e, py:m.b*zx+m.d*zy+m.f});
-          }catch(e){}
+          }catch(e){ glifovi.push({px:-1e9,py:-1e9}); }
         };
         B.x.strokeText=B.x.fillText;
         await page.render(Object.assign({canvasContext:B.x},opc)).promise;
@@ -198,34 +218,77 @@
         } else rez.mjereno=false;
       }
 
-      // ---- tekst gurnut izvan stranice ----
-      // Sto je nacrtano, a citac teksta ga ne vraca, nije na stranici.
-      const naStranici=tc.items.map(i=>i.str||'').join(' ').replace(/\s+/g,'');
+      // ---- uparivanje dvaju izvora teksta ----
+      // Svaka naredba se svrsta po zajednickom nazivniku. Kad citac teksta javi
+      // istu recenicu, uzima se zapis iz popisa naredbi, jer je u njemu sacuvan
+      // svaki znak, i nevidljivi. Naredbe koje nitko ne preuzme nisu na
+      // stranici uopce, dakle gurnute su izvan nje.
+      const karta=new Map();
       opTekst.forEach(niz=>{
-        const golo=niz.replace(/\s+/g,'');
-        if(golo.length>3&&naStranici.indexOf(golo)<0) rez.offPage.push(niz);
+        const k=nazivnik(niz);
+        if(!k) return;
+        if(!karta.has(k)) karta.set(k,[]);
+        karta.get(k).push(niz);
       });
+      tc.items.forEach(it=>{
+        if(typeof it.str!=='string'||!it.str.trim()) return;
+        const lista=karta.get(nazivnik(it.str));
+        if(lista&&lista.length){
+          const izvorni=lista.shift();
+          if(izvorni&&izvorni!==it.str) it.str=izvorni;   // vrati nevidljive znakove
+        }
+      });
+      karta.forEach(ostatak=>ostatak.forEach(niz=>{
+        if(nazivnik(niz).length>3) rez.offPage.push(niz);
+      }));
 
       // je li na mjestu ovog teksta uopce naslikano ijedno slovo
       const naslikanoTu=(ax,ay,bx,by)=>glifovi.some(g=>
         g.px>=ax-2&&g.px<=bx+2&&g.py>=ay-2&&g.py<=by+2);
 
-      // Okviri svih tekstova na stranici. Kad se mjeri jedan tekst, pikseli koji
-      // pripadaju NEKOM DRUGOM tekstu se preskacu. Bez toga bi vidljiv natpis
-      // nacrtan preko zakopanog teksta prikrio da je zakopani tekst nevidljiv.
-      const okviri=[];
-      tc.items.forEach(it=>{
-        if(!it.str||!it.str.trim()) return;
+      // Okviri svih tekstova na stranici, radi prepoznavanja preklapanja.
+      const okvirOd=it=>{
         const t2=it.transform||[1,0,0,1,0,0];
         const q1=vpMjera.convertToViewportPoint(t2[4],t2[5]);
         const q2=vpMjera.convertToViewportPoint(t2[4]+Math.max(it.width||1,1),
                                                 t2[5]+Math.max(it.height||Math.abs(t2[3])||10,1));
-        okviri.push({txt:it.str,
-          ax:Math.min(q1[0],q2[0])-RUB, ay:Math.min(q1[1],q2[1])-RUB,
-          bx:Math.max(q1[0],q2[0])+RUB, by:Math.max(q1[1],q2[1])+RUB});
-      });
-      const tudi=(txt,px,py)=>okviri.some(o=>o.txt!==txt&&
-        px>=o.ax&&px<=o.bx&&py>=o.ay&&py<=o.by);
+        return {ax:Math.min(q1[0],q2[0])-RUB, ay:Math.min(q1[1],q2[1])-RUB,
+                bx:Math.max(q1[0],q2[0])+RUB, by:Math.max(q1[1],q2[1])+RUB};
+      };
+      const okviri=tc.items.filter(it=>it.str&&it.str.trim()).map(okvirOd);
+      const preklapaSe=(o,k)=>okviri.some((d,j)=>j!==k&&
+        d.ax<o.bx&&d.bx>o.ax&&d.ay<o.by&&d.by>o.ay);
+
+      // Koja su slova od KOJEG teksta. Kad se dva teksta crtaju na istom mjestu,
+      // okvir ih ne razlikuje, ali redoslijed crtanja da: slova jednog teksta
+      // idu jedno za drugim. Zato se uzimaju slova unutar okvira, razdvoje se u
+      // neprekinute nizove po redoslijedu crtanja, i uzme se onaj niz koji je
+      // duljinom najblizi broju slova tog teksta.
+      const slovaOd=(o,brojSlova)=>{
+        const unutra=[];
+        glifovi.forEach((g,i)=>{
+          if(g.px>=o.ax&&g.px<=o.bx&&g.py>=o.ay&&g.py<=o.by) unutra.push(i);
+        });
+        if(!unutra.length) return null;
+        // Novi niz pocinje kad se preskoci koje slovo, ali i kad se polozaj
+        // vrati unatrag ili skoci u drugi redak. Bez toga se dva teksta crtana
+        // na istom mjestu ne razdvoje, jer crtanje pravokutnika izmedu njih ne
+        // prekida brojanje slova.
+        const nizovi=[]; let n=[unutra[0]];
+        for(let k=1;k<unutra.length;k++){
+          const a=glifovi[unutra[k-1]], b=glifovi[unutra[k]];
+          const nastavak = unutra[k]===unutra[k-1]+1 &&
+                           b.px>=a.px-1 && Math.abs(b.py-a.py)<=2;
+          if(nastavak) n.push(unutra[k]);
+          else { nizovi.push(n); n=[unutra[k]]; }
+        }
+        nizovi.push(n);
+        let naj=nizovi[0];
+        nizovi.forEach(x=>{
+          if(Math.abs(x.length-brojSlova)<Math.abs(naj.length-brojSlova)) naj=x;
+        });
+        return {od:naj[0], do:naj[naj.length-1]};
+      };
 
       // ---- prolaz kroz tekst ----
       let sloj=null;               // oznaka sloja u kojem smo trenutno
@@ -233,6 +296,8 @@
       let red=[], zadnjiY=null;
       const zavrsiRed=()=>{ if(red.length){ rez.lines.push(red); red=[]; } };
 
+      const zaCiljano=[];
+      let redniBroj=-1;
       tc.items.forEach(it=>{
         if(it.type==='beginMarkedContentProps'){ stog.push(sloj); sloj=it.id||null; return; }
         if(it.type==='beginMarkedContent'){ stog.push(sloj); return; }
@@ -240,6 +305,7 @@
         if(typeof it.str!=='string') return;
         if(!it.str) { if(it.hasEOL) zavrsiRed(); return; }
 
+        if(it.str.trim()) redniBroj++;
         const tr=it.transform||[1,0,0,1,0,0];
         const x=tr[4], y=tr[5];
         const velicina=Math.abs(tr[3])||Math.abs(tr[0])||12;
@@ -261,17 +327,24 @@
         // 2. mikroskopski font
         if(velicina<SITAN_PT) razlozi.push('ptiny:'+(Math.round(velicina*10)/10));
         // 3. mjerenje vidljivosti na nacrtanoj stranici
+        // Kad se okvir ovog teksta preklapa s okvirom nekog drugog, iz jednog
+        // zajednickog crtanja se ne moze zakljuciti cija su slova ostavila trag.
+        // Takav se tekst odlaze za CILJANO crtanje: stranica se nacrta jos jednom,
+        // bez bas tog teksta i sa svim ostalim.
         if(mjerljivo&&!nenaslikano&&it.str.trim()){
-          let raz=0, gledanih=0;
-          for(let yy=ay;yy<by&&raz<PRAG_PIKSELA;yy++) for(let xx=ax;xx<bx&&raz<PRAG_PIKSELA;xx++){
-            if(tudi(it.str,xx,yy)) continue;      // taj piksel pripada drugom tekstu
-            gledanih++;
-            const i=(yy*sirina+xx)*4;
-            const d=Math.max(Math.abs(dA[i]-dB[i]),Math.abs(dA[i+1]-dB[i+1]),Math.abs(dA[i+2]-dB[i+2]));
-            if(d>=PRAG_BOJE) raz++;
+          if(preklapaSe({ax,ay,bx,by},redniBroj)){
+            const brojSlova=it.str.replace(/\s/g,'').replace(NEVIDLJIVI,'').length;
+            zaCiljano.push({okvir:{ax,ay,bx,by},razlozi,tekst:it.str,
+                            raspon:slovaOd({ax,ay,bx,by},brojSlova)});
+          } else {
+            let raz=0;
+            for(let yy=ay;yy<by&&raz<PRAG_PIKSELA;yy++) for(let xx=ax;xx<bx&&raz<PRAG_PIKSELA;xx++){
+              const i=(yy*sirina+xx)*4;
+              const d=Math.max(Math.abs(dA[i]-dB[i]),Math.abs(dA[i+1]-dB[i+1]),Math.abs(dA[i+2]-dB[i+2]));
+              if(d>=PRAG_BOJE) raz++;
+            }
+            if(raz<PRAG_PIKSELA) razlozi.push('pinvis');
           }
-          // ako od okvira nije ostalo nista za gledati, ne tvrdimo nista
-          if(gledanih>=20&&raz<PRAG_PIKSELA) razlozi.push('pinvis');
         }
 
         if(nenaslikano&&imaIskljucenih) rez.hiddenLayers.push(it.str);
@@ -283,6 +356,44 @@
         if(it.hasEOL) zavrsiRed();
       });
       zavrsiRed();
+
+      // ---- ciljano crtanje za tekstove koji se preklapaju ----
+      // Ovo je doslovno ono sto provjera vidljivosti znaci: stranica bez BAS TOG
+      // teksta, pa usporedba. Radi se samo za preklopljene tekstove, jer su
+      // rijetki; da ih na nekoj stranici bude jako mnogo, mjerenje bi trajalo
+      // predugo, pa se tada posteno kaze da vidljivost nije izmjerena.
+      const NAJVISE_CILJANIH=60;
+      if(zaCiljano.length>NAJVISE_CILJANIH) rez.mjereno=false;
+      else for(const stavka of zaCiljano){
+        const o=stavka.okvir, r=stavka.raspon;
+        if(!r) continue;                      // nema mu se sto preskociti
+        const C=platno(vpMjera);
+        // Slova se broje isto kao pri crtanju bez teksta, dakle i ispunjena i
+        // obrubljena, inace bi se brojevi razisli i preskocila bi kriva slova.
+        const izvIspuna=C.x.fillText, izvObrub=C.x.strokeText;
+        let brojac=-1;
+        const preskace=()=>{ brojac++; return brojac>=r.od&&brojac<=r.do; };
+        C.x.fillText=function(){
+          if(preskace()) return;                   // bas slova ovog teksta preskacemo
+          return izvIspuna.apply(this,arguments);
+        };
+        C.x.strokeText=function(){
+          if(preskace()) return;
+          return izvObrub.apply(this,arguments);
+        };
+        await page.render(Object.assign({canvasContext:C.x},
+          (function(){ const q={viewport:vpMjera,intent:'print'};
+            if(occ) q.optionalContentConfigPromise=Promise.resolve(occ); return q; })())).promise;
+        const dC=C.x.getImageData(0,0,C.c.width,C.c.height).data;
+        let raz=0;
+        for(let yy=Math.max(0,Math.floor(o.ay));yy<Math.min(visina,Math.ceil(o.by))&&raz<PRAG_PIKSELA;yy++)
+        for(let xx=Math.max(0,Math.floor(o.ax));xx<Math.min(sirina,Math.ceil(o.bx))&&raz<PRAG_PIKSELA;xx++){
+          const i=(yy*sirina+xx)*4;
+          const d=Math.max(Math.abs(dA[i]-dC[i]),Math.abs(dA[i+1]-dC[i+1]),Math.abs(dA[i+2]-dC[i+2]));
+          if(d>=PRAG_BOJE) raz++;
+        }
+        if(raz<PRAG_PIKSELA) stavka.razlozi.push('pinvis');
+      }
 
       // ---- biljeske i polja obrasca ----
       try{
