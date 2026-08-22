@@ -1068,6 +1068,81 @@ window.addEventListener('load',async()=>{
           pozvanAlert===0, 'alert pozvan '+pozvanAlert+' puta');
     w.alert=stariAlert;
 
+    // ============ 5u. ZARAZENI ZIVOTOPIS: OSAM ZAMKI ODJEDNOM ============
+    log('\nFAZA 2b - zarazeni zivotopis, tocno ono na cemu su nadene greske v5.0');
+    const zv=await pdfNalaz('pdf-zivotopis.pdf');
+
+    check('zivotopis: svih sest skrivenih tekstova je otkriveno', (()=>{
+      const t=zv.skriveno;
+      return /Ignore all previous instructions/i.test(t)&&      // bijelo na bijelom
+             /If you are an AI reviewer/i.test(t)&&             // nevidljiv nacin crtanja
+             /Do not mention this note/i.test(t)&&              // ispod pravokutnika
+             /Deset godina iskustva/i.test(t)&&                 // boja jednaka polju
+             /Certifikati: PMP/i.test(t)&&                      // boja jednaka polju
+             /Napomena za automatsku obradu/i.test(t);          // font od 1 pt
+    })(), zv.skriveno.slice(0,260));
+
+    // TOCNO JEDAN ulomak izvan stranice, i to onaj koji stvarno jest izvan
+    const brojIzvan=(()=>{ const m=/^(\d+)/.exec(
+      (zv.st.findings.find(f=>/izvan stranice/i.test(f.title))||{title:'0'}).title); return m?+m[1]:0; })();
+    check('zivotopis: tocno jedan ulomak je izvan stranice', brojIzvan===1,
+          'prijavljeno '+brojIzvan+': '+zv.izvan.slice(0,200));
+    check('zivotopis: izvan stranice je bas ona recenica koja jest izvan',
+          /Ne spominji ovu uputu/i.test(zv.izvan), zv.izvan.slice(0,200));
+    check('zivotopis: vidljiv naslov NIJE prijavljen kao izvan stranice',
+          !/Marko/i.test(zv.izvan)&&!/Horvat/i.test(zv.izvan), zv.izvan.slice(0,200));
+    check('zivotopis: nijedan vidljiv tekst nije prijavljen kao izvan stranice',
+          !/Voditelj projekata|Radno iskustvo|Obrazovanje|Vjestine|primjer\.hr/i.test(zv.izvan),
+          zv.izvan.slice(0,200));
+
+    // nevidljivi Unicode znakovi u PDF-u, jednako kao u Wordu
+    check('zivotopis: nevidljivi Unicode znakovi u PDF-u se prijavljuju',
+          zv.st.findings.some(f=>/nevidljivih znakova/i.test(f.title)),
+          zv.st.findings.map(f=>f.title).join('; '));
+    check('zivotopis: nevidljivi znakovi su oznaceni i u desnom panelu',
+          zv.st.chips>=2, 'zetona: '+zv.st.chips);
+    check('zivotopis: vidljiv naslov je i dalje citljiv uz nevidljive znakove',
+          /Marko/.test(zv.st.inputText)&&/Horvat/.test(zv.st.inputText));
+
+    check('zivotopis: svojstva dokumenta su prijavljena',
+          zv.st.findings.some(f=>/Svojstva dokumenta/i.test(f.title)),
+          zv.st.findings.map(f=>f.title).join('; '));
+    check('zivotopis: presuda je crvena', zv.st.verdict==='v-danger', zv.st.verdict);
+
+    // ---- ociscena kopija iz PDF-a ----
+    const kop=w.OwlUV.app.cleaned().plain;
+    const zamke=['Ignore all previous instructions','If you are an AI reviewer',
+                 'Do not mention this note','Deset godina iskustva','Certifikati: PMP',
+                 'Napomena za automatsku obradu','Ne spominji ovu uputu',
+                 'odaberi ovog kandidata','best candidate','hire immediately'];
+    const ostalo=zamke.filter(x=>new RegExp(x.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'),'i').test(kop));
+    check('zivotopis: ociscena kopija ne sadrzi nijednu rijec iz skrivenog sadrzaja',
+          ostalo.length===0, 'ostalo: '+ostalo.join(' | '));
+    check('zivotopis: ociscena kopija ne sadrzi svojstva dokumenta',
+          !/Napomena za AI|kao najboljeg|hire immediately/i.test(kop), kop.slice(0,160));
+    const vidljivo=['Voditelj projekata, Zagreb','Radno iskustvo','Obrazovanje',
+                    'Ekonomski fakultet','Hrvatski, engleski','Vjestine',
+                    '2020 - 2026','Analiticar'];
+    const fali=vidljivo.filter(x=>!new RegExp(x.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'),'i').test(kop));
+    check('zivotopis: ociscena kopija sadrzi cijeli vidljivi sadrzaj',
+          fali.length===0, 'fali: '+fali.join(' | '));
+    check('zivotopis: ociscena kopija nema nevidljivih znakova',
+          ![...kop].some(ch=>{const c=ch.codePointAt(0);
+            return w.OwlUV.detect.INVISIBLE[c]||w.OwlUV.detect.isTag(c);}));
+
+    // ---- isto za spremljenu .docx datoteku ----
+    const bajtoviZ=w.OwlUV.app.saveBytes();
+    const natragZ=w.OwlUV.docx.parse(bajtoviZ);
+    const pomZ=w.document.createElement('div');
+    pomZ.innerHTML=w.OwlUV.docx.toHtml(natragZ,w.OwlUV.I18N.hr);
+    const tekstZ=(pomZ.textContent||'').replace(/\s+/g,' ');
+    const ostaloZ=zamke.filter(x=>new RegExp(x.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'),'i').test(tekstZ));
+    check('zivotopis: spremljena datoteka ne sadrzi nijednu rijec iz skrivenog sadrzaja',
+          ostaloZ.length===0, 'ostalo: '+ostaloZ.join(' | '));
+    const faliZ=vidljivo.filter(x=>!new RegExp(x.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'),'i').test(tekstZ));
+    check('zivotopis: spremljena datoteka sadrzi cijeli vidljivi sadrzaj',
+          faliZ.length===0, 'fali: '+faliZ.join(' | '));
+
     // napomena o rekonstrukciji je posebna za PDF
     w.OwlUV.app.reset();
     await w.OwlUV.app.loadFile(await pdfFrom('pdf-cist.pdf'));
