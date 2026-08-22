@@ -7,10 +7,17 @@
 <!-- Naslov i opis mijenjaju se s jezikom sucelja (js/app.js, applyLang).
      Ovdje stoji hrvatska inacica, jer je hrvatski pocetni jezik. -->
 <meta name="description" content="OwlUV je skener skrivenog teksta i AI zamki: otkriva tekst skriven bojom ili velicinom fonta, nevidljive Unicode znakove i fraze koje pokusavaju navesti AI na krivi odgovor. Radi potpuno lokalno u pregledniku.">
-<!-- Ikone se citaju iz repozitorija, nikad s OneDrivea: alat mora raditi i bez njega. -->
+<!-- Ikone se citaju iz repozitorija: alat mora raditi i bez interneta. -->
 <link rel="icon" href="assets/sovaweb_favicon.ico" sizes="16x16 32x32">
 <link rel="icon" type="image/png" sizes="512x512" href="assets/sovaweb_favicon_512.png">
 <link rel="apple-touch-icon" href="assets/sovaweb_favicon_512.png">
+<!-- Dodavanje na pocetni zaslon telefona: radi kao aplikacija, bez trake preglednika. -->
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#0E1B26">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<meta name="apple-mobile-web-app-title" content="OwlUV">
 <style>
   :root{
     --paper:#F7F9FB; --panel:#FFFFFF; --ink:#14232E; --muted:#5B6B77;
@@ -68,6 +75,22 @@
     .btn.reset::before{display:none}
     .fhead{flex-wrap:wrap}
     footer .by img{height:54px}
+  }
+  /* Mobitel: prstom se ne pogada isto sto i misem. Na uskom zaslonu svi gumbi
+     dobivaju vecu povrsinu za dodir, rubovi stranice se stanjuju da tekst dobije
+     sirinu, a paneli se snize da se do drugog panela ne mora dugo listati.
+     Na sirokom zaslonu se nista od ovoga ne mijenja. */
+  @media(max-width:560px){
+    main{padding:16px 12px 48px}
+    .grid{gap:14px}
+    .grid>.panel{min-height:360px;max-height:none}
+    #input,.viz{padding:14px}
+    .btn{padding:12px 18px;font-size:13px}
+    .btn.sm{padding:10px 14px;font-size:12px}
+    .lang{padding:9px 13px;font-size:12px}
+    .langs{max-width:none}
+    .hitbtn{padding:8px 14px;font-size:15px}
+    .panel-h{padding:12px}
   }
   .langs{display:flex;gap:5px;flex-wrap:wrap;max-width:220px}
   .lang{font-family:var(--mono);font-size:11px;font-weight:700;letter-spacing:.06em;padding:6px 10px;border-radius:6px;border:1px solid #35505F;background:transparent;color:#A9BFCF;cursor:pointer}
@@ -409,5 +432,21 @@
 <script src="js/signals.js"></script>
 <script src="js/docxout.js"></script>
 <script src="js/app.js"></script>
+<script>
+/* Rad bez interneta na telefonu. Radnik se prijavljuje samo kad je stranica
+   posluzena s posluzitelja; otvorena iz mape (file://) preglednik ga ne
+   dopusta, a alat i tako vec radi iz mape. Ako prijava ne uspije, nista se ne
+   mijenja: alat radi dalje, samo bez ostave.
+
+   Prijavljuje se samo GLAVNA stranica, nikad ugradena u tudi okvir: ugradena
+   stranica nema pravo preuzeti ostavu za cijelo posluziteljsko ime. Zbog toga
+   je automatski test, koji alat ucitava u okvir, potpuno isti u oba nacina. */
+if('serviceWorker' in navigator && location.protocol.indexOf('http')===0
+   && window.top===window.self){
+  window.addEventListener('load',function(){
+    navigator.serviceWorker.register('sw.js').catch(function(){});
+  });
+}
+</script>
 </body>
 </html>
