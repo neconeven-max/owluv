@@ -322,6 +322,25 @@ notes:
    pieces, the tool neither guesses nor stays silent: it says plainly that
    visibility could not be measured.
 
+### Known limitation: the visibility measurement does not always run
+
+On some PDFs the page cannot be measured by drawing, and the tool says so
+instead of guessing. This happens most often with PDFs produced by billing,
+price list and reporting software, which draw text in ways the measurement
+cannot separate.
+
+When it happens, the finding **names the pages** it could not measure, says the
+measurement was done on the rest, and lists the checks that did run and pass:
+reading the text, invisible Unicode characters, suspicious phrases, sentences
+aimed at a machine, document properties, form fields, annotations and embedded
+JavaScript. The verdict then says one check could not give an answer.
+
+**It is not estimated from the colour of the letters.** That was considered and
+rejected: it would be a return to guessing, which is what drawing the page
+replaced. The tool would be claiming something it had not checked. An honest "I
+do not know" about one check is worth more than a confident answer that might be
+wrong.
+
 ### Two sources of text in a PDF, which must never be compared raw
 
 pdf.js gives text from two sources, and they do not agree:
@@ -415,10 +434,10 @@ takes about ten minutes, because the full suite runs twice.
 | Pass | Result |
 |---|---|
 | Repository hygiene | 32 checks, all passed |
-| Tool from a folder (`file://`) | 341 checks, all passed |
-| Tool served over http | 341 checks, all passed |
+| Tool from a folder (`file://`) | 380 checks, all passed |
+| Tool served over http | 380 checks, all passed |
 | Comparison of the two | 3 checks, identical |
-| **Total** | **717 checks, all passed** |
+| **Total** | **795 checks, all passed** |
 
 What is covered, in short: every kind of trap in Word and in PDF, each with its
 own fixture file; the four verdicts; all 6 languages with no missing key and no
@@ -564,6 +583,65 @@ which is worse for search engines.
 ---
 
 ## Change history
+
+### 23.08.2026. - v6.3, the verdict now matches what was actually found
+
+Five real business documents from five different sources - two price lists, a
+telecom bill, a stock report and a training certificate - were run through the
+tool. **Not one of them got the green verdict.** The detection was right every
+time; the **verdict** was wrong. The tool claimed "elements that look like a
+deliberate trap for an AI", and they were not.
+
+A telecom bill contains a dozen texts that genuinely are not visible on the
+page - and they are the labels of the payment slip: "Urgent", "Amount",
+"Model", "Purpose code", "Stamp and signature". Billing software leaves them
+invisible because the bill is sometimes printed onto a pre-printed form. Every
+utility bill in the country behaves that way. On the certificate, the entire
+reason for the red verdict was **one** item: the signature of the program that
+produced the PDF, in a one-point font at the bottom of the page.
+
+**Hidden text is still always reported and never leaves the list.** What changed
+is the claim on top of it. A red verdict, with the word "trap" in it, is now
+given only when the hidden text **also carries a sign of a trap**: a suspicious
+phrase, a sentence addressed to a machine, a demand for secrecy, or a planted
+outcome. Without any of those, the verdict says what is true instead - hidden
+text exists, it is worth a look, but it does not look like a trap, and the
+common harmless reasons are form labels, watermarks and the signatures of the
+programs that make documents.
+
+This is not a threshold and nothing is being kept quiet. No finding was removed
+from the list; an untrue claim was.
+
+**The verdict also names the real reason now.** One sentence used to cover
+everything, so "the text contains unusual characters" was shown even when the
+reason was something else entirely. Each reason now has its own wording: hidden
+text without a trap sign, visibility that could not be measured, unusual
+characters, mixed scripts, content outside the main text.
+
+**The same item is no longer reported twice.** The producer signature used to
+appear both as hidden text and again under document properties. The hidden text
+finding is kept, because it says more; the duplicate is dropped from properties.
+
+**The "could not measure" finding now says which pages.** Previously the tool
+could look self-contradictory: it said visibility could not be measured and, at
+the same time, that twelve texts were not visible. Those were different pages.
+It now names them, says the measurement was done on the rest, lists which checks
+ran and passed, and states plainly that this is neither a confirmation that the
+document is clean nor a claim that it hides something.
+
+**We keep the honest "I do not know".** Estimating visibility from the colour of
+the letters when the measurement cannot run was considered and rejected: that
+would be a return to guessing, which is exactly what drawing the page replaced.
+
+**New test documents: the ordinary business world.** Five entirely invented
+PDFs - a bill with a payment slip, a certificate with a one-point producer
+signature, a price list with dashes for empty fields, a stock report, and an
+official form - none of which may get a red verdict, while their findings still
+appear. The infected fixtures still go red.
+
+**Ctrl+A / Cmd+A in the right panel** now selects only that panel, so copying
+the revealed document no longer picks up the buttons and the finding
+descriptions.
 
 ### 23.08.2026. - v6.2, a stopped check no longer keeps running
 

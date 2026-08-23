@@ -319,6 +319,24 @@ izvedbi:
    više od 60, alat neće ni pogađati ni šutjeti: pošteno kaže da vidljivost nije
    izmjerio.
 
+### Poznato ograničenje: mjerenje vidljivosti ne uspije uvijek
+
+Na nekim PDF-ovima stranica se ne može izmjeriti crtanjem, pa alat to kaže
+umjesto da pogađa. Najčešće se to događa na PDF-ovima iz programa za izradu
+računa, cjenika i izvještaja, koji tekst crtaju na način koji mjerenje ne može
+razdvojiti.
+
+Kad se to dogodi, nalaz **imenuje stranice** koje nije mogao izmjeriti, kaže da
+je na ostalima mjerenje provedeno, i nabraja provjere koje jesu provedene i
+prošle: čitanje teksta, nevidljivi Unicode znakovi, sumnjive fraze, rečenice
+upućene stroju, svojstva dokumenta, polja obrasca, bilješke i ugrađeni
+JavaScript. Presuda tada kaže da jedna provjera nije mogla dati odgovor.
+
+**Ne procjenjuje se po boji slova.** To je razmotreno i odbijeno: bio bi to
+povratak na pogađanje, dakle upravo ono što je crtanje stranice zamijenilo. Alat
+bi tvrdio nešto što nije provjerio. Pošteno "ne znam" o jednoj provjeri vrijedi
+više od samouvjerenog odgovora koji možda nije točan.
+
 ### Dva izvora teksta u PDF-u, koji se nikad ne uspoređuju neobrađeni
 
 pdf.js daje tekst iz dva izvora, a oni ne pišu isto:
@@ -413,10 +431,10 @@ jer se puni test vrti dvaput.
 | Prolaz | Rezultat |
 |---|---|
 | Higijena repozitorija | 32 provjere, sve prošle |
-| Alat iz mape (`file://`) | 341 provjera, sve prošle |
-| Alat poslužen preko http | 341 provjera, sve prošle |
+| Alat iz mape (`file://`) | 380 provjera, sve prošle |
+| Alat poslužen preko http | 380 provjera, sve prošle |
 | Usporedba dvaju načina | 3 provjere, identično |
-| **Ukupno** | **717 provjera, sve prošle** |
+| **Ukupno** | **795 provjera, sve prošle** |
 
 Što je pokriveno, ukratko: svaka vrsta zamke u Wordu i u PDF-u, svaka sa svojom
 testnom datotekom; sve četiri presude; svih 6 jezika bez ijednog ključa koji
@@ -562,6 +580,62 @@ lošije za tražilice.
 ---
 
 ## Povijest izmjena
+
+### 23.08.2026. - v6.3, presuda odgovara onome što je stvarno nađeno
+
+Kroz alat je provučeno pet pravih poslovnih dokumenata iz pet različitih izvora
+- dva cjenika, telekom račun, izvještaj o zalihama i certifikat o edukaciji.
+**Nijedan nije dobio zelenu presudu.** Detekcija je svaki put bila točna;
+pogrešna je bila **presuda**. Alat je tvrdio "elementi koji izgledaju kao
+namjerna zamka za AI", a nisu bili.
+
+Telekom račun sadrži dvanaest tekstova koji se doista ne vide na stranici - a to
+su rubrike uplatnice: "Hitno", "Iznos", "Model", "Šifra namjene", "Pečat i
+potpis". Programi za izradu računa ih ostavljaju nevidljivima jer se račun
+ponekad tiska na gotov obrazac. Tako se ponaša svaki račun s uplatnicom u
+zemlji. Na certifikatu je cijeli razlog crvene presude bila **jedna** stavka:
+potpis programa koji je izradio PDF, u fontu od jedne točke na dnu stranice.
+
+**Skriveni tekst se i dalje prijavljuje uvijek i nikad ne izlazi iz popisa.**
+Promijenila se tvrdnja iznad njega. Crvena presuda, s riječju "zamka" u sebi,
+sada se daje samo kad skriveni tekst **uz to nosi i znak zamke**: sumnjivu
+frazu, obraćanje stroju, traženje tajnosti ili podmetanje ishoda. Kad nijednog
+od njih nema, presuda kaže ono što je istina - skriveni tekst postoji, vrijedi
+ga pogledati, ali ne izgleda kao zamka, a česti bezazleni razlozi su rubrike
+obrazaca, vodeni žigovi i potpisi programa koji izrađuju dokumente.
+
+To nije prag i ništa se ne prešućuje. Nijedan nalaz nije uklonjen iz popisa;
+uklonjena je neistinita tvrdnja.
+
+**Presuda sada navodi i stvaran razlog.** Jedna rečenica pokrivala je sve, pa je
+"tekst sadrži neuobičajene znakove" stajalo i onda kad je razlog bio nešto posve
+drugo. Sada svaki razlog ima svoj tekst: skriveni tekst bez znaka zamke,
+neizmjerena vidljivost, neobični znakovi, pomiješana pisma, sadržaj izvan
+glavnog teksta.
+
+**Ista stavka više nije prijavljena dvaput.** Potpis programa pojavljivao se i
+kao skriveni tekst i još jednom u svojstvima dokumenta. Zadržava se nalaz o
+skrivenom tekstu, jer nosi više; iz svojstava se dvojnik miče.
+
+**Nalaz o nemogućnosti mjerenja sada imenuje stranice.** Prije je alat znao
+izgledati kao da si proturječi: rekao bi da vidljivost nije mogao izmjeriti i
+istovremeno da dvanaest tekstova nije vidljivo. Radilo se o različitim
+stranicama. Sada ih imenuje, kaže da je na ostalima mjerenje provedeno, nabraja
+koje su provjere provedene i prošle, i izričito kaže da to nije potvrda da je
+dokument čist, ali ni tvrdnja da nešto skriva.
+
+**Ostajemo na poštenom "ne znam".** Procjena vidljivosti po boji slova kad se
+mjerenje ne može provesti razmotrena je i odbijena: to bi bio povratak na
+pogađanje, dakle upravo ono što je crtanje stranice zamijenilo.
+
+**Novi testni dokumenti: običan poslovni svijet.** Pet potpuno izmišljenih
+PDF-ova - račun s uplatnicom, certifikat s potpisom programa u fontu od jedne
+točke, cjenik s crticama za prazna polja, izvještaj o zalihama i službeni
+obrazac - od kojih nijedan ne smije dobiti crvenu presudu, a nalazi na njima
+svejedno stoje. Zaražene testne datoteke i dalje daju crveno.
+
+**Ctrl+A / Cmd+A u desnom panelu** sada označava samo taj panel, pa se pri
+kopiranju otkrivenog dokumenta više ne pokupe gumbi i opisi nalaza.
 
 ### 23.08.2026. - v6.2, prekinuta obrada više ne nastavlja raditi
 

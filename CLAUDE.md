@@ -325,6 +325,78 @@ da alat o tom dokumentu **ne tvrdi ništa - ni da je čist, ni da nije**.
 **Vrijedi za sve formate**, ne samo za PDF: provjera broja posla stoji oko
 `F.load()`, kroz koji prolaze i tekst, i HTML, i Word, i PDF.
 
+### ODLUKA: presuda mora odgovarati onome što je stvarno nađeno
+
+**Ne vraća se bez razgovora.**
+
+Pet pravih poslovnih dokumenata iz pet izvora (dva cjenika, telekom račun,
+izvještaj o zalihama, certifikat) - **nijedan nije dobio zelenu presudu**.
+Detekcija je u svih pet slučajeva bila **točna**; pogrešna je bila **presuda**.
+Alat je tvrdio "elementi koji izgledaju kao namjerna zamka za AI", a nije bila.
+
+Dva primjera koja to najbolje pokazuju:
+
+- **Račun s uplatnicom.** Dvanaest nevidljivih tekstova, i doista ih nema na
+  nacrtanoj stranici. Ali to su rubrike uplatnice ("Hitno", "Iznos", "Model",
+  "Šifra namjene", "Pečat i potpis"). Programi za izradu računa ih ostavljaju
+  nevidljivima jer se ponekad tiska na gotov obrazac. **Tako radi svaki račun
+  s uplatnicom u zemlji.**
+- **Certifikat.** Cijeli razlog crvene presude je JEDNA stavka: potpis programa
+  koji je izradio PDF, font od jedne točke na dnu stranice.
+
+**Pravilo koje iz toga slijedi.** Skriveni tekst se prijavljuje **uvijek** i
+nalaz nikad ne izlazi iz popisa. Ali sam po sebi **nije dokaz namjere**. Crvena
+presuda i tvrdnja o zamci smiju se izreći samo kad skriveni tekst **uz to nosi i
+znak zamke**: sumnjivu frazu s popisa, obraćanje stroju, traženje tajnosti ili
+podmetanje ishoda (`ZNAKOVI_ZAMKE` u `js/app.js`). Zapovjedni ton se namjerno
+**ne** broji, jer je najširi i javlja se i na posve normalnim rečenicama.
+
+Kad znaka zamke nema, presuda je mirnija i kaže istinu: skriveni tekst postoji,
+vrijedi ga pogledati, ali ne izgleda kao zamka, a česti bezazleni razlozi su
+rubrike obrazaca, vodeni žigovi i potpisi programa za izradu.
+
+**Ovo NIJE uvođenje praga ni prešućivanje.** Nijedan nalaz nije uklonjen iz
+popisa. Ispravljena je samo tvrdnja koja nije bila istinita. Detekcija nije
+dirana.
+
+**Posljedica koju treba znati:** tekst u isključenom sloju i skrivena lista
+vještina bez ijedne naredbe od v6.3 daju **narančastu**, a ne crvenu presudu,
+jer ne nose nijedan znak zamke. Nalaz o njima i dalje stoji na vrhu popisa.
+
+**Uz to: presuda uvijek navodi STVARAN razlog.** Jedna ista rečenica ("sadrži
+neuobičajene znakove") stajala je i onda kad razlog uopće nisu bili znakovi
+nego nemogućnost mjerenja. Sada svaki razlog ima svoj tekst: skriveni tekst bez
+znaka zamke, neizmjerena vidljivost, neobični znakovi, pomiješana pisma, sadržaj
+izvan glavnog teksta. Nalazi nose polje `uzrok`, po kojem se razlog bira.
+
+### ODLUKA: pošteno "ne znam", nikad procjena po boji
+
+**Ne vraća se bez razgovora.**
+
+Kad se vidljivost ne može izmjeriti crtanjem, **ne procjenjuje se po boji
+slova**. To bi bio povratak na pogađanje, dakle točno ono što je napušteno kad
+je uvedeno mjerenje crtanjem. Alat bi tada tvrdio nešto što nije provjerio.
+
+Umjesto toga poboljšan je **tekst** tog nalaza: imenuje stranice na kojima
+mjerenje nije provedeno, kaže da je na ostalima provedeno, nabraja koje su
+provjere provedene i prošle, i izričito kaže da to **nije potvrda da je dokument
+čist, ali ni tvrdnja da nešto skriva**.
+
+**Time je uklonjeno i prividno proturječje.** Prije je alat na istom dokumentu
+znao reći "vidljivost se nije mogla izmjeriti" i "tekst skriven formatiranjem
+(12)", pa je izgledalo kao da si proturječi. Radilo se o **različitim
+stranicama**. Zato `rez.neizmjerene` pamti brojeve stranica, a nalaz ih imenuje.
+
+### Ista stavka ne smije biti prijavljena dvaput
+
+Potpis programa koji je izradio dokument često stoji **i** kao skriveni tekst na
+stranici (font od jedne točke) **i** u svojstvima dokumenta. To je jedna te ista
+stvar, a korisniku izgleda kao kvar.
+
+Zadržava se nalaz o **skrivenom tekstu**, jer nosi više: kaže i gdje na stranici
+stoji i da se ne vidi. Iz svojstava se ta stavka miče, a broj u naslovu nalaza
+se poravna. **Detekcija se ne dira** - miče se samo dvostruki prikaz.
+
 ### Zamka pri razvoju: ostava servisnog radnika
 
 Dok se radi na alatu posluženom preko `http`, servisni radnik poslužuje
