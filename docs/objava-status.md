@@ -8,6 +8,14 @@ korak (postavke na GitHubu, DNS zapisi, preusmjeravanje druge domene) stoje u
 
 Zadnja provjera: **23.08.2026.**
 
+## Stranica je ŽIVA na privremenoj adresi
+
+> **https://neconeven-max.github.io/owluv/**
+
+To je GitHubova zadana adresa za ovaj repozitorij. Radi odmah, preko HTTPS-a, i
+na njoj se alat može testirati dok se ne riješi domena. Kad `owluv.com`
+proradi, ova adresa će preusmjeravati na njega.
+
 ---
 
 ## Kratko stanje
@@ -16,7 +24,7 @@ Zadnja provjera: **23.08.2026.**
 |---|---|
 | Kod v6.3 na GitHubu, grana `main` | **gotovo** |
 | Repozitorij javan | **gotovo** |
-| Datoteke za posluživanje (`CNAME`, `.nojekyll`) | **gotovo** |
+| Datoteke za posluživanje (`.nojekyll`) | **gotovo** |
 | GitHub Pages uključen | **gotovo**, grana `main`, mapa `/` |
 | Stranica živi na github.io adresi | **gotovo**, za testiranje |
 | Datoteka `CNAME` | **privremeno izvađena**, vidi na dnu |
@@ -24,6 +32,25 @@ Zadnja provjera: **23.08.2026.**
 | `owluv.com` kao vlastita domena na GitHubu | čeka DNS |
 | HTTPS na `owluv.com` | čeka vlastitu domenu |
 | Preusmjeravanje `hiddentextscanner.com` | blokirano istim uzrokom |
+
+---
+
+## Provjereno na živoj stranici, 23.08.2026.
+
+Otvoreno u pravom pregledniku na adresi gore:
+
+| Provjera | Rezultat |
+|---|---|
+| Verzija u podnožju | `v6.3` |
+| HTTPS | radi, valjan certifikat |
+| Zaraženi životopis (`test/pdf-zivotopis.pdf`) | **crvena** presuda, 6 nalaza |
+| Račun s uplatnicom (`test/pdf-racun-uplatnica.pdf`) | **narančasta**, "ne izgleda kao zamka" |
+| Čist PDF (`test/pdf-cist.pdf`) | **zelena** presuda |
+| Servisni radnik (rad bez interneta) | prijavljen, ostava radi |
+| **Zahtjevi izvan `github.io`** | **nijedan** |
+
+Zadnji redak je najvažniji: alat na živoj stranici ne dohvaća ništa izvana, kako
+i obećava.
 
 ---
 
@@ -35,10 +62,17 @@ Repozitorij `github.com/neconeven-max/owluv`:
 - zadana grana: `main`, lokalno stanje i `origin/main` su u koraku
 - `CNAME` je u repozitoriju i sadrži točno `owluv.com`
 - `.nojekyll`, `index.html`, `manifest.webmanifest` i `sw.js` su na `main`
-- GitHub Pages: **još nije uključen** (`has_pages: false`)
+- GitHub Pages: **uključen**, izvor je grana `main`, mapa `/` (root),
+  `build_type: legacy`; zadnja gradnja prošla
 
-Alat `gh` (GitHub CLI) instaliran je na MacBook Air preko Homebrewa,
-verzija 2.98.0. **Još nije prijavljen na GitHub račun.**
+Alat `gh` (GitHub CLI) instaliran je preko Homebrewa na radnom računalu,
+verzija 2.98.0, i prijavljen je na račun `neconeven-max` (opseg `repo`).
+Zbog toga se Pages i vlastita domena mogu podešavati s naredbenog retka:
+
+```
+gh api repos/neconeven-max/owluv/pages                 # stanje
+gh api repos/neconeven-max/owluv/pages/builds/latest   # zadnja gradnja
+```
 
 ---
 
@@ -78,14 +112,14 @@ Dva su moguća puta, i biraju se kod davatelja usluge, ne ovdje:
 
 ## Redoslijed koji preostaje
 
-1. **Prijava na GitHub:** `gh auth login` (traži da čovjek klikne u pregledniku).
-2. **Uključivanje GitHub Pagesa** s grane `main`, mapa `/` (root).
-   Preko CLI-ja: `gh api -X POST repos/neconeven-max/owluv/pages -f source[branch]=main -f source[path]=/`
-3. **Riješiti DNS** za `owluv.com` (vidi blokadu gore).
+1. ~~Prijava na GitHub~~ - **gotovo**
+2. ~~Uključivanje GitHub Pagesa~~ - **gotovo**
+3. **Riješiti DNS** za `owluv.com` (vidi blokadu gore). **Ovdje smo stali.**
 4. **Upisati DNS zapise** iz README-a: četiri `A` zapisa na GitHubove adrese i
    `CNAME` za `www`.
-5. **Vlastita domena na GitHubu:** `owluv.com`, pa pričekati da provjera
-   pozeleni, pa uključiti **Enforce HTTPS**.
+5. **Vratiti datoteku `CNAME`** u repozitorij (postupak je na dnu ovog
+   dokumenta), pa pričekati da provjera domene na GitHubu pozeleni, pa uključiti
+   **Enforce HTTPS**.
 6. **Preusmjeravanje** `hiddentextscanner.com` na `https://owluv.com`, trajno
    (301), kod registrara.
 7. **Provjera:** stranica radi na `https://owluv.com`, HTTPS vrijedi, a
@@ -105,8 +139,9 @@ koji se ne može razriješiti. Stranica time nije bila dostupna nigdje.
 
 Kako se vraća, kad DNS zapisi prorade:
 
+U mapi repozitorija:
+
 ```
-cd ~/owluv
 echo "owluv.com" > CNAME
 git add CNAME
 git commit -m "DD.MM.GGGG. Vracen CNAME, domena owluv.com je spremna"

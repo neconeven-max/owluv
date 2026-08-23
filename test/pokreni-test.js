@@ -151,10 +151,25 @@ function higijena(){
            /PRIVATNO|privatno/.test(gi)&&/INFRASTRUKTURA/.test(gi));
 
   // --- sve sto stranica treba za rad kao web stranica i kao aplikacija ---
-  for(const f of ['CNAME','manifest.webmanifest','sw.js','.nojekyll'])
+  for(const f of ['manifest.webmanifest','sw.js','.nojekyll'])
     provjera('postoji '+f, fs.existsSync(path.join(KORIJEN,f)));
-  provjera('CNAME sadrzi owluv.com',
-           fs.readFileSync(path.join(KORIJEN,'CNAME'),'utf8').trim()==='owluv.com');
+
+  // CNAME je ono sto GitHubu postavlja vlastitu domenu. Dok domena nema DNS,
+  // ta datoteka namjerno NIJE u repozitoriju, jer bi inace stranica
+  // preusmjeravala na adresu koja se ne moze razrijesiti. Takva odsutnost je
+  // dopustena, ali samo ako je zapisana u statusu objave, da se ne zaboravi
+  // vratiti. Test ne smije tiho preci ni preko jednog ni preko drugog.
+  const putCname=path.join(KORIJEN,'CNAME');
+  if(fs.existsSync(putCname)){
+    provjera('CNAME sadrzi owluv.com',
+             fs.readFileSync(putCname,'utf8').trim()==='owluv.com');
+  } else {
+    const status=path.join(KORIJEN,'docs','objava-status.md');
+    const zapisano=fs.existsSync(status)&&
+      /CNAME.*privremeno izva|CNAME.*se mora vratiti/i.test(fs.readFileSync(status,'utf8'));
+    provjera('CNAME je izvaden, i to je zapisano u statusu objave', zapisano,
+             'docs/objava-status.md mora objasniti zasto i kako se vraca');
+  }
 
   // --- rad bez interneta: popis u sw.js mora odgovarati stvarnim datotekama ---
   const sw=fs.readFileSync(path.join(KORIJEN,'sw.js'),'utf8');
