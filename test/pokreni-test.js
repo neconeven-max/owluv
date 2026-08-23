@@ -63,7 +63,11 @@ const NE_SMIJE_BITI=[
   {re:/-----BEGIN [A-Z ]*PRIVATE KEY-----/g, opis:'privatni kljuc'},
   // poslovni plan i naplata
   {re:/poslovni plan|business plan/gi,       opis:'poslovni plan'},
-  {re:/naplat\w*|napla[ćc]uj\w*|pretplat\w*|cjenik|monetiz\w*/gi, opis:'naplata'},
+  // "cjenik" je izbacen iz ovog popisa namjerno: to je obicna hrvatska rijec za
+  // vrstu dokumenta koju alat provjerava, pa se pojavljuje i u imenu testne
+  // datoteke i u opisu. Naplatu pouzdano hvataju naplata, pretplata i
+  // monetizacija; zabrana obicne rijeci bila je lazna uzbuna ovog popisa.
+  {re:/naplat\w*|napla[ćc]uj\w*|pretplat\w*|monetiz\w*/gi, opis:'naplata'},
   {re:/\bpricing\b|\bsubscription\b|\bpaid plan\b|\bper seat\b|\brevenue\b/gi, opis:'naplata'},
   {re:/skupna obrada|skupnu obradu|\bbatch processing\b/gi, opis:'skupna obrada'}
 ];

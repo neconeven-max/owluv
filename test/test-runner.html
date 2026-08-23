@@ -1284,6 +1284,96 @@ window.addEventListener('load',async()=>{
 
     w.OwlUV.app.reset();
 
+    // ====== 5y. OBICAN POSLOVNI SVIJET: nalaz da, uzbuna ne ======
+    log('\nFAZA 2b - obicni poslovni dokumenti ne smiju dobiti crvenu presudu');
+
+    const racun=await pdfNalaz('pdf-racun-uplatnica.pdf');
+    check('racun s uplatnicom: presuda NIJE crvena', racun.st.verdict!=='v-danger',
+          racun.st.verdict+' / '+racun.st.verdictBig);
+    check('racun s uplatnicom: skriveni tekst je SVEJEDNO prijavljen',
+          /rubrik|Hitno|Sifra namjene|Model/i.test(racun.skriveno)||racun.skriveno!=='',
+          racun.skriveno.slice(0,180));
+    check('racun s uplatnicom: presuda ne tvrdi da je rijec o zamci',
+          !/namjerna zamka|deliberate trap/i.test(racun.st.verdictSub), racun.st.verdictSub.slice(0,90));
+    check('racun s uplatnicom: presuda kaze da ne izgleda kao zamka',
+          /ne izgleda kao zamka/i.test(racun.st.verdictBig), racun.st.verdictBig);
+
+    const cert=await pdfNalaz('pdf-certifikat.pdf');
+    check('certifikat: presuda NIJE crvena', cert.st.verdict!=='v-danger',
+          cert.st.verdict+' / '+cert.st.verdictBig);
+    check('certifikat: potpis programa je SVEJEDNO prijavljen',
+          /Primjer Dokumenti/i.test(cert.sve), cert.sve.slice(0,200));
+    // ista stavka ne smije biti u dva nalaza
+    const putaPotpis=cert.st.findings
+      .filter(f=>/Primjer Dokumenti/i.test(String(f.title)+String(f.detail))).length;
+    check('certifikat: potpis programa je prijavljen JEDNOM, ne dvaput',
+          putaPotpis===1, 'prijavljen '+putaPotpis+' puta');
+    check('certifikat: svojstva dokumenta i dalje postoje kao nalaz',
+          cert.st.findings.some(f=>/Svojstva dokumenta/i.test(f.title)),
+          cert.st.findings.map(f=>f.title).join('; '));
+
+    for(const [ime,opis] of [['pdf-cjenik.pdf','cjenik'],['pdf-izvjestaj-zalihe.pdf','izvjestaj']]){
+      const d=await pdfNalaz(ime);
+      check(opis+': presuda NIJE crvena', d.st.verdict!=='v-danger',
+            d.st.verdict+' / '+d.sve.slice(0,120));
+      check(opis+': nema nalaza o skrivenom sadrzaju', d.skriveno===''&&d.izvan==='',
+            (d.skriveno+d.izvan).slice(0,160));
+    }
+
+    // suprotan smjer: zamka i dalje mora biti crvena
+    const zamka1=await pdfNalaz('pdf-zivotopis.pdf');
+    check('zamka: zarazeni zivotopis i dalje daje crvenu presudu',
+          zamka1.st.verdict==='v-danger', zamka1.st.verdict);
+    check('zamka: presuda i dalje tvrdi da je rijec o namjernoj zamci',
+          /namjerna zamka/i.test(zamka1.st.verdictSub), zamka1.st.verdictSub.slice(0,90));
+    const zamka2=await pdfNalaz('pdf-bijelo-na-bijelom.pdf');
+    check('zamka: bijelo na bijelom s naredbom i dalje daje crvenu presudu',
+          zamka2.st.verdict==='v-danger', zamka2.st.verdict);
+
+    // Presuda mora navesti STVARAN razlog. Racun i certifikat imaju ISTI razlog
+    // (skriveni tekst bez znaka zamke), pa im tekst SMIJE biti isti - to je
+    // ispravno. Usporeduju se tri RAZLICITA razloga.
+    const cjenikZa=await pdfNalaz('pdf-cjenik.pdf');
+    const razliciti=new Set([racun.st.verdictSub,zamka1.st.verdictSub,cjenikZa.st.verdictSub]);
+    check('presuda ne koristi jednu istu recenicu za razlicite razloge',
+          razliciti.size===3, 'razlicitih tekstova: '+razliciti.size);
+    check('isti razlog daje isti tekst presude',
+          racun.st.verdictSub===cert.st.verdictSub,
+          racun.st.verdictBig+' / '+cert.st.verdictBig);
+    for(const L of ['hr','en','de','fr','es','it']){
+      const T=w.OwlUV.I18N[L];
+      const skup=new Set([T.vHiddenOnlySub,T.vWarnMeasureSub,T.vWarnCharsSub,
+                          T.vWarnMixedSub,T.vWarnAnnexSub,T.vWarnSub]);
+      check(L+': svaki razlog narancaste presude ima svoj tekst', skup.size===6,
+            'razlicitih: '+skup.size);
+      check(L+': nalaz o nemogucnosti mjerenja imenuje stranice',
+            /2/.test(T.fNoMeasureTitle([2],3))&&/3/.test(T.fNoMeasureTitle([2,3],3)),
+            T.fNoMeasureTitle([2],3));
+      check(L+': taj nalaz kaze i sto je provjereno i proslo',
+            String(T.fNoMeasureWhy([2],3)).length>200, String(T.fNoMeasureWhy([2],3)).slice(0,60));
+    }
+
+    // ====== 5z2. Cmd+A u desnom panelu oznacava samo taj panel ======
+    w.OwlUV.app.reset();
+    await w.OwlUV.app.loadFile(await pdfFrom('pdf-zivotopis.pdf'));
+    const vizEl=w.document.getElementById('viz');
+    check('desni panel moze primiti zariste', vizEl.getAttribute('tabindex')==='0',
+          String(vizEl.getAttribute('tabindex')));
+    vizEl.focus();
+    const ev=new w.KeyboardEvent('keydown',{key:'a',metaKey:true,bubbles:true,cancelable:true});
+    const proslo=vizEl.dispatchEvent(ev);
+    check('Cmd+A u desnom panelu se presrece', proslo===false, 'preventDefault: '+(!proslo));
+    const odabir=w.getSelection();
+    check('Cmd+A oznaci sadrzaj desnog panela', odabir.rangeCount===1&&
+          odabir.getRangeAt(0).commonAncestorContainer===vizEl,
+          'raspona: '+odabir.rangeCount);
+    const tekstOdabira=odabir.getRangeAt(0).toString();
+    check('odabir ne zahvaca gumbe ni opise nalaza',
+          !/Kopiraj o|Spremi kao|Detaljni nalazi/i.test(tekstOdabira),
+          tekstOdabira.slice(0,60));
+    odabir.removeAllRanges();
+    w.OwlUV.app.reset();
+
     // napomena o rekonstrukciji je posebna za PDF
     w.OwlUV.app.reset();
     await w.OwlUV.app.loadFile(await pdfFrom('pdf-cist.pdf'));
