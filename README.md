@@ -415,10 +415,10 @@ takes about ten minutes, because the full suite runs twice.
 | Pass | Result |
 |---|---|
 | Repository hygiene | 32 checks, all passed |
-| Tool from a folder (`file://`) | 332 checks, all passed |
-| Tool served over http | 332 checks, all passed |
+| Tool from a folder (`file://`) | 341 checks, all passed |
+| Tool served over http | 341 checks, all passed |
 | Comparison of the two | 3 checks, identical |
-| **Total** | **699 checks, all passed** |
+| **Total** | **717 checks, all passed** |
 
 What is covered, in short: every kind of trap in Word and in PDF, each with its
 own fixture file; the four verdicts; all 6 languages with no missing key and no
@@ -564,6 +564,33 @@ which is worse for search engines.
 ---
 
 ## Change history
+
+### 23.08.2026. - v6.2, a stopped check no longer keeps running
+
+**The most dangerous bug so far, because nobody could have noticed it.** Load a
+large PDF, press stop, press "New text", load a second smaller PDF - and after a
+while the result of the **first** document would appear on its own, while the
+second one was in the panel. The name on screen belonged to one file, the
+verdict to another. In the worst case an infected document would inherit the
+green verdict of a clean one.
+
+Two things caused it. Stopping set a single shared flag, but every new job reset
+that flag to false at the start, so the stopped job saw "keep going" on its next
+check and **carried on**. And when it eventually finished, it wrote its result to
+the screen without ever asking whether it was still the job that belonged there.
+
+Now **every check carries its own number**. The number goes up on every new job,
+on stop, and on "New text". A job runs only while its number is still the
+current one, and - this is the part that matters - **after waiting, nothing is
+written to the screen before checking that the job is still the current one**.
+The result of an older check is discarded entirely and never touches the
+display. This holds for every format, not just PDF: plain text, HTML, Word and
+PDF all go through the same gate.
+
+After a stop, the screen says plainly that **the check was stopped and the tool
+claims nothing about that document - neither that it is clean nor that it is
+not**, on all 6 languages. It is never left blank, and never left showing the
+previous document's verdict.
 
 ### 23.08.2026. - v6.1, two bugs found on real documents
 

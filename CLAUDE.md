@@ -284,6 +284,47 @@ provjeriti" - a to je tvrdnja o dokumentu, u koji alat nije ni ušao. Sada takav
 dokument dobiva "Provjera je prekinuta" i izričito piše da alat o njemu ne
 tvrdi ništa.
 
+### Uzrok 3 (v6.2): prekinuta obrada je nastavljala raditi i prepisivala nalaz
+
+**Ovo je bio najopasniji kvar dosad, jer se nije mogao primijetiti.**
+
+Reproducirano: veliki PDF, klik na prekid, "Novi tekst", pa drugi dokument.
+Nakon nekog vremena na zaslonu bi se sam od sebe pojavio nalaz **prvog**
+dokumenta, iako je u panelu bio drugi. Provjereno mjerenjem na v6.1: nalaz
+čistog dokumenta bio je prepisan nalazom prekinutog, zajedno s tekstom u panelu.
+
+**Uzrok su bile dvije stvari, obje u `js/app.js`:**
+
+1. **Zajednička zastavica za prekid.** Prekid je postavljao `prekidTrazen=true`,
+   ali je svaka nova obrada na početku radila `prekidTrazen=false`. Čitač PDF-a
+   zastavicu čita **između stranica**, pa bi prekinuta obrada na sljedećoj
+   provjeri vidjela `false` i **nastavila raditi**.
+2. **Rezultat se nije provjeravao kome pripada.** Kad bi stara obrada napokon
+   završila, njezin `await` bi se razriješio i ona bi bezuvjetno upisala
+   `loaded`, sadržaj panela i presudu - preko onoga što je u međuvremenu ondje.
+
+**Popravak: svaka obrada nosi svoj broj.**
+
+- `posaoBroj` raste na svaki novi posao, na prekid i na "Novi tekst".
+- Obrada radi samo dok je `josTece(moj)`, dakle dok je njezin broj još tekući.
+  Predikat za prekid koji se predaje čitaču je `()=>!josTece(moj)`, pa čitač
+  stane sam od sebe.
+- **Poslije `await`-a se ne piše po zaslonu prije provjere `josTece(moj)`.**
+  Rezultat starije obrade se odbacuje u cijelosti i nikad ne dira zaslon.
+
+**Pravilo za dalje:** svaka funkcija koja nešto čeka pa onda piše po zaslonu
+mora prije pisanja provjeriti je li njezin posao još tekući. Zajednička
+zastavica za "stani" nije dovoljna, jer ju sljedeći posao može poništiti.
+
+**Zašto poruku o prekidu ispisuje gumb, a ne obrada.** Prekinuta obrada više
+nema pravo pisati po zaslonu - to je cijela poanta popravka. Zato stanje nakon
+prekida crta `prikaziPrekid()`, pozvan iz rukovatelja klika, odmah. Zaslon nikad
+ne ostaje prazan ni sa zatečenim stanjem prethodnog dokumenta, i izričito piše
+da alat o tom dokumentu **ne tvrdi ništa - ni da je čist, ni da nije**.
+
+**Vrijedi za sve formate**, ne samo za PDF: provjera broja posla stoji oko
+`F.load()`, kroz koji prolaze i tekst, i HTML, i Word, i PDF.
+
 ### Zamka pri razvoju: ostava servisnog radnika
 
 Dok se radi na alatu posluženom preko `http`, servisni radnik poslužuje

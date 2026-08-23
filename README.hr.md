@@ -413,10 +413,10 @@ jer se puni test vrti dvaput.
 | Prolaz | Rezultat |
 |---|---|
 | Higijena repozitorija | 32 provjere, sve prošle |
-| Alat iz mape (`file://`) | 332 provjere, sve prošle |
-| Alat poslužen preko http | 332 provjere, sve prošle |
+| Alat iz mape (`file://`) | 341 provjera, sve prošle |
+| Alat poslužen preko http | 341 provjera, sve prošle |
 | Usporedba dvaju načina | 3 provjere, identično |
-| **Ukupno** | **699 provjera, sve prošle** |
+| **Ukupno** | **717 provjera, sve prošle** |
 
 Što je pokriveno, ukratko: svaka vrsta zamke u Wordu i u PDF-u, svaka sa svojom
 testnom datotekom; sve četiri presude; svih 6 jezika bez ijednog ključa koji
@@ -562,6 +562,31 @@ lošije za tražilice.
 ---
 
 ## Povijest izmjena
+
+### 23.08.2026. - v6.2, prekinuta obrada više ne nastavlja raditi
+
+**Najopasniji bug dosad, jer ga nitko nije mogao primijetiti.** Učitaš veliki
+PDF, klikneš prekid, klikneš "Novi tekst", učitaš drugi, manji PDF - i nakon
+nekog vremena se sam od sebe pojavi rezultat **prvog** dokumenta, iako je u
+panelu drugi. Ime na ekranu pripadalo je jednoj datoteci, presuda drugoj. U
+najgorem slučaju zaražen dokument naslijedi zelenu presudu čistoga.
+
+Uzrokovale su to dvije stvari. Prekid je postavljao jednu zajedničku zastavicu,
+ali ju je svaka nova obrada na početku vraćala na false, pa je prekinuta obrada
+na sljedećoj provjeri vidjela "nastavi" i **nastavila raditi**. A kad bi napokon
+završila, upisala bi svoj rezultat na zaslon a da se nikad nije pitala pripada
+li on još ondje.
+
+Sada **svaka obrada nosi svoj broj**. Broj raste na svaki novi posao, na prekid
+i na "Novi tekst". Obrada radi samo dok je njezin broj još tekući, a - i to je
+ono bitno - **poslije čekanja se ne piše po zaslonu prije nego se provjeri je li
+posao još tekući**. Rezultat starije obrade odbacuje se u cijelosti i nikad ne
+dira zaslon. Vrijedi za sve formate, ne samo za PDF: i obični tekst, i HTML, i
+Word, i PDF prolaze kroz ista vrata.
+
+Nakon prekida na zaslonu izričito piše da je **provjera prekinuta i da alat o
+tom dokumentu ne tvrdi ništa - ni da je čist, ni da nije**, na svih 6 jezika.
+Nikad ne ostaje prazan i nikad ne zadrži presudu prethodnog dokumenta.
 
 ### 23.08.2026. - v6.1, dva buga nađena na pravim dokumentima
 
