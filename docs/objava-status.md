@@ -17,7 +17,9 @@ Zadnja provjera: **23.08.2026.**
 | Kod v6.3 na GitHubu, grana `main` | **gotovo** |
 | Repozitorij javan | **gotovo** |
 | Datoteke za posluživanje (`CNAME`, `.nojekyll`) | **gotovo** |
-| GitHub Pages uključen | **čeka** - traži prijavu na GitHub |
+| GitHub Pages uključen | **gotovo**, grana `main`, mapa `/` |
+| Stranica živi na github.io adresi | **gotovo**, za testiranje |
+| Datoteka `CNAME` | **privremeno izvađena**, vidi na dnu |
 | DNS za `owluv.com` | **blokirano** - vidi niže |
 | `owluv.com` kao vlastita domena na GitHubu | čeka DNS |
 | HTTPS na `owluv.com` | čeka vlastitu domenu |
@@ -91,10 +93,30 @@ Dva su moguća puta, i biraju se kod davatelja usluge, ne ovdje:
 
 ---
 
-## Napomena o datoteci CNAME
+## VAŽNO: datoteka CNAME je privremeno izvađena
 
-`CNAME` u repozitoriju već sadrži `owluv.com`. Čim se GitHub Pages uključi,
-GitHub tu datoteku pročita i sam postavi vlastitu domenu. Dok DNS ne proradi,
-adresa `neconeven-max.github.io/owluv/` zato može preusmjeravati na `owluv.com`
-i izgledati kao da stranica ne radi. To **nije kvar** nego posljedica toga što
-domena još nema DNS, i prolazi samo od sebe čim zapisi prorade.
+**Kad DNS proradi, `CNAME` se mora vratiti.** Bez nje stranica nikad neće raditi
+na `owluv.com`.
+
+Zašto je izvađena: `CNAME` u repozitoriju je ono što GitHubu **postavlja**
+vlastitu domenu. Čim je Pages uključen, GitHub je pročitao i svaki zahtjev na
+`neconeven-max.github.io/owluv/` počeo preusmjeravati na `http://owluv.com/`,
+koji se ne može razriješiti. Stranica time nije bila dostupna nigdje.
+
+Kako se vraća, kad DNS zapisi prorade:
+
+```
+cd ~/owluv
+echo "owluv.com" > CNAME
+git add CNAME
+git commit -m "DD.MM.GGGG. Vracen CNAME, domena owluv.com je spremna"
+git push
+```
+
+Zatim na GitHubu, pod *Settings -> Pages -> Custom domain*, pričekati da provjera
+pozeleni, pa uključiti **Enforce HTTPS**. Isto se može i s CLI-ja:
+
+```
+gh api -X PUT repos/neconeven-max/owluv/pages -f cname=owluv.com
+gh api -X PUT repos/neconeven-max/owluv/pages -F https_enforced=true
+```
