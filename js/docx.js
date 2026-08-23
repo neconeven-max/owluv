@@ -349,10 +349,10 @@
   // tekst jer su isto skriveni sadrzaj, samo gurnut van vidljivog podrucja.
   function findings(r,t){
     const f=[];
-    if(r.comments.length) f.push({sev:'warn',rank:38,title:t.fCommTitle(r.comments.length),why:t.fCommWhy,
+    if(r.comments.length) f.push({sev:'warn',rank:38,uzrok:'annex',title:t.fCommTitle(r.comments.length),why:t.fCommWhy,
       anchor:ax('comments'),
       items:r.comments.map(c=>({q:strip(c.html),n:c.author||'?'}))});
-    if(r.deleted.length) f.push({sev:'warn',rank:39,title:t.fDelTitle(r.deleted.length),why:t.fDelWhy,
+    if(r.deleted.length) f.push({sev:'warn',rank:39,uzrok:'annex',title:t.fDelTitle(r.deleted.length),why:t.fDelWhy,
       anchor:ax('deleted'),
       items:r.deleted.map(d=>({q:d.slice(0,300)}))});
     if(r.boxes.length) f.push({sev:'danger',rank:12,title:t.fBoxTitle(r.boxes.length),why:t.fBoxWhy,

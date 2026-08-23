@@ -139,7 +139,11 @@
     const rez={
       pages:doc.numPages, provjereno:0, prekinuto:false,
       lines:[], hiddenLayers:[], offPage:[], fields:[],
-      notes:[], props:[], js:[], layers:[], hasImages:false, mjereno:true, ms:0
+      notes:[], props:[], js:[], layers:[], hasImages:false, mjereno:true, ms:0,
+      // Na kojim stranicama vidljivost NIJE izmjerena. Bez toga alat izgleda
+      // kao da si proturjeci: kaze "nisam mogao izmjeriti" i istovremeno
+      // "ovaj tekst nije vidljiv" - a to su bile razlicite stranice.
+      neizmjerene:[]
     };
     let ciljanihUkupno=0;
 
@@ -248,7 +252,7 @@
           dB=B.x.getImageData(0,0,B.c.width,B.c.height).data;
           sirina=A.c.width; visina=A.c.height;
           mjerljivo=true;
-        } else rez.mjereno=false;
+        } else { rez.mjereno=false; rez.neizmjerene.push(br); }
       }
 
       // ---- je li nacrtani tekst uopce na stranici ----
@@ -411,9 +415,16 @@
       // izmjerena. Granica je i po stranici i po cijelom dokumentu: sto vrijedi
       // za jednu stranicu s puno preklapanja, vrijedi i za sto takvih stranica.
       if(zaCiljano.length>NAJVISE_CILJANIH||
-         ciljanihUkupno+zaCiljano.length>NAJVISE_CILJANIH_UKUPNO) rez.mjereno=false;
+         ciljanihUkupno+zaCiljano.length>NAJVISE_CILJANIH_UKUPNO){
+        rez.mjereno=false;
+        if(rez.neizmjerene.indexOf(br)<0) rez.neizmjerene.push(br);
+      }
       else for(const stavka of zaCiljano){
-        if(stani()){ rez.prekinuto=true; rez.mjereno=false; break; }
+        if(stani()){
+          rez.prekinuto=true; rez.mjereno=false;
+          if(rez.neizmjerene.indexOf(br)<0) rez.neizmjerene.push(br);
+          break;
+        }
         ciljanihUkupno++;
         const o=stavka.okvir, r=stavka.raspon;
         if(!r) continue;                      // nema mu se sto preskociti
@@ -509,17 +520,18 @@
     if(r.js.length) f.push({sev:'danger',rank:14,
       title:t.fJsTitle(r.js.length),why:t.fJsWhy,anchor:'[data-uv-annex="js"]',
       items:r.js.map(j=>({q:j.code.slice(0,400),n:j.name}))});
-    if(r.fields.length) f.push({sev:'warn',rank:37,
+    if(r.fields.length) f.push({sev:'warn',rank:37,uzrok:'annex',
       title:t.fFieldTitle(r.fields.length),why:t.fFieldWhy,anchor:'[data-uv-annex="fields"]',
       items:r.fields.map(x=>({q:x.value.slice(0,300),n:x.name}))});
-    if(r.notes.length) f.push({sev:'warn',rank:38,
+    if(r.notes.length) f.push({sev:'warn',rank:38,uzrok:'annex',
       title:t.fCommTitle(r.notes.length),why:t.fCommWhy,anchor:'[data-uv-annex="comments"]',
       items:r.notes.map(x=>({q:x.txt.slice(0,300),n:x.title}))});
     if(r.props.length) f.push({sev:'info',rank:40,
       title:t.fPropTitle(r.props.length),why:t.fPropWhy,
       items:r.props.map(p=>({q:p.v,n:t.prop[p.k]||p.k}))});
-    if(!r.mjereno) f.push({sev:'warn',rank:41,
-      title:t.fNoMeasureTitle,why:t.fNoMeasureWhy});
+    if(!r.mjereno) f.push({sev:'warn',rank:41,uzrok:'nomeasure',
+      title:t.fNoMeasureTitle(r.neizmjerene,r.provjereno),
+      why:t.fNoMeasureWhy(r.neizmjerene,r.provjereno)});
     // Dokument koji nije provjeren u cijelosti to mora i reci, jednako kao sto
     // dokument bez teksta ne dobiva zelenu presudu. Nikad tiho.
     if(r.provjereno<r.pages) f.push({sev:'warn',rank:9,

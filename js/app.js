@@ -343,7 +343,7 @@
 
       // pomijesana pisma
       const mixed=text.split(/\s+/).filter(w=>/[a-zA-Z]/.test(w)&&/[\u0400-\u04FF\u0370-\u03FF]/.test(w));
-      if(mixed.length) g.mixed.push({sev:'warn',rank:50,title:t.fMixedTitle,why:t.fMixedWhy,
+      if(mixed.length) g.mixed.push({sev:'warn',rank:50,uzrok:'mixed',title:t.fMixedTitle,why:t.fMixedWhy,
         anchor:'.mixmark', detail:mixed.slice(0,20).join(', ')});
 
       // duge crtice
@@ -355,11 +355,38 @@
 
     // --- korak: pregled svojstava dokumenta ---
     // Ide samo kad je ucitan Word, jer se samo tada ima sto pregledati.
+    // Ista stavka ne smije biti prijavljena dvaput. Potpis programa koji je
+    // izradio dokument cesto stoji i kao skriveni tekst na stranici (font od
+    // jedne tocke) i u svojstvima dokumenta. To je jedna te ista stvar, a
+    // korisniku izgleda kao kvar. Zadrzava se nalaz o SKRIVENOM TEKSTU, jer
+    // nosi vise: kaze i gdje na stranici stoji i da se ne vidi. Iz svojstava se
+    // ta stavka mice. Detekcija se ne dira - mice se samo dvostruki prikaz.
+    const kljuc=x=>String(x||'').replace(/\s+/g,'').toLowerCase();
+    function bezDvostrukih(f){
+      if(!f.items||!f.items.length) return f;
+      if(!/Svojstva dokumenta|Document properties|Dokumenteigenschaften|Propri|Propiedades|Propriet/i.test(f.title)) return f;
+      const skriveno=hiddenTexts.map(h=>kljuc(h.t));
+      const ostaje=f.items.filter(it=>{
+        const v=kljuc(it.q);
+        if(v.length<8) return true;                 // prekratko da bi bilo pouzdano
+        return !skriveno.some(h=>h===v||h.indexOf(v)>=0);
+      });
+      if(!ostaje.length) return null;
+      if(ostaje.length===f.items.length) return f;
+      return Object.assign({},f,{items:ostaje,title:naslovSBrojem(f.title,ostaje.length)});
+    }
+    // Naslov nosi broj stavki, pa se broj mora poravnati kad se koja makne.
+    const naslovSBrojem=(naslov,n)=>String(naslov).replace(/\((\d+)\)/,'('+n+')');
+
     if(loaded&&loaded.docx) steps.push({k:'stepProps',fn(){
-      OwlUV.docx.findings(loaded.docx,t).forEach(f=>g.docx.push(f));
+      OwlUV.docx.findings(loaded.docx,t).forEach(f=>{
+        const x=bezDvostrukih(f); if(x) g.docx.push(x);
+      });
     }});
     if(loaded&&loaded.pdf) steps.push({k:'stepProps',fn(){
-      OwlUV.pdf.findings(loaded.pdf,t).forEach(f=>g.docx.push(f));
+      OwlUV.pdf.findings(loaded.pdf,t).forEach(f=>{
+        const x=bezDvostrukih(f); if(x) g.docx.push(x);
+      });
     }});
 
     function finish(){
@@ -383,9 +410,37 @@
         const cp=ch.codePointAt(0);
         return !INVISIBLE[cp]&&!isVariation(cp)&&!isTag(cp)&&!/\s/.test(ch);
       }).length;
+      // ---- NOSI LI SKRIVENI TEKST ZNAKOVE ZAMKE ----
+      // Skriveni tekst se prijavljuje UVIJEK i nalaz nikad ne izlazi iz popisa.
+      // Ali sam po sebi nije dokaz namjere: programi za izradu racuna ostavljaju
+      // rubrike uplatnice nevidljivima, a programi za izradu dokumenata upisuju
+      // svoj potpis fontom od jedne tocke. Tvrdnja "namjerna zamka za AI" smije
+      // se izreci samo kad skriveni tekst UZ TO nosi i znak zamke: sumnjivu
+      // frazu s popisa, obracanje stroju, trazenje tajnosti ili podmetanje
+      // ishoda. Zapovjedni ton se namjerno NE broji, jer je najsiri i javlja se
+      // i na posve normalnim recenicama.
+      // Ovo ne mijenja detekciju nego samo presudu: ispravlja se tvrdnja koja
+      // nije istinita, a to nije uvodenje praga.
+      const ZNAKOVI_ZAMKE=['addr','sec','plant'];
+      const nosiZamku=txt=>{
+        if(!txt) return false;
+        for(const [re] of PHRASES){
+          if(re.lastIndex!==undefined) re.lastIndex=0;
+          if(re.test(txt)) return true;
+        }
+        if(!OwlUV.signals) return false;
+        return OwlUV.signals.scan(txt).some(r=>
+          (r.signals||[]).some(k=>ZNAKOVI_ZAMKE.indexOf(String(k).split(':')[0])>=0));
+      };
+      const skrivenoNosiZamku=hiddenTexts.some(h=>nosiZamku(h.t));
+
       const danger=findings.some(f=>f.sev==='danger');
       const warn=findings.some(f=>f.sev==='warn'||f.sev==='uv');
       const info=findings.some(f=>f.sev==='info');
+
+      // Crvena presuda i tvrdnja o namjeri: samo kad za to ima pokrica.
+      const zamka=!!(g.tag.length||g.phrase.length||skrivenoNosiZamku);
+      const samoSkriveno=!zamka&&hiddenTexts.length>0;
 
       // Dokument koji nije provjeren u cijelosti NIKAD ne dobiva zelenu presudu,
       // po istom pravilu po kojem je ne dobiva ni dokument bez teksta: lazna
@@ -409,7 +464,22 @@
       }
       if(text.trim()===''&&!dio){ setVerdict('','',''); return; }
 
-      if(danger) setVerdict('v-danger',t.vDangerBig,t.vDangerSub);
+      // ---- TEKST PRESUDE MORA NAVESTI STVARAN RAZLOG ----
+      // Jedna ista recenica za sve slucajeve je krivo govorila korisniku sto je
+      // naslo: "sadrzi neuobicajene znakove" i onda kad razlog uopce nisu bili
+      // znakovi. Zato se razlog bira po onome sto je stvarno pronadeno.
+      const imaNeizmjereno=findings.some(f=>f.uzrok==='nomeasure');
+      const imaZnakove=findings.some(f=>f.sev==='uv');
+      const imaPisma=findings.some(f=>f.uzrok==='mixed');
+      const imaAnekse=findings.some(f=>f.uzrok==='annex');
+
+      if(zamka) setVerdict('v-danger',t.vDangerBig,t.vDangerSub);
+      else if(samoSkriveno) setVerdict('v-warn',t.vHiddenOnlyBig,t.vHiddenOnlySub);
+      else if(danger) setVerdict('v-danger',t.vDangerBig,t.vDangerSub);
+      else if(imaNeizmjereno) setVerdict('v-warn',t.vWarnMeasureBig,t.vWarnMeasureSub);
+      else if(imaZnakove) setVerdict('v-warn',t.vWarnCharsBig,t.vWarnCharsSub);
+      else if(imaPisma) setVerdict('v-warn',t.vWarnMixedBig,t.vWarnMixedSub);
+      else if(imaAnekse) setVerdict('v-warn',t.vWarnAnnexBig,t.vWarnAnnexSub);
       else if(warn) setVerdict('v-warn',t.vWarnBig,t.vWarnSub);
       // zelena uz plave nalaze ne smije tvrditi da nema nicega
       else if(info) setVerdict('v-ok',t.vOkNotesBig,t.vOkNotesSub);
@@ -1013,6 +1083,20 @@
   input.addEventListener('input',()=>{ if(!settingContent) markStale(); });
   $('rescanBtn').addEventListener('click',()=>{ clearStale(); owlSweep(); scan(); });
   $('resetBtn').addEventListener('click',resetAll);
+
+  // Cmd+A / Ctrl+A dok je zariste u desnom panelu oznacava SAMO taj panel.
+  // Preglednik bi inace oznacio cijelu stranicu, pa bi u kopiju usli i gumbi i
+  // opisi nalaza. Lijevi panel se moze uredivati pa to vec radi sam od sebe.
+  viz.addEventListener('keydown',e=>{
+    if(!(e.key==='a'||e.key==='A')) return;
+    if(!(e.metaKey||e.ctrlKey)||e.altKey) return;
+    e.preventDefault();
+    const opseg=document.createRange();
+    opseg.selectNodeContents(viz);
+    const odabir=window.getSelection();
+    odabir.removeAllRanges();
+    odabir.addRange(opseg);
+  });
   document.addEventListener('keydown',e=>{ if(e.key==='Escape') resetAll(); });
   $('saveBtn').addEventListener('click',()=>{ saveClean(); });
   $('cleanBtn').addEventListener('click',()=>{

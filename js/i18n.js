@@ -129,13 +129,29 @@
       vAbortViz:'Provjera je prekinuta. Nema nalaza jer dokument nije provjeren.',
       vStoppedBig:'Provjera je prekinuta',
       vStoppedSub:b=>'Provjera je prekinuta prije nego je provjerena ijedna od '+b+' stranica. O ovom dokumentu alat ne tvrdi ništa. Tvoja datoteka nije promijenjena.',
-      fNoMeasureTitle:'Vidljivost teksta nije se mogla izmjeriti',
-      fNoMeasureWhy:'Ova stranica crta slova na način koji alat ne može izmjeriti, pa provjera vidljivosti nije provedena. Ostale provjere jesu. Ovo NIJE potvrda da je dokument čist.',
+      fNoMeasureTitle:(str,prov)=>'Vidljivost teksta nije izmjerena'+
+        (str&&str.length?(str.length===1?' na stranici '+str[0]:' na stranicama '+str.join(', ')):''),
+      fNoMeasureWhy:(str,prov)=>{
+        const koje=(str&&str.length)?(str.length===1?'Stranica '+str[0]+' crta':'Stranice '+str.join(', ')+' crtaju'):'Neke stranice crtaju';
+        const ostale=(str&&str.length&&prov&&prov>str.length)?' Na ostalim stranicama mjerenje je provedeno, pa se nalaz o skrivenom tekstu odnosi na njih.':'';
+        return koje+' slova na način koji alat ne može izmjeriti crtanjem, pa je od svih provjera izostala samo ta jedna.'+ostale+
+          ' Provedene su i prošle: čitanje teksta, nevidljivi Unicode znakovi, sumnjive fraze, rečenice upućene stroju, svojstva dokumenta, polja obrasca, bilješke i ugrađeni JavaScript. Ovo NIJE potvrda da je dokument čist, ali NIJE ni tvrdnja da nešto skriva - jedna provjera jednostavno nije mogla dati odgovor.';
+      },
+      vHiddenOnlyBig:'Pronađen skriveni tekst, ne izgleda kao zamka',
+      vHiddenOnlySub:'U dokumentu postoji tekst koji se ne vidi na stranici. Vrijedi ga pogledati, ali ne nosi nijedan znak namjerne zamke za AI. Česti bezazleni razlozi: rubrike obrasca koje se tiskaju na gotov papir, vodeni žigovi i potpis programa koji je dokument izradio.',
+      vWarnMeasureBig:'Jedna provjera nije mogla dati odgovor',
+      vWarnMeasureSub:'Sve ostale provjere su provedene i ništa nisu našle. Vidljivost teksta se na dijelu dokumenta nije mogla izmjeriti crtanjem, pa alat o tom dijelu ne tvrdi ni da je čist ni da nije. Pojedinosti su u nalazu ispod.',
+      vWarnCharsBig:'Oprez - neuobičajeni znakovi u tekstu',
+      vWarnCharsSub:'Nema skrivenog teksta ni sumnjive fraze, ali dokument sadrži znakove koji se ne vide, a računalo ih čita. Ponekad su bezazleni (meka crtica iz rastavljanja riječi), ponekad nisu. Pogledaj nalaz ispod i po potrebi koristi očišćenu verziju.',
+      vWarnMixedBig:'Oprez - riječi s pomiješanim pismima',
+      vWarnMixedSub:'U tekstu ima riječi koje miješaju latinicu s ćirilicom ili grčkim. Oku izgledaju isto, a računalu su druge riječi. Ponekad je to samo loše kopiran tekst, ponekad namjerno zaobilaženje provjere.',
+      vWarnAnnexBig:'Oprez - sadržaj izvan glavnog teksta',
+      vWarnAnnexSub:'Glavni tekst je čist, ali dokument nosi sadržaj koji se pri običnom čitanju ne vidi: komentare, obrisani tekst iz praćenja izmjena ili polja obrasca. To je često sasvim uredno, ali putuje s datotekom. Pogledaj nalaze ispod.',
       errPdfRead:'Ovaj PDF nije bilo moguće otvoriti. Možda je oštećen ili zaštićen lozinkom. OVO NIJE POTVRDA da je dokument čist, jer alat u njega nije mogao ući.',
       stepPdfDraw:'Crtanje stranica i mjerenje vidljivosti',
       fOffTitle:n=>n+' ulomaka gurnutih izvan stranice',
       fOffWhy:'Tekst je nacrtan izvan vidljivog područja stranice, pa ga čovjek ne vidi ni na ekranu ni na ispisu. Obični čitači teksta ga preskaču, ali je u datoteci i stroj ga čita.',
-      footer:'OwlUV v6.2 · open source alat · radi potpuno lokalno, bez slanja podataka'
+      footer:'OwlUV v6.3 · open source alat · radi potpuno lokalno, bez slanja podataka'
     },
     en:{
       eyebrow:'Text and document inspection tool', intro:'Paste text or drop in a file: an assignment, job description or CV. The scanner reveals invisible characters, text hidden via color or font size, and phrases designed to mislead AI. Everything runs in your browser, nothing is sent anywhere.',
@@ -254,13 +270,29 @@
       vAbortViz:'The check was stopped. There are no findings, because the document was not checked.',
       vStoppedBig:'The check was stopped',
       vStoppedSub:b=>'The check was stopped before a single one of the '+b+' pages had been checked. The tool claims nothing about this document. Your file has not been changed.',
-      fNoMeasureTitle:'Text visibility could not be measured',
-      fNoMeasureWhy:'This page draws letters in a way the tool cannot measure, so the visibility check was not performed. The other checks were. This is NOT a confirmation that the document is clean.',
+      fNoMeasureTitle:(str,prov)=>'Text visibility was not measured'+
+        (str&&str.length?(str.length===1?' on page '+str[0]:' on pages '+str.join(', ')):''),
+      vHiddenOnlyBig:'Hidden text found, does not look like a trap',
+      vHiddenOnlySub:'This document contains text that is not visible on the page. It is worth a look, but it carries no sign of a deliberate trap for an AI. Common harmless reasons: form field labels meant to be printed onto pre-printed paper, watermarks, and the signature of the program that produced the document.',
+      vWarnMeasureBig:'One check could not give an answer',
+      vWarnMeasureSub:'Every other check ran and found nothing. Text visibility could not be measured by drawing on part of this document, so the tool claims neither that this part is clean nor that it is not. The details are in the finding below.',
+      vWarnCharsBig:'Caution - unusual characters in the text',
+      vWarnCharsSub:'No hidden text and no suspicious phrase, but the document contains characters that cannot be seen while a computer still reads them. Sometimes harmless (a soft hyphen from word breaking), sometimes not. Look at the finding below and use the cleaned version if needed.',
+      vWarnMixedBig:'Caution - words with mixed scripts',
+      vWarnMixedSub:'Some words mix Latin letters with Cyrillic or Greek. They look identical to the eye but are different words to a computer. Sometimes it is just badly copied text, sometimes it is a deliberate way around a check.',
+      vWarnAnnexBig:'Caution - content outside the main text',
+      vWarnAnnexSub:'The main text is clean, but the document carries content you do not see while reading it normally: comments, deleted tracked changes or form fields. That is often perfectly ordinary, but it travels with the file. Look at the findings below.',
+      fNoMeasureWhy:(str,prov)=>{
+        const koje=(str&&str.length)?(str.length===1?'Page '+str[0]+' draws':'Pages '+str.join(', ')+' draw'):'Some pages draw';
+        const ostale=(str&&str.length&&prov&&prov>str.length)?' On the other pages the measurement was done, so the hidden text finding refers to those.':'';
+        return koje+' letters in a way the tool cannot measure by drawing, so out of all the checks only that one was left undone.'+ostale+
+          ' These ran and passed: reading the text, invisible Unicode characters, suspicious phrases, sentences aimed at a machine, document properties, form fields, annotations and embedded JavaScript. This is NOT a confirmation that the document is clean, but it is NOT a claim that it hides something either - one check simply could not give an answer.';
+      },
       errPdfRead:'This PDF could not be opened. It may be damaged or password-protected. This is NOT a confirmation that the document is clean, because the tool could not get inside it.',
       stepPdfDraw:'Drawing pages and measuring visibility',
       fOffTitle:n=>n+' passages pushed off the page',
       fOffWhy:'The text is drawn outside the visible area of the page, so nobody sees it on screen or in print. Ordinary text readers skip it, but it is in the file and a machine reads it.',
-      footer:'OwlUV v6.2 · open source tool · runs fully locally, no data sent'
+      footer:'OwlUV v6.3 · open source tool · runs fully locally, no data sent'
     },
     de:{
       eyebrow:'Werkzeug zur Text- und Dokumentprüfung', intro:'Text einfügen oder Datei ablegen: Aufgabe, Stellenbeschreibung oder Lebenslauf. Der Scanner zeigt unsichtbare Zeichen, per Farbe oder Schriftgröße versteckten Text und Phrasen, die eine KI in die Irre führen sollen. Alles läuft im Browser, nichts wird gesendet.',
@@ -379,13 +411,29 @@
       vAbortViz:'Die Prüfung wurde abgebrochen. Es gibt keine Befunde, weil das Dokument nicht geprüft wurde.',
       vStoppedBig:'Die Prüfung wurde abgebrochen',
       vStoppedSub:b=>'Die Prüfung wurde abgebrochen, bevor auch nur eine der '+b+' Seiten geprüft war. Über dieses Dokument behauptet das Werkzeug nichts. Deine Datei wurde nicht verändert.',
-      fNoMeasureTitle:'Die Sichtbarkeit des Textes konnte nicht gemessen werden',
-      fNoMeasureWhy:'Diese Seite zeichnet Buchstaben auf eine Weise, die das Werkzeug nicht messen kann, daher wurde die Sichtbarkeitsprüfung nicht durchgeführt. Die übrigen Prüfungen schon. Das ist KEINE Bestätigung, dass das Dokument sauber ist.',
+      fNoMeasureTitle:(str,prov)=>'Die Sichtbarkeit des Textes wurde nicht gemessen'+
+        (str&&str.length?(str.length===1?', Seite '+str[0]:', Seiten '+str.join(', ')):''),
+      vHiddenOnlyBig:'Versteckter Text gefunden, sieht nicht nach einer Falle aus',
+      vHiddenOnlySub:'Dieses Dokument enthält Text, der auf der Seite nicht zu sehen ist. Ein Blick lohnt sich, aber er trägt kein Anzeichen einer absichtlichen Falle für eine KI. Häufige harmlose Gründe: Feldbezeichnungen von Formularen, die auf vorgedrucktes Papier gedruckt werden, Wasserzeichen und die Signatur des Programms, das das Dokument erstellt hat.',
+      vWarnMeasureBig:'Eine Prüfung konnte keine Antwort geben',
+      vWarnMeasureSub:'Alle anderen Prüfungen wurden durchgeführt und haben nichts gefunden. Die Sichtbarkeit des Textes konnte auf einem Teil des Dokuments nicht durch Zeichnen gemessen werden, daher behauptet das Werkzeug über diesen Teil weder dass er sauber ist noch dass er es nicht ist. Einzelheiten stehen im Befund unten.',
+      vWarnCharsBig:'Vorsicht - ungewöhnliche Zeichen im Text',
+      vWarnCharsSub:'Kein versteckter Text und keine verdächtige Formulierung, aber das Dokument enthält Zeichen, die man nicht sieht und die ein Computer trotzdem liest. Manchmal harmlos (ein weiches Trennzeichen), manchmal nicht. Sieh dir den Befund unten an und nutze bei Bedarf die bereinigte Fassung.',
+      vWarnMixedBig:'Vorsicht - Wörter mit gemischten Schriften',
+      vWarnMixedSub:'Einige Wörter mischen lateinische Buchstaben mit kyrillischen oder griechischen. Für das Auge sehen sie gleich aus, für den Computer sind es andere Wörter. Manchmal ist es nur schlecht kopierter Text, manchmal ein bewusster Weg um eine Prüfung herum.',
+      vWarnAnnexBig:'Vorsicht - Inhalt außerhalb des Haupttextes',
+      vWarnAnnexSub:'Der Haupttext ist sauber, aber das Dokument trägt Inhalt, den man beim normalen Lesen nicht sieht: Kommentare, gelöschten Text aus der Änderungsverfolgung oder Formularfelder. Das ist oft völlig normal, reist aber mit der Datei mit. Sieh dir die Befunde unten an.',
+      fNoMeasureWhy:(str,prov)=>{
+        const koje=(str&&str.length)?(str.length===1?'Seite '+str[0]+' zeichnet':'Die Seiten '+str.join(', ')+' zeichnen'):'Einige Seiten zeichnen';
+        const ostale=(str&&str.length&&prov&&prov>str.length)?' Auf den übrigen Seiten wurde gemessen, der Befund zu verstecktem Text bezieht sich also auf diese.':'';
+        return koje+' Buchstaben auf eine Weise, die das Werkzeug nicht durch Zeichnen messen kann, daher blieb von allen Prüfungen nur diese eine aus.'+ostale+
+          ' Durchgeführt und bestanden: Lesen des Textes, unsichtbare Unicode-Zeichen, verdächtige Formulierungen, an eine Maschine gerichtete Sätze, Dokumenteigenschaften, Formularfelder, Anmerkungen und eingebettetes JavaScript. Das ist KEINE Bestätigung, dass das Dokument sauber ist, aber auch KEINE Behauptung, dass es etwas verbirgt - eine Prüfung konnte einfach keine Antwort geben.';
+      },
       errPdfRead:'Dieses PDF konnte nicht geöffnet werden. Es ist möglicherweise beschädigt oder passwortgeschützt. Das ist KEINE Bestätigung, dass das Dokument sauber ist, denn das Werkzeug kam nicht hinein.',
       stepPdfDraw:'Seiten zeichnen und Sichtbarkeit messen',
       fOffTitle:n=>n+' Abschnitte außerhalb der Seite',
       fOffWhy:'Der Text ist außerhalb des sichtbaren Seitenbereichs gezeichnet, niemand sieht ihn also am Bildschirm oder im Druck. Gewöhnliche Textleser überspringen ihn, aber er steht in der Datei und eine Maschine liest ihn.',
-      footer:'OwlUV v6.2 · Open-Source-Werkzeug · läuft vollständig lokal, keine Datenübertragung'
+      footer:'OwlUV v6.3 · Open-Source-Werkzeug · läuft vollständig lokal, keine Datenübertragung'
     },
     fr:{
       eyebrow:'Outil de vérification de textes et documents', intro:"Collez un texte ou déposez un fichier : devoir, offre d'emploi ou CV. Le scanner révèle les caractères invisibles, le texte masqué par la couleur ou la taille de police, et les phrases conçues pour induire une IA en erreur. Tout se passe dans votre navigateur, rien n'est envoyé.",
@@ -504,13 +552,29 @@
       vAbortViz:'La vérification a été arrêtée. Il n y a aucun résultat, car le document n a pas été vérifié.',
       vStoppedBig:'La vérification a été arrêtée',
       vStoppedSub:b=>'La vérification a été arrêtée avant même qu une seule des '+b+' pages ait été vérifiée. L outil n affirme rien sur ce document. Ton fichier n a pas été modifié.',
-      fNoMeasureTitle:'La visibilité du texte n a pas pu être mesurée',
-      fNoMeasureWhy:"Cette page dessine les lettres d'une manière que l'outil ne peut pas mesurer, la vérification de visibilité n'a donc pas été faite. Les autres vérifications, si. Ce n'est PAS une confirmation que le document est propre.",
+      fNoMeasureTitle:(str,prov)=>'La visibilité du texte n a pas été mesurée'+
+        (str&&str.length?(str.length===1?' sur la page '+str[0]:' sur les pages '+str.join(', ')):''),
+      vHiddenOnlyBig:'Texte caché trouvé, ne ressemble pas à un piège',
+      vHiddenOnlySub:'Ce document contient du texte invisible sur la page. Cela vaut un coup d oeil, mais il ne porte aucun signe de piège volontaire pour une IA. Raisons anodines fréquentes: libellés de champs destinés à être imprimés sur du papier pré imprimé, filigranes, et la signature du programme qui a produit le document.',
+      vWarnMeasureBig:'Une vérification n a pas pu donner de réponse',
+      vWarnMeasureSub:'Toutes les autres vérifications ont été faites et n ont rien trouvé. La visibilité du texte n a pas pu être mesurée par le dessin sur une partie du document, donc l outil n affirme ni que cette partie est propre, ni qu elle ne l est pas. Les détails sont dans le résultat ci dessous.',
+      vWarnCharsBig:'Attention - caractères inhabituels dans le texte',
+      vWarnCharsSub:'Pas de texte caché ni de formulation suspecte, mais le document contient des caractères invisibles qu un ordinateur lit quand même. Parfois anodins (un trait d union conditionnel), parfois non. Regarde le résultat ci dessous et utilise la version nettoyée si besoin.',
+      vWarnMixedBig:'Attention - mots mêlant plusieurs écritures',
+      vWarnMixedSub:'Certains mots mélangent des lettres latines avec du cyrillique ou du grec. À l oeil ils sont identiques, pour l ordinateur ce sont d autres mots. Parfois c est juste du texte mal copié, parfois un contournement volontaire.',
+      vWarnAnnexBig:'Attention - contenu hors du texte principal',
+      vWarnAnnexSub:'Le texte principal est propre, mais le document porte du contenu qu on ne voit pas en le lisant normalement: commentaires, texte supprimé du suivi des modifications ou champs de formulaire. C est souvent tout à fait normal, mais cela voyage avec le fichier. Regarde les résultats ci dessous.',
+      fNoMeasureWhy:(str,prov)=>{
+        const koje=(str&&str.length)?(str.length===1?'La page '+str[0]+' dessine':'Les pages '+str.join(', ')+' dessinent'):'Certaines pages dessinent';
+        const ostale=(str&&str.length&&prov&&prov>str.length)?' Sur les autres pages la mesure a été faite, le résultat sur le texte caché porte donc sur celles là.':'';
+        return koje+' les lettres d une manière que l outil ne peut pas mesurer par le dessin, de toutes les vérifications seule celle là n a pas pu être faite.'+ostale+
+          ' Faites et passées: lecture du texte, caractères Unicode invisibles, formulations suspectes, phrases adressées à une machine, propriétés du document, champs de formulaire, annotations et JavaScript intégré. Ce n est PAS une confirmation que le document est propre, mais ce n est PAS non plus une affirmation qu il cache quelque chose - une vérification n a simplement pas pu répondre.';
+      },
       errPdfRead:"Ce PDF n'a pas pu être ouvert. Il est peut-être endommagé ou protégé par un mot de passe. Ce n'est PAS une confirmation que le document est propre, car l'outil n'a pas pu y entrer.",
       stepPdfDraw:'Dessin des pages et mesure de la visibilité',
       fOffTitle:n=>n+' passages poussés hors de la page',
       fOffWhy:"Le texte est dessiné hors de la zone visible de la page, personne ne le voit donc à l'écran ni à l'impression. Les lecteurs de texte ordinaires l'ignorent, mais il est dans le fichier et une machine le lit.",
-      footer:'OwlUV v6.2 · outil open source · fonctionne entièrement en local, aucune donnée envoyée'
+      footer:'OwlUV v6.3 · outil open source · fonctionne entièrement en local, aucune donnée envoyée'
     },
     es:{
       eyebrow:'Herramienta de verificación de textos y documentos', intro:'Pega un texto o suelta un archivo: una tarea, una oferta de empleo o un CV. El escáner revela caracteres invisibles, texto oculto por color o tamaño de fuente y frases diseñadas para engañar a una IA. Todo se procesa en tu navegador, no se envía nada.',
@@ -629,13 +693,29 @@
       vAbortViz:'La comprobación se ha detenido. No hay resultados, porque el documento no se ha comprobado.',
       vStoppedBig:'La comprobación se ha detenido',
       vStoppedSub:b=>'La comprobación se ha detenido antes de comprobar ni una sola de las '+b+' páginas. La herramienta no afirma nada sobre este documento. Tu archivo no se ha modificado.',
-      fNoMeasureTitle:'No se ha podido medir la visibilidad del texto',
-      fNoMeasureWhy:'Esta página dibuja las letras de una forma que la herramienta no puede medir, así que la comprobación de visibilidad no se ha hecho. Las demás sí. Esto NO es una confirmación de que el documento esté limpio.',
+      fNoMeasureTitle:(str,prov)=>'No se ha medido la visibilidad del texto'+
+        (str&&str.length?(str.length===1?' en la página '+str[0]:' en las páginas '+str.join(', ')):''),
+      vHiddenOnlyBig:'Se ha encontrado texto oculto, no parece una trampa',
+      vHiddenOnlySub:'Este documento contiene texto que no se ve en la página. Merece un vistazo, pero no lleva ninguna señal de trampa deliberada para una IA. Motivos inocuos frecuentes: rótulos de campos de formulario pensados para imprimirse sobre papel preimpreso, marcas de agua y la firma del programa que creó el documento.',
+      vWarnMeasureBig:'Una comprobación no ha podido dar respuesta',
+      vWarnMeasureSub:'Todas las demás comprobaciones se han hecho y no han encontrado nada. La visibilidad del texto no se ha podido medir dibujando en una parte del documento, así que la herramienta no afirma ni que esa parte esté limpia ni que no lo esté. Los detalles están en el resultado de abajo.',
+      vWarnCharsBig:'Atención - caracteres inusuales en el texto',
+      vWarnCharsSub:'No hay texto oculto ni frases sospechosas, pero el documento contiene caracteres que no se ven y que un ordenador sí lee. A veces son inocuos (un guión blando), a veces no. Mira el resultado de abajo y usa la versión limpia si hace falta.',
+      vWarnMixedBig:'Atención - palabras con escrituras mezcladas',
+      vWarnMixedSub:'Algunas palabras mezclan letras latinas con cirílicas o griegas. A la vista son iguales, para el ordenador son otras palabras. A veces es solo texto mal copiado, a veces un rodeo deliberado.',
+      vWarnAnnexBig:'Atención - contenido fuera del texto principal',
+      vWarnAnnexSub:'El texto principal está limpio, pero el documento lleva contenido que no se ve al leerlo normalmente: comentarios, texto eliminado del control de cambios o campos de formulario. A menudo es del todo normal, pero viaja con el archivo. Mira los resultados de abajo.',
+      fNoMeasureWhy:(str,prov)=>{
+        const koje=(str&&str.length)?(str.length===1?'La página '+str[0]+' dibuja':'Las páginas '+str.join(', ')+' dibujan'):'Algunas páginas dibujan';
+        const ostale=(str&&str.length&&prov&&prov>str.length)?' En las demás páginas la medición sí se hizo, así que el resultado sobre texto oculto se refiere a ellas.':'';
+        return koje+' las letras de una forma que la herramienta no puede medir dibujando, así que de todas las comprobaciones solo faltó esa.'+ostale+
+          ' Hechas y superadas: lectura del texto, caracteres Unicode invisibles, frases sospechosas, oraciones dirigidas a una máquina, propiedades del documento, campos de formulario, anotaciones y JavaScript incrustado. Esto NO es una confirmación de que el documento esté limpio, pero TAMPOCO es una afirmación de que oculte algo - una comprobación simplemente no ha podido responder.';
+      },
       errPdfRead:'No se ha podido abrir este PDF. Puede estar dañado o protegido con contraseña. Esto NO es una confirmación de que el documento esté limpio, porque la herramienta no ha podido entrar en él.',
       stepPdfDraw:'Dibujado de páginas y medición de visibilidad',
       fOffTitle:n=>n+' fragmentos empujados fuera de la página',
       fOffWhy:'El texto está dibujado fuera del área visible de la página, así que nadie lo ve en pantalla ni impreso. Los lectores de texto corrientes lo saltan, pero está en el archivo y una máquina lo lee.',
-      footer:'OwlUV v6.2 · herramienta de código abierto · funciona totalmente en local, sin enviar datos'
+      footer:'OwlUV v6.3 · herramienta de código abierto · funciona totalmente en local, sin enviar datos'
     },
     it:{
       eyebrow:'Strumento di verifica di testi e documenti', intro:'Incolla un testo o trascina un file: un compito, un annuncio di lavoro o un CV. Lo scanner rivela caratteri invisibili, testo nascosto tramite colore o dimensione del carattere e frasi pensate per ingannare una IA. Tutto viene elaborato nel browser, nulla viene inviato.',
@@ -754,13 +834,29 @@
       vAbortViz:'Il controllo è stato interrotto. Non ci sono risultati, perché il documento non è stato controllato.',
       vStoppedBig:'Il controllo è stato interrotto',
       vStoppedSub:b=>'Il controllo è stato interrotto prima che fosse controllata anche una sola delle '+b+' pagine. Lo strumento non afferma nulla su questo documento. Il tuo file non è stato modificato.',
-      fNoMeasureTitle:'Non è stato possibile misurare la visibilità del testo',
-      fNoMeasureWhy:"Questa pagina disegna le lettere in un modo che lo strumento non riesce a misurare, quindi il controllo di visibilità non è stato eseguito. Gli altri controlli sì. Questa NON è una conferma che il documento sia pulito.",
+      fNoMeasureTitle:(str,prov)=>'La visibilità del testo non è stata misurata'+
+        (str&&str.length?(str.length===1?' a pagina '+str[0]:' alle pagine '+str.join(', ')):''),
+      vHiddenOnlyBig:'Trovato testo nascosto, non sembra una trappola',
+      vHiddenOnlySub:'Questo documento contiene testo che non si vede sulla pagina. Vale la pena guardarlo, ma non porta alcun segno di trappola deliberata per una IA. Motivi innocui frequenti: etichette di campi di moduli destinate a essere stampate su carta prestampata, filigrane e la firma del programma che ha prodotto il documento.',
+      vWarnMeasureBig:'Un controllo non ha potuto dare una risposta',
+      vWarnMeasureSub:'Tutti gli altri controlli sono stati eseguiti e non hanno trovato nulla. La visibilità del testo non è stata misurabile tramite disegno su una parte del documento, quindi lo strumento non afferma né che quella parte sia pulita né che non lo sia. I dettagli sono nel risultato qui sotto.',
+      vWarnCharsBig:'Attenzione - caratteri insoliti nel testo',
+      vWarnCharsSub:'Nessun testo nascosto e nessuna frase sospetta, ma il documento contiene caratteri che non si vedono e che un computer legge comunque. A volte innocui (un trattino morbido), a volte no. Guarda il risultato qui sotto e usa la versione pulita se serve.',
+      vWarnMixedBig:'Attenzione - parole con scritture mescolate',
+      vWarnMixedSub:'Alcune parole mescolano lettere latine con cirilliche o greche. All occhio sembrano uguali, per il computer sono altre parole. A volte è solo testo copiato male, a volte è un aggiramento deliberato.',
+      vWarnAnnexBig:'Attenzione - contenuto fuori dal testo principale',
+      vWarnAnnexSub:'Il testo principale è pulito, ma il documento porta contenuto che non si vede leggendolo normalmente: commenti, testo eliminato dal rilevamento modifiche o campi di modulo. Spesso è del tutto normale, ma viaggia con il file. Guarda i risultati qui sotto.',
+      fNoMeasureWhy:(str,prov)=>{
+        const koje=(str&&str.length)?(str.length===1?'La pagina '+str[0]+' disegna':'Le pagine '+str.join(', ')+' disegnano'):'Alcune pagine disegnano';
+        const ostale=(str&&str.length&&prov&&prov>str.length)?' Sulle altre pagine la misurazione è stata fatta, quindi il risultato sul testo nascosto riguarda quelle.':'';
+        return koje+' le lettere in un modo che lo strumento non riesce a misurare disegnando, quindi di tutti i controlli è mancato solo quello.'+ostale+
+          ' Eseguiti e superati: lettura del testo, caratteri Unicode invisibili, frasi sospette, frasi rivolte a una macchina, proprietà del documento, campi di modulo, annotazioni e JavaScript incorporato. Questa NON è una conferma che il documento sia pulito, ma NON è nemmeno un affermazione che nasconda qualcosa - un controllo semplicemente non ha potuto rispondere.';
+      },
       errPdfRead:"Non è stato possibile aprire questo PDF. Potrebbe essere danneggiato o protetto da password. Questa NON è una conferma che il documento sia pulito, perché lo strumento non è riuscito a entrarci.",
       stepPdfDraw:'Disegno delle pagine e misura della visibilità',
       fOffTitle:n=>n+' passaggi spinti fuori dalla pagina',
       fOffWhy:"Il testo è disegnato fuori dall\u2019area visibile della pagina, quindi nessuno lo vede a schermo né in stampa. I lettori di testo comuni lo saltano, ma è nel file e una macchina lo legge.",
-      footer:'OwlUV v6.2 · strumento open source · funziona interamente in locale, nessun dato inviato'
+      footer:'OwlUV v6.3 · strumento open source · funziona interamente in locale, nessun dato inviato'
     }
   };
 })();
