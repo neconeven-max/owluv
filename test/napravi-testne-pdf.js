@@ -315,6 +315,145 @@ jednostavan('pdf-cist.pdf',
   zapisi('pdf-obrazac-tablice.pdf',P.build(objs));
 })();
 
+// ======= 14. OBICAN POSLOVNI SVIJET: dokumenti koji NISU zamka =======
+// Dosadasnje testne datoteke provjeravaju hvatanje zamki. Ovdje je suprotno:
+// da alat NE uzbunjuje na obicnim dokumentima. Sve je izmisljeno - izmisljene
+// tvrtke, izmisljeni brojevi, izmisljeni artikli.
+//
+// Svaki od ovih dokumenata namjerno ima nesto sto ce alat naci i prijaviti
+// (i mora prijaviti), ali nista od toga nije zamka za AI:
+//  - racun: rubrike uplatnice su nevidljive, jer se tiskaju na gotov obrazac
+//  - certifikat: potpis programa za izradu, font od jedne tocke, na dnu
+//  - cjenik: prazna polja oznacena crticama
+//  - izvjestaj: brojevi i zbrojevi
+//  - obrazac: tablice s praznim poljima (vec postoji, vidi 13)
+(function(){
+  const NEVIDLJIVO={nacin:3,vel:8};      // nacin crtanja 3 = ne ostavlja trag
+
+  function crte(x,y,sirina,visina,redaka){
+    let s='0.5 w 0.55 0.55 0.55 RG\n'+x+' '+y+' '+sirina+' '+visina+' re S\n';
+    for(let i=1;i<redaka;i++){
+      const yy=(y+i*(visina/redaka)).toFixed(1);
+      s+=x+' '+yy+' m '+(x+sirina)+' '+yy+' l S\n';
+    }
+    return s;
+  }
+
+  // ---------- 14a. racun s uplatnicom ----------
+  // Rubrike uplatnice su NEVIDLJIVE. Tako radi svaki program za izradu racuna
+  // koji predvida tiskanje na gotov obrazac s vec otisnutim rubrikama.
+  jednostavan('pdf-racun-uplatnica.pdf',[
+    T(60,795,'PRIMJER TELEKOM d.o.o.',{vel:14}),
+    T(60,778,'Racun broj 2026-000123',{vel:10}),
+    T(60,764,'Razdoblje: 01.07.2026. - 31.07.2026.',{vel:9}),
+    T(60,735,'Korisnik: Ivan Primjer, Primjerska 1, Primjergrad',{vel:9}),
+
+    crte(60,600,470,110,4),
+    T(66,690,'Mjesecna naknada',{vel:9}), T(430,690,'15,00',{vel:9}),
+    T(66,662,'Promet izvan paketa',{vel:9}), T(430,662,'2,40',{vel:9}),
+    T(66,634,'Popust na paket',{vel:9}), T(430,634,'-1,50',{vel:9}),
+    T(66,606,'UKUPNO ZA PLATITI',{vel:10}), T(430,606,'15,90',{vel:10}),
+
+    T(60,560,'Uplatnica',{vel:11}),
+    crte(60,380,470,160,4),
+    // popunjeni podaci su vidljivi
+    T(66,510,'HR1210010051863000160',{vel:9}),
+    T(66,470,'HR01 2026-000123',{vel:9}),
+    T(66,430,'15,90',{vel:9}),
+    T(66,390,'Primjer Telekom d.o.o.',{vel:9}),
+    // rubrike uplatnice su NEVIDLJIVE: tiskaju se na gotov obrazac
+    T(300,525,'Hitno',NEVIDLJIVO),
+    T(300,510,'IBAN platitelja',NEVIDLJIVO),
+    T(300,495,'Iznos',NEVIDLJIVO),
+    T(300,480,'Model',NEVIDLJIVO),
+    T(300,465,'Poziv na broj primatelja',NEVIDLJIVO),
+    T(300,450,'Sifra namjene',NEVIDLJIVO),
+    T(300,435,'Opis placanja',NEVIDLJIVO),
+    T(300,420,'Pecat i potpis platitelja',NEVIDLJIVO),
+    T(300,405,'Datum izvrsenja',NEVIDLJIVO),
+    T(300,390,'Mjesto i datum',NEVIDLJIVO),
+
+    T(60,330,'Racun je izradjen elektronickim putem i valjan je bez potpisa.',{vel:8})
+  ].join('\n'));
+
+  // ---------- 14b. certifikat s potpisom programa ----------
+  // Jedina stvar koju alat ovdje nade je potpis programa za izradu, font 1 pt.
+  jednostavan('pdf-certifikat.pdf',[
+    T(150,700,'POTVRDA O ZAVRSENOJ EDUKACIJI',{vel:18}),
+    T(150,660,'Ovime se potvrdjuje da je',{vel:11}),
+    T(150,630,'Ana Primjer',{vel:16}),
+    T(150,600,'zavrsila program osposobljavanja iz podrucja',{vel:11}),
+    T(150,575,'zastite na radu, u trajanju od 40 skolskih sati.',{vel:11}),
+    T(150,520,'Mjesto i datum: Primjergrad, 15.06.2026.',{vel:10}),
+    T(150,495,'Voditelj programa: Marija Primjer',{vel:10}),
+    T(150,470,'Broj potvrde: 2026/PR/0042',{vel:10}),
+    crte(60,440,470,2,1),
+    // potpis programa za izradu: font od jedne tocke, na dnu stranice
+    T(60,20,'Izradjeno programom Primjer Dokumenti 4.2 (build 2026-05-11)',{vel:1})
+  ].join('\n'),{trailer:'/Info 6 0 R',dodatni:[
+    // isti potpis stoji i u svojstvima dokumenta: to je ISTA stavka, ne dvije
+    '<< /Title '+P.str('Potvrda o zavrsenoj edukaciji')+
+    ' /Author '+P.str('Primjer ustanova')+
+    ' /Producer '+P.str('Izradjeno programom Primjer Dokumenti 4.2 (build 2026-05-11)')+' >>'
+  ]});
+
+  // ---------- 14c. cjenik s praznim poljima ----------
+  const cjenikRedci=[
+    ['Artikl A-100','Kutija od 500 kom','12,50','--'],
+    ['Artikl A-200','Kutija od 200 kom','7,90','--'],
+    ['Artikl B-050','Vrecica od 50 kom','3,20','5%'],
+    ['Artikl B-120','Kutija od 120 kom','9,10','--'],
+    ['Artikl C-010','Komad','24,00','10%'],
+    ['Artikl C-020','Komad','31,50','--']
+  ];
+  const cjenik=[
+    T(60,795,'CJENIK 2026.',{vel:15}),
+    T(60,778,'Primjer trgovina d.o.o., vrijedi od 01.01.2026.',{vel:9}),
+    T(60,745,'Sve cijene su u eurima, bez poreza. Crtica znaci da popust nije ugovoren.',{vel:8}),
+    crte(60,470,470,240,7),
+    T(66,690,'Sifra',{vel:9}), T(190,690,'Pakiranje',{vel:9}),
+    T(370,690,'Cijena',{vel:9}), T(450,690,'Popust',{vel:9})
+  ];
+  cjenikRedci.forEach((r,i)=>{
+    const y=655-i*33;
+    cjenik.push(T(66,y,r[0],{vel:9}));
+    cjenik.push(T(190,y,r[1],{vel:9}));
+    cjenik.push(T(370,y,r[2],{vel:9}));
+    cjenik.push(T(450,y,r[3],{vel:9}));
+  });
+  cjenik.push(T(60,440,'Cijene vrijede do objave novog cjenika.',{vel:8}));
+  jednostavan('pdf-cjenik.pdf',cjenik.join('\n'));
+
+  // ---------- 14d. izvjestaj o zalihama ----------
+  const zalihe=[
+    ['A-100','Skladiste 1','1 240','980','260'],
+    ['A-200','Skladiste 1','860','700','160'],
+    ['B-050','Skladiste 2','2 010','1 850','160'],
+    ['B-120','Skladiste 2','440','440','0'],
+    ['C-010','Skladiste 3','75','60','15'],
+    ['C-020','Skladiste 3','120','95','25']
+  ];
+  const izvj=[
+    T(60,795,'IZVJESTAJ O ZALIHAMA',{vel:15}),
+    T(60,778,'Stanje na dan 31.07.2026., Primjer trgovina d.o.o.',{vel:9}),
+    crte(60,470,470,250,8),
+    T(66,700,'Sifra',{vel:9}), T(150,700,'Skladiste',{vel:9}),
+    T(280,700,'Ulaz',{vel:9}), T(360,700,'Izlaz',{vel:9}), T(440,700,'Stanje',{vel:9})
+  ];
+  zalihe.forEach((r,i)=>{
+    const y=668-i*31;
+    izvj.push(T(66,y,r[0],{vel:9}));  izvj.push(T(150,y,r[1],{vel:9}));
+    izvj.push(T(280,y,r[2],{vel:9})); izvj.push(T(360,y,r[3],{vel:9}));
+    izvj.push(T(440,y,r[4],{vel:9}));
+  });
+  izvj.push(T(66,480,'UKUPNO',{vel:10}));
+  izvj.push(T(280,480,'4 745',{vel:10}));
+  izvj.push(T(360,480,'4 125',{vel:10}));
+  izvj.push(T(440,480,'620',{vel:10}));
+  izvj.push(T(60,440,'Izvjestaj je izradjen automatski iz skladisne evidencije.',{vel:8}));
+  jednostavan('pdf-izvjestaj-zalihe.pdf',izvj.join('\n'));
+})();
+
 // ==================== 13. vise stranica, za mjerenje brzine ====================
 function viseStranica(ime,n){
   const objs=['<< /Type /Catalog /Pages 2 0 R >>', null,
