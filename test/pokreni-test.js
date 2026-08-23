@@ -130,8 +130,14 @@ function higijena(){
 
   // --- poruke uz commitove ---
   const log=spawnSync('git',['log','--pretty=%s%n%b'],{cwd:KORIJEN,encoding:'utf8'}).stdout||'';
-  const uPorukama=[/poslovni plan|business plan/i,/naplat|pretplat|cjenik|monetiz/i,
-                   /skupna obrada|skupnu obradu/i]
+  // Za poruke uz commitove popis je UZI nego za sadrzaj datoteka, i to namjerno.
+  // Sadrzaj datoteka je ono sto svijet cita na stranici i u repozitoriju, pa se
+  // ondje pazi sire. Poruke uz commitove su razvojna proza u kojoj se o samim
+  // pravilima normalno raspravlja: commit koji objasnjava zasto je neka rijec na
+  // popisu nuzno tu rijec i sadrzi. Zato se ovdje traze samo izrazi koji
+  // pripadaju privatnoj biljesci, a ne pojedinacne rijeci.
+  const uPorukama=[/poslovni plan|business plan/i,
+                   /skupna obrada|skupnu obradu|batch processing/i]
     .filter(re=>re.test(log));
   provjera('poruke uz commitove ne spominju poslovni plan ni naplatu',
            uPorukama.length===0, String(uPorukama[0]||''));

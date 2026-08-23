@@ -731,6 +731,10 @@ Repozitorij je javan, kod je pod GPL-3.0 (`LICENSE`), a ime "OwlUV" i logo
 SOVA WEB nisu njome obuhvaćeni (`NOTICE.md`). Stranicu poslužuje GitHub Pages s
 grane `main`, domena je u datoteci `CNAME`.
 
+**Dokle je objava stigla i što još nedostaje piše u
+[`docs/objava-status.md`](docs/objava-status.md).** Taj dokument se ažurira pri
+svakom pomaku, da bilo koji stroj može nastaviti gdje se stalo.
+
 Ono što se bez sučelja ne može provjeriti, provjerava se rukom u pravom
 pregledniku: da se drugi PDF učita bez ponovnog otvaranja stranice, da spremanje
 datoteke na disk radi, i da potvrda o kopiranju iskoči.
