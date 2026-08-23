@@ -136,6 +136,10 @@
   .dropzone.dragging .drop-overlay{display:flex}
 
   /* ---- desno: isti dokument, ali pod UV lampom ---- */
+  /* Zariste na panelu treba za Cmd+A, ali ne smije crtati okvir oko cijelog
+     panela pri obicnom kliku; vidljiv rub ostaje samo za tipkovnicu. */
+  .viz:focus{outline:none}
+  .viz:focus-visible{outline:2px solid var(--uv);outline-offset:-2px}
   .viz{flex:1 1 auto;min-height:0;padding:18px;overflow:auto;
        font-family:Georgia,"Times New Roman",serif;font-size:16px;line-height:1.7;color:var(--ink)}
   .viz p{margin:0 0 12px}
@@ -401,7 +405,7 @@
     </section>
     <section class="panel">
       <div class="panel-h"><span class="t uv" data-i18n="vizTitle"></span><span class="count" id="charCount"></span></div>
-      <div class="viz" id="viz"></div>
+      <div class="viz" id="viz" tabindex="0"></div>
       <div class="note" data-i18n="legend"></div>
       <div class="copybar">
         <span class="btns">
