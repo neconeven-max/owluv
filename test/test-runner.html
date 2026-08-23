@@ -1213,6 +1213,77 @@ window.addEventListener('load',async()=>{
     check('50 stranica: unutar granice, presuda ostaje zelena',
           pedeset2.st.verdict==='v-ok', pedeset2.st.verdict+' / '+pedeset2.sve.slice(0,160));
 
+    // ====== 5x. PREKINUTA OBRADA NE SMIJE PREPISATI NOVI NALAZ ======
+    // Najopasniji moguci kvar: korisnik vidi ime jedne datoteke, a nalaz
+    // pripada drugoj. Zato se ovdje glumi tocno taj slijed poteza.
+    log('\nFAZA 2b - prekinuta obrada ne smije prepisati novi nalaz');
+
+    const dajFile=async ime=>await pdfFrom(ime);
+    const stanjeUkratko=()=>{ const x=w.OwlUV.app.state();
+      return {v:x.verdict,n:x.findings.map(f=>f.title).join('|'),t:x.inputText.slice(0,45)}; };
+
+    // a) veliki -> prekid -> "Novi tekst" -> drugi dokument
+    const veliki1=w.OwlUV.app.loadFile(await dajFile('pdf-300-stranica.pdf'));
+    w.document.getElementById('cancelBtn').click();
+    const poPrekidu=w.OwlUV.app.state();
+    check('nakon prekida presuda kaze da je provjera prekinuta',
+          /prekinuta/i.test(poPrekidu.verdictBig), poPrekidu.verdictBig);
+    check('nakon prekida zaslon nije prazan ni zatecen',
+          poPrekidu.verdict==='v-warn'&&/ne tvrdi ni/i.test(poPrekidu.verdictSub),
+          poPrekidu.verdict+' / '+poPrekidu.verdictSub.slice(0,80));
+    check('nakon prekida nema zaostalih nalaza', poPrekidu.findings.length===0,
+          poPrekidu.findings.map(f=>f.title).join('|'));
+
+    w.OwlUV.app.reset();
+    const drugi1=w.OwlUV.app.loadFile(await dajFile('pdf-cist.pdf'));
+    await drugi1;
+    const odmah=stanjeUkratko();
+    await veliki1;                       // pusti prekinutu obradu da zavrsi
+    await new Promise(r=>setTimeout(r,4000));
+    const poslije=stanjeUkratko();
+    check('rezultat prekinute obrade se NIKAD ne pojavi',
+          JSON.stringify(odmah)===JSON.stringify(poslije),
+          'prije: '+JSON.stringify(odmah)+'  poslije: '+JSON.stringify(poslije));
+    check('na zaslonu je nalaz drugog dokumenta, ne prvog',
+          poslije.v==='v-ok'&&/Zavrsni rad iz geografije/.test(poslije.t), JSON.stringify(poslije));
+
+    // b) druga datoteka preko prve, BEZ prekida
+    const veliki2=w.OwlUV.app.loadFile(await dajFile('pdf-300-stranica.pdf'));
+    const drugi2=w.OwlUV.app.loadFile(await dajFile('pdf-zivotopis.pdf'));
+    await Promise.all([veliki2,drugi2]);
+    await new Promise(r=>setTimeout(r,4000));
+    const preko=w.OwlUV.app.state();
+    check('nova datoteka preko stare: prikazuje se samo nalaz nove',
+          preko.verdict==='v-danger'&&/Marko/.test(preko.inputText)&&
+          !/Stranica 1 od 300/.test(preko.inputText),
+          preko.verdict+' / '+preko.inputText.slice(0,60));
+    check('nova datoteka preko stare: nema nalaza o broju provjerenih stranica',
+          !preko.findings.some(f=>/od 300 stranica/i.test(f.title)),
+          preko.findings.map(f=>f.title).join('|'));
+
+    // c) "Novi tekst" prekida obradu koja je u tijeku
+    const veliki3=w.OwlUV.app.loadFile(await dajFile('pdf-300-stranica.pdf'));
+    w.OwlUV.app.reset();
+    await veliki3;
+    await new Promise(r=>setTimeout(r,4000));
+    const poResetu=w.OwlUV.app.state();
+    check('"Novi tekst" prekida obradu i zaslon ostaje prazan',
+          poResetu.findings.length===0&&poResetu.inputText.trim()==='',
+          poResetu.verdict+' / '+poResetu.findings.length+' nalaza');
+
+    // d) isto vrijedi i za Word, ne samo za PDF
+    w.OwlUV.app.reset();
+    const word1=w.OwlUV.app.loadFile(await fileFrom('test-skriveno.docx'));
+    const word2=w.OwlUV.app.loadFile(await fileFrom('test-cist.docx'));
+    await Promise.all([word1,word2]);
+    await new Promise(r=>setTimeout(r,1500));
+    const poWordu=w.OwlUV.app.state();
+    check('Word: nova datoteka preko stare prikazuje samo nalaz nove',
+          poWordu.verdict==='v-ok'&&!/Madagascar/i.test(poWordu.inputText),
+          poWordu.verdict+' / '+poWordu.findings.map(f=>f.title).join('|'));
+
+    w.OwlUV.app.reset();
+
     // napomena o rekonstrukciji je posebna za PDF
     w.OwlUV.app.reset();
     await w.OwlUV.app.loadFile(await pdfFrom('pdf-cist.pdf'));
