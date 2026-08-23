@@ -36,8 +36,19 @@
   const staleBar=$('staleBar'), staleMsg=$('staleMsg');
   const progress=$('progress'), progressH=$('progressH'), progressList=$('progressList');
   const cancelBtn=$('cancelBtn');
-  // Zastavica za prekid dugotrajne obrade. Cita je citac PDF-a izmedu stranica.
-  let prekidTrazen=false;
+  // ---------- OZNAKA OBRADE ----------
+  // Zajednicka zastavica za prekid nije dovoljna: cim bi sljedeca obrada
+  // zastavicu vratila na false, prekinuta obrada bi nastavila raditi i na kraju
+  // prepisala zatecen nalaz. Korisnik bi tada gledao ime jedne datoteke uz nalaz
+  // druge - a to je najgora moguca greska, jer se ne moze primijetiti.
+  //
+  // Zato svaka obrada nosi SVOJ broj. Broj raste na svaki novi posao, na prekid
+  // i na "Novi tekst". Obrada radi samo dok je njezin broj jos tekuci, a njezin
+  // rezultat se prikazuje SAMO ako je u tom trenutku jos tekuca. Rezultat
+  // starije obrade se odbacuje u cijelosti i nikad ne dira zaslon.
+  let posaoBroj=0;
+  const mojPosao = () => ++posaoBroj;
+  const josTece = moj => moj===posaoBroj;
   const metaDesc=document.querySelector('meta[name="description"]');
 
   let hasScanned=false;
@@ -418,16 +429,20 @@
     p.steps.forEach(s=>s.fn());
     p.finish();
   }
-  async function scanWithProgress(){
+  // moj je broj posla; kad se preda, skeniranje stane cim posao prestane biti
+  // tekuci, da nalaz starijeg dokumenta ne zavrsi na zaslonu.
+  async function scanWithProgress(moj){
     hasScanned=true;
     cutSel=new Set();
     const p=scanPlan();
     for(const s of p.steps){
+      if(moj!==undefined&&!josTece(moj)) return;
       progStep(s.k);
       // posao ne ceka prikaz; ustupanje kontrole ima smisla tek kad se prikaz vidi
       if(progVisible()) await yieldPaint();
       s.fn();
     }
+    if(moj!==undefined&&!josTece(moj)) return;
     p.finish();
   }
 
@@ -535,7 +550,7 @@
   // ============ OCISCENA KOPIJA ============
   // NACELO: izvorna datoteka korisnika se NIKAD ne mijenja. Alat je samo cita.
   // Mijenja se iskljucivo tekst koji korisnik kopira u medduspremnik.
-  // Ociscено znaci obrisano: skriveni sadrzaj se BRISE. Ne oznacava se, ne
+  // Ocisceno znaci obrisano: skriveni sadrzaj se BRISE. Ne oznacava se, ne
   // omotava se, i na njegovo mjesto se NISTA ne stavlja - tekst tece dalje.
   //
   // Iz kopije izlazi:
@@ -768,34 +783,61 @@
     findCount.textContent='-'; charCount.textContent=t.chars(0);
     hasScanned=false;
   }
-  // Klik na prekid samo podize zastavicu. Posao je sam procita izmedu stranica
-  // i stane uredno, s onim sto je do tada provjerio. Nista se ne prekida nasilno.
+  // Klik na prekid podize broj posla. Obrada koja je bila u tijeku time prestaje
+  // biti tekuca: sama stane izmedu stranica, a njezin rezultat vise ne moze na
+  // zaslon. Nista se ne prekida nasilno i datoteka se ne dira.
+  // Poruku o prekidu ispisuje sam gumb, jer prekinuta obrada vise nema pravo
+  // pisati po zaslonu.
   cancelBtn.addEventListener('click',()=>{
-    prekidTrazen=true;
+    if(!posaoBroj) return;
+    posaoBroj++;
     cancelBtn.disabled=true;
     cancelBtn.textContent=T().cancelDone;
+    prikaziPrekid();
   });
+
+  // Zaslon nakon prekida: nikad prazan i nikad zateceno stanje prethodnog
+  // dokumenta. Izricito pise da alat o ovom dokumentu ne tvrdi nista.
+  function prikaziPrekid(){
+    const t=T();
+    progHide();
+    loaded=null; hasScanned=false; lastFindings=[]; lastError=null;
+    cutSel=new Set();
+    setContent('');
+    setVerdict('v-warn',t.vAbortBig,t.vAbortSub);
+    viz.innerHTML='<div class="empty">'+esc(t.vAbortViz)+'</div>';
+    findingsEl.innerHTML='<div class="empty">'+esc(t.vAbortViz)+'</div>';
+    findCount.textContent='-'; charCount.textContent=t.chars(0);
+    showFileInfo();
+  }
 
   async function handleFile(file){
     const t=T();
+    // Nova datoteka prekida obradu koja je jos u tijeku: broj posla raste, pa
+    // stara obrada prestaje biti tekuca i njezin rezultat vise ne moze na zaslon.
+    const moj=mojPosao();
     hidePasteNote('pasteNothing');
     lastError=null;
     setVerdict('v-none',t.reading,file.name);
     owlSweep();
-    prekidTrazen=false;
     cancelBtn.disabled=false;
     progBegin();
     // Prekid se nudi samo kod PDF-a: to je jedini put koji na velikom dokumentu
     // moze trajati dugo, jer se svaka stranica crta.
     if(prog) prog.mozeStati=(F.kindOf&&F.kindOf(file)==='pdf');
     progStep('stepRead');
-    const res=await F.load(file,t,k=>{ if(typeof k==='string') progStep(k); },
-                           ()=>prekidTrazen);
+    const res=await F.load(file,t,
+      k=>{ if(typeof k==='string'&&josTece(moj)) progStep(k); },
+      ()=>!josTece(moj));          // citac stane cim ovaj posao vise nije tekuci
+    // Od ove tocke pise se po zaslonu. Ako je u meduvremenu krenuo novi posao
+    // ili je korisnik prekinuo ovaj, rezultat se ODBACUJE u cijelosti.
+    if(!josTece(moj)) return;
     if(!res.ok){ progHide(); fileError(res.msgKey); return; }
     loaded={name:file.name,size:file.size,source:res.source,docx:res.docx||null,pdf:res.pdf||null};
     setContent(res.html);          // jedna datoteka odjednom: zamjenjuje sadrzaj
     showFileInfo();
-    await scanWithProgress();
+    await scanWithProgress(moj);
+    if(!josTece(moj)) return;
     progEnd();                     // prikaz se dovrsi sam, posao ga ne ceka
   }
 
@@ -867,6 +909,7 @@
   }
 
   function resetAll(){
+    posaoBroj++;                   // prekida obradu koja je jos u tijeku
     setContent('');
     loaded=null; fileInput.value='';
     hasScanned=false; lastFindings=[]; lastError=null; cutSel=new Set();

@@ -124,6 +124,9 @@
       cancelDone:'Prekidam…',
       vPartBig:'Provjeren je samo dio dokumenta',
       vPartSub:(a,b)=>'Provjereno je '+a+' od '+b+' stranica. O ostatku dokumenta alat ne tvrdi ništa. Nema zelene presude dok dokument nije provjeren u cijelosti.',
+      vAbortBig:'Provjera je prekinuta',
+      vAbortSub:'Provjera je zaustavljena na tvoj zahtjev, pa alat o ovom dokumentu ne tvrdi ništa - ni da je čist, ni da nije. Tvoja datoteka nije promijenjena. Ubaci je ponovno ako je želiš provjeriti do kraja.',
+      vAbortViz:'Provjera je prekinuta. Nema nalaza jer dokument nije provjeren.',
       vStoppedBig:'Provjera je prekinuta',
       vStoppedSub:b=>'Provjera je prekinuta prije nego je provjerena ijedna od '+b+' stranica. O ovom dokumentu alat ne tvrdi ništa. Tvoja datoteka nije promijenjena.',
       fNoMeasureTitle:'Vidljivost teksta nije se mogla izmjeriti',
@@ -132,7 +135,7 @@
       stepPdfDraw:'Crtanje stranica i mjerenje vidljivosti',
       fOffTitle:n=>n+' ulomaka gurnutih izvan stranice',
       fOffWhy:'Tekst je nacrtan izvan vidljivog područja stranice, pa ga čovjek ne vidi ni na ekranu ni na ispisu. Obični čitači teksta ga preskaču, ali je u datoteci i stroj ga čita.',
-      footer:'OwlUV v6.1 · open source alat · radi potpuno lokalno, bez slanja podataka'
+      footer:'OwlUV v6.2 · open source alat · radi potpuno lokalno, bez slanja podataka'
     },
     en:{
       eyebrow:'Text and document inspection tool', intro:'Paste text or drop in a file: an assignment, job description or CV. The scanner reveals invisible characters, text hidden via color or font size, and phrases designed to mislead AI. Everything runs in your browser, nothing is sent anywhere.',
@@ -246,6 +249,9 @@
       cancelDone:'Stopping…',
       vPartBig:'Only part of the document was checked',
       vPartSub:(a,b)=>a+' of '+b+' pages were checked. The tool claims nothing about the rest of the document. No green verdict until the whole document has been checked.',
+      vAbortBig:'The check was stopped',
+      vAbortSub:'The check was stopped at your request, so the tool claims nothing about this document - neither that it is clean nor that it is not. Your file has not been changed. Load it again if you want it checked all the way through.',
+      vAbortViz:'The check was stopped. There are no findings, because the document was not checked.',
       vStoppedBig:'The check was stopped',
       vStoppedSub:b=>'The check was stopped before a single one of the '+b+' pages had been checked. The tool claims nothing about this document. Your file has not been changed.',
       fNoMeasureTitle:'Text visibility could not be measured',
@@ -254,7 +260,7 @@
       stepPdfDraw:'Drawing pages and measuring visibility',
       fOffTitle:n=>n+' passages pushed off the page',
       fOffWhy:'The text is drawn outside the visible area of the page, so nobody sees it on screen or in print. Ordinary text readers skip it, but it is in the file and a machine reads it.',
-      footer:'OwlUV v6.1 · open source tool · runs fully locally, no data sent'
+      footer:'OwlUV v6.2 · open source tool · runs fully locally, no data sent'
     },
     de:{
       eyebrow:'Werkzeug zur Text- und Dokumentprüfung', intro:'Text einfügen oder Datei ablegen: Aufgabe, Stellenbeschreibung oder Lebenslauf. Der Scanner zeigt unsichtbare Zeichen, per Farbe oder Schriftgröße versteckten Text und Phrasen, die eine KI in die Irre führen sollen. Alles läuft im Browser, nichts wird gesendet.',
@@ -368,6 +374,9 @@
       cancelDone:'Wird gestoppt…',
       vPartBig:'Nur ein Teil des Dokuments wurde geprüft',
       vPartSub:(a,b)=>a+' von '+b+' Seiten wurden geprüft. Über den Rest des Dokuments behauptet das Werkzeug nichts. Kein grünes Urteil, solange das Dokument nicht vollständig geprüft ist.',
+      vAbortBig:'Die Prüfung wurde abgebrochen',
+      vAbortSub:'Die Prüfung wurde auf deinen Wunsch gestoppt, daher behauptet das Werkzeug nichts über dieses Dokument - weder dass es sauber ist noch dass es das nicht ist. Deine Datei wurde nicht verändert. Lade sie erneut, wenn du sie vollständig prüfen lassen willst.',
+      vAbortViz:'Die Prüfung wurde abgebrochen. Es gibt keine Befunde, weil das Dokument nicht geprüft wurde.',
       vStoppedBig:'Die Prüfung wurde abgebrochen',
       vStoppedSub:b=>'Die Prüfung wurde abgebrochen, bevor auch nur eine der '+b+' Seiten geprüft war. Über dieses Dokument behauptet das Werkzeug nichts. Deine Datei wurde nicht verändert.',
       fNoMeasureTitle:'Die Sichtbarkeit des Textes konnte nicht gemessen werden',
@@ -376,7 +385,7 @@
       stepPdfDraw:'Seiten zeichnen und Sichtbarkeit messen',
       fOffTitle:n=>n+' Abschnitte außerhalb der Seite',
       fOffWhy:'Der Text ist außerhalb des sichtbaren Seitenbereichs gezeichnet, niemand sieht ihn also am Bildschirm oder im Druck. Gewöhnliche Textleser überspringen ihn, aber er steht in der Datei und eine Maschine liest ihn.',
-      footer:'OwlUV v6.1 · Open-Source-Werkzeug · läuft vollständig lokal, keine Datenübertragung'
+      footer:'OwlUV v6.2 · Open-Source-Werkzeug · läuft vollständig lokal, keine Datenübertragung'
     },
     fr:{
       eyebrow:'Outil de vérification de textes et documents', intro:"Collez un texte ou déposez un fichier : devoir, offre d'emploi ou CV. Le scanner révèle les caractères invisibles, le texte masqué par la couleur ou la taille de police, et les phrases conçues pour induire une IA en erreur. Tout se passe dans votre navigateur, rien n'est envoyé.",
@@ -490,6 +499,9 @@
       cancelDone:'Arrêt en cours…',
       vPartBig:'Seule une partie du document a été vérifiée',
       vPartSub:(a,b)=>a+' pages sur '+b+' ont été vérifiées. L outil n affirme rien sur le reste du document. Pas de verdict vert tant que le document n a pas été vérifié en entier.',
+      vAbortBig:'La vérification a été arrêtée',
+      vAbortSub:'La vérification a été arrêtée à ta demande, donc l outil n affirme rien sur ce document - ni qu il est propre, ni qu il ne l est pas. Ton fichier n a pas été modifié. Recharge le si tu veux le vérifier jusqu au bout.',
+      vAbortViz:'La vérification a été arrêtée. Il n y a aucun résultat, car le document n a pas été vérifié.',
       vStoppedBig:'La vérification a été arrêtée',
       vStoppedSub:b=>'La vérification a été arrêtée avant même qu une seule des '+b+' pages ait été vérifiée. L outil n affirme rien sur ce document. Ton fichier n a pas été modifié.',
       fNoMeasureTitle:'La visibilité du texte n a pas pu être mesurée',
@@ -498,7 +510,7 @@
       stepPdfDraw:'Dessin des pages et mesure de la visibilité',
       fOffTitle:n=>n+' passages poussés hors de la page',
       fOffWhy:"Le texte est dessiné hors de la zone visible de la page, personne ne le voit donc à l'écran ni à l'impression. Les lecteurs de texte ordinaires l'ignorent, mais il est dans le fichier et une machine le lit.",
-      footer:'OwlUV v6.1 · outil open source · fonctionne entièrement en local, aucune donnée envoyée'
+      footer:'OwlUV v6.2 · outil open source · fonctionne entièrement en local, aucune donnée envoyée'
     },
     es:{
       eyebrow:'Herramienta de verificación de textos y documentos', intro:'Pega un texto o suelta un archivo: una tarea, una oferta de empleo o un CV. El escáner revela caracteres invisibles, texto oculto por color o tamaño de fuente y frases diseñadas para engañar a una IA. Todo se procesa en tu navegador, no se envía nada.',
@@ -612,6 +624,9 @@
       cancelDone:'Deteniendo…',
       vPartBig:'Solo se ha comprobado parte del documento',
       vPartSub:(a,b)=>'Se han comprobado '+a+' de '+b+' páginas. La herramienta no afirma nada sobre el resto del documento. No hay veredicto verde mientras el documento no se haya comprobado entero.',
+      vAbortBig:'La comprobación se ha detenido',
+      vAbortSub:'La comprobación se ha detenido a petición tuya, así que la herramienta no afirma nada sobre este documento - ni que esté limpio ni que no lo esté. Tu archivo no se ha modificado. Vuelve a cargarlo si quieres comprobarlo hasta el final.',
+      vAbortViz:'La comprobación se ha detenido. No hay resultados, porque el documento no se ha comprobado.',
       vStoppedBig:'La comprobación se ha detenido',
       vStoppedSub:b=>'La comprobación se ha detenido antes de comprobar ni una sola de las '+b+' páginas. La herramienta no afirma nada sobre este documento. Tu archivo no se ha modificado.',
       fNoMeasureTitle:'No se ha podido medir la visibilidad del texto',
@@ -620,7 +635,7 @@
       stepPdfDraw:'Dibujado de páginas y medición de visibilidad',
       fOffTitle:n=>n+' fragmentos empujados fuera de la página',
       fOffWhy:'El texto está dibujado fuera del área visible de la página, así que nadie lo ve en pantalla ni impreso. Los lectores de texto corrientes lo saltan, pero está en el archivo y una máquina lo lee.',
-      footer:'OwlUV v6.1 · herramienta de código abierto · funciona totalmente en local, sin enviar datos'
+      footer:'OwlUV v6.2 · herramienta de código abierto · funciona totalmente en local, sin enviar datos'
     },
     it:{
       eyebrow:'Strumento di verifica di testi e documenti', intro:'Incolla un testo o trascina un file: un compito, un annuncio di lavoro o un CV. Lo scanner rivela caratteri invisibili, testo nascosto tramite colore o dimensione del carattere e frasi pensate per ingannare una IA. Tutto viene elaborato nel browser, nulla viene inviato.',
@@ -734,6 +749,9 @@
       cancelDone:'Interrompo…',
       vPartBig:'È stata controllata solo una parte del documento',
       vPartSub:(a,b)=>'Sono state controllate '+a+' pagine su '+b+'. Lo strumento non afferma nulla sul resto del documento. Nessun verdetto verde finché il documento non è stato controllato per intero.',
+      vAbortBig:'Il controllo è stato interrotto',
+      vAbortSub:'Il controllo è stato interrotto su tua richiesta, quindi lo strumento non afferma nulla su questo documento - né che sia pulito né che non lo sia. Il tuo file non è stato modificato. Ricaricalo se vuoi controllarlo fino in fondo.',
+      vAbortViz:'Il controllo è stato interrotto. Non ci sono risultati, perché il documento non è stato controllato.',
       vStoppedBig:'Il controllo è stato interrotto',
       vStoppedSub:b=>'Il controllo è stato interrotto prima che fosse controllata anche una sola delle '+b+' pagine. Lo strumento non afferma nulla su questo documento. Il tuo file non è stato modificato.',
       fNoMeasureTitle:'Non è stato possibile misurare la visibilità del testo',
@@ -742,7 +760,7 @@
       stepPdfDraw:'Disegno delle pagine e misura della visibilità',
       fOffTitle:n=>n+' passaggi spinti fuori dalla pagina',
       fOffWhy:"Il testo è disegnato fuori dall\u2019area visibile della pagina, quindi nessuno lo vede a schermo né in stampa. I lettori di testo comuni lo saltano, ma è nel file e una macchina lo legge.",
-      footer:'OwlUV v6.1 · strumento open source · funziona interamente in locale, nessun dato inviato'
+      footer:'OwlUV v6.2 · strumento open source · funziona interamente in locale, nessun dato inviato'
     }
   };
 })();
