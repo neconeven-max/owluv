@@ -729,11 +729,24 @@ skripti. Ne crta se nova sova.
 
 Repozitorij je javan, kod je pod GPL-3.0 (`LICENSE`), a ime "OwlUV" i logo
 SOVA WEB nisu njome obuhvaćeni (`NOTICE.md`). Stranicu poslužuje GitHub Pages s
-grane `main`, domena je u datoteci `CNAME`.
+grane `main`.
 
-**Dokle je objava stigla i što još nedostaje piše u
-[`docs/objava-status.md`](docs/objava-status.md).** Taj dokument se ažurira pri
-svakom pomaku, da bilo koji stroj može nastaviti gdje se stalo.
+### PRAVILO: objava i domene idu isključivo preko docs/objava-status.md
+
+**Prije bilo kakvog rada na objavi, GitHub Pagesu ili domenama pročitaj
+[`docs/objava-status.md`](docs/objava-status.md).** Ondje piše stvarno stanje:
+što je uključeno, gdje se stalo, koja je odluka donesena i koji je sljedeći
+korak. Bez toga se ne dira ništa.
+
+**Na kraju svake sesije koja išta pomakne u objavi, taj se dokument ažurira i
+šalje na GitHub.** Nije dovoljno napraviti posao; stanje mora ostati zapisano.
+
+Razlog nije urednost nego nužnost: **Neven ništa ne pamti između sesija, a rad
+ide naizmjenično s više strojeva.** Ono što nije u repozitoriju, ne postoji.
+Repozitorij je jedino mjesto istine.
+
+Ondje su zapisani i **poznati bugovi iz testiranja v6.3**, kao popis za rad
+nakon što domena proradi.
 
 Ono što se bez sučelja ne može provjeriti, provjerava se rukom u pravom
 pregledniku: da se drugi PDF učita bez ponovnog otvaranja stranice, da spremanje
