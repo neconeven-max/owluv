@@ -4,7 +4,7 @@
 napravljeno, gdje smo stali i što je sljedeće. Napisano je tako da ga može
 pročitati netko tko o projektu ne zna ništa i nastaviti bez ijednog pitanja.
 
-Zadnja izmjena: **26.08.2026.**
+Zadnja izmjena: **12.09.2026.**
 
 Upute korak po korak za GitHub i DNS stoje u [README.md](../README.md), odjeljak
 *Setting up the website*, odnosno u [README.hr.md](../README.hr.md), odjeljak
@@ -13,13 +13,14 @@ opisuje **postupak**.
 
 ---
 
-## Stranica je ŽIVA na privremenoj adresi
+## Stranica je ŽIVA na vlastitoj domeni
 
-> ### https://neconeven-max.github.io/owluv/
+> ### https://owluv.com
 
-To je GitHubova zadana adresa za ovaj repozitorij. Radi odmah, preko HTTPS-a, i
-na njoj se alat može koristiti i testirati dok se ne riješi domena. Kad
-`owluv.com` proradi, ova adresa će preusmjeravati na njega.
+Od 12.09.2026. alat radi na vlastitoj domeni, preko HTTPS-a, s valjanim
+certifikatom. Sve ostale adrese vode na nju trajnim preusmjeravanjem (301):
+`http://owluv.com`, `www.owluv.com` (oba protokola) i stara privremena adresa
+`neconeven-max.github.io/owluv/`.
 
 ---
 
@@ -30,35 +31,44 @@ na njoj se alat može koristiti i testirati dok se ne riješi domena. Kad
 | Kod v6.3 na GitHubu, grana `main` | **gotovo** |
 | Repozitorij javan | **gotovo** |
 | GitHub Pages uključen, grana `main`, mapa `/` | **gotovo** |
-| Stranica živi na github.io adresi | **gotovo**, provjereno |
-| Datoteka `CNAME` | **privremeno izvađena**, vidi niže |
-| DNS za `owluv.com` | **blokirano**, ovdje smo stali |
-| `owluv.com` kao vlastita domena na GitHubu | čeka DNS |
-| HTTPS na `owluv.com` | čeka vlastitu domenu |
-| Preusmjeravanje `hiddentextscanner.com` | čeka DNS |
+| DNS za `owluv.com` na Cloudflareu | **gotovo**, 12.09.2026. |
+| Datoteka `CNAME` vraćena u repozitorij | **gotovo**, commit `c1813e7` |
+| `owluv.com` kao vlastita domena na GitHubu | **gotovo** |
+| Certifikat i Enforce HTTPS | **gotovo**, certifikat vrijedi do 10.12.2026. |
+| Stranica provjerena na `https://owluv.com` | **gotovo**, 380 provjera, sve prošle |
+| Preusmjeravanje `hiddentextscanner.com` | **nije napravljeno**, vidi sljedeće korake |
 
 ---
 
-## Provjereno na živoj stranici, 23.08.2026.
+## Provjereno na živoj stranici, 12.09.2026.
 
-Otvoreno u pravom pregledniku na adresi gore:
+Cijeli automatski test iz repozitorija (`test/test-runner.html`) pokrenut je u
+Chromeu bez sučelja **izravno protiv `https://owluv.com`**, dakle isti test koji
+inače ide iz mape i s lokalnog poslužitelja, samo protiv prave stranice:
+
+> **380 provjera, 0 palo.** Isti broj kao u lokalnom prolazu.
+
+Uz to, rukom u pravom pregledniku:
 
 | Provjera | Rezultat |
 |---|---|
 | Verzija u podnožju | `v6.3` |
-| HTTPS | radi, valjan certifikat |
-| Zaraženi životopis (`test/pdf-zivotopis.pdf`) | **crvena** presuda, 6 nalaza |
-| Račun s uplatnicom (`test/pdf-racun-uplatnica.pdf`) | **narančasta**, "ne izgleda kao zamka" |
-| Čist PDF (`test/pdf-cist.pdf`) | **zelena** presuda |
-| Servisni radnik (rad bez interneta) | prijavljen, ostava radi |
-| **Zahtjevi izvan `github.io`** | **nijedan** |
+| Certifikat | Let's Encrypt, za `owluv.com` i `www.owluv.com`, vrijedi do 10.12.2026. |
+| `http://owluv.com` | 301 na `https://owluv.com/` |
+| `http://www.owluv.com`, `https://www.owluv.com` | 301 na `https://owluv.com/` |
+| `neconeven-max.github.io/owluv/` | 301 na `https://owluv.com/` |
+| "Isprobaj primjer" | **crvena** presuda, 4 nalaza (skriveni tekst, 3 fraze, 4 nevidljiva znaka, 3 rečenice) |
+| Servisni radnik (rad bez interneta) | prijavljen na `https://owluv.com/`, ostava `owluv-v6.3` |
+| **Zahtjevi izvan `owluv.com`** | **nijedan** (15 zahtjeva, svi na `owluv.com`) |
 
 Zadnji redak je najvažniji: alat na živoj stranici ne dohvaća ništa izvana, kako
 i obećava.
 
 ---
 
-## Što je konfigurirano na GitHubu
+## Što je konfigurirano
+
+### GitHub
 
 Repozitorij `github.com/neconeven-max/owluv`:
 
@@ -66,144 +76,98 @@ Repozitorij `github.com/neconeven-max/owluv`:
 - zadana grana: `main`
 - GitHub Pages: **uključen**, izvor je grana `main`, mapa `/` (root),
   `build_type: legacy`
-- vlastita domena: **nije postavljena** (namjerno, dok DNS ne proradi)
-- `.nojekyll`, `index.html`, `manifest.webmanifest`, `sw.js`: svi na `main`
+- vlastita domena: **`owluv.com`** (postavljena 12.09.2026. preko `gh api`)
+- Enforce HTTPS: **uključen**
+- `CNAME` (sadržaj `owluv.com`), `.nojekyll`, `index.html`,
+  `manifest.webmanifest`, `sw.js`: svi na `main`
 
 Alat `gh` (GitHub CLI) instaliran je preko Homebrewa na radnom računalu,
-verzija 2.98.0, prijavljen na račun `neconeven-max`, opseg `repo`. Zbog toga se
-Pages može podešavati s naredbenog retka:
+prijavljen na račun `neconeven-max`, opseg `repo`. Zbog toga se Pages može
+podešavati i provjeravati s naredbenog retka:
 
 ```
-gh api repos/neconeven-max/owluv/pages                 # stanje
+gh api repos/neconeven-max/owluv/pages                 # stanje, domena, certifikat
 gh api repos/neconeven-max/owluv/pages/builds/latest   # zadnja gradnja
 ```
 
----
+### DNS, Cloudflare
 
-## VAŽNO: datoteka CNAME je privremeno izvađena
+Domena `owluv.com` ostaje kupljena na Regici; Regica prijavljuje registru
+Cloudflareove poslužitelje imena, a zonu poslužuje Cloudflare (besplatan plan):
 
-**Kad DNS proradi, `CNAME` se mora vratiti.** Bez nje stranica nikad neće raditi
-na `owluv.com`.
-
-**Zašto je izvađena.** `CNAME` u repozitoriju je ono što GitHubu **postavlja**
-vlastitu domenu; nije samo zapis nego prekidač. Čim je Pages uključen, GitHub ju
-je pročitao i svaki zahtjev na `neconeven-max.github.io/owluv/` počeo
-preusmjeravati na `http://owluv.com/`, koji se ne može razriješiti. Stranica time
-nije bila dostupna **nigdje**. Zato je izvađena, da se alat može koristiti i
-testirati dok se domena rješava.
-
-**Kako se vraća**, kad Cloudflare preuzme DNS i zapisi prorade. U mapi
-repozitorija:
-
-```
-echo "owluv.com" > CNAME
-git add CNAME
-git commit -m "DD.MM.GGGG. Vracen CNAME, domena owluv.com je spremna"
-git push
-```
-
-Zatim pričekati da provjera domene na GitHubu pozeleni, pa uključiti
-**Enforce HTTPS**. Preko sučelja: *Settings -> Pages -> Custom domain*. Preko
-naredbenog retka:
-
-```
-gh api -X PUT repos/neconeven-max/owluv/pages -f cname=owluv.com
-gh api -X PUT repos/neconeven-max/owluv/pages -F https_enforced=true
-```
-
-Automatski test pada ako se `CNAME` izvadi, a razlog ne bude zapisan u ovom
-dokumentu. Tako se ne može zaboraviti vratiti.
-
----
-
-## Zašto DNS ne radi
-
-Obje domene **jesu uredno registrirane**, 19.08.2026., preko registrara
-**Regica**. U registru su delegirane na Iskonove poslužitelje imena:
-
-| Domena | Poslužitelji imena u registru |
+| Što | Vrijednost |
 |---|---|
-| `owluv.com` | `dns.iskon.hr`, `dns2.iskon.hr` |
-| `hiddentextscanner.com` | `dns.iskon.hr`, `dns2.iskon.hr` |
+| Poslužitelji imena (na Regici) | `lilyana.ns.cloudflare.com`, `matteo.ns.cloudflare.com` |
+| `A` zapisi za `owluv.com` | `185.199.108.153`, `185.199.109.153`, `185.199.110.153`, `185.199.111.153` |
+| `CNAME` za `www` | `neconeven-max.github.io` |
+| Proxy (narančasti oblačić) | **isključen** na svim zapisima, "DNS only" |
 
-**Ali te domene se ne mogu razriješiti.** Upit prema oba poslužitelja vraća
-`REFUSED`:
+Iskonovi poslužitelji imena su obrisani s Regice. Provjera s bilo kojeg
+računala:
 
 ```
-dig @dns.iskon.hr  owluv.com SOA     ->  status: REFUSED
-dig @dns2.iskon.hr owluv.com SOA     ->  status: REFUSED
+dig +short owluv.com NS      # dva Cloudflareova poslužitelja
+dig +short owluv.com A       # četiri GitHubove adrese
+dig +short www.owluv.com     # neconeven-max.github.io.
 ```
-
-`REFUSED` znači da su ti poslužitelji upisani kao nadležni za domenu, **ali zonu
-ne poslužuju** - kod njih ta zona nikad nije stvorena. Zbog toga svaki upit
-prema `owluv.com` završi sa `SERVFAIL`, i to za cijeli internet, ne samo za
-jedno računalo.
-
-**Regica nudi samo polja za upis poslužitelja imena, bez uređivanja zapisa.**
-Ondje se dakle ne mogu upisati `A` zapisi koje GitHub Pages traži. Zbog toga
-domene trebaju davatelja koji stvarno poslužuje zonu.
 
 ---
 
-## Odluka: Cloudflare kao DNS
+## Kako je domena proradila, 12.09.2026.
 
-**Cloudflare, besplatan plan**, preuzima DNS za domene. Preko njega ide i
-preusmjeravanje `hiddentextscanner.com` na `owluv.com`.
+Zapisano da se zna što je učinjeno i kojim redom, ako ikad zatreba ponoviti
+za drugu domenu.
 
-Zašto baš to:
+1. Neven je na Regici zamijenio Iskonove poslužitelje imena Cloudflareovima i
+   u Cloudflareu upisao četiri `A` zapisa i `CNAME` za `www`, sve bez proxyja.
+   Nakon toga se `owluv.com` razrješavao, a GitHub je vraćao svoju 404 stranicu,
+   jer domena još nije bila vezana uz repozitorij.
+2. Vraćen je `CNAME` u repozitorij (commit `c1813e7`). Prije slanja je prošla
+   higijena, `node test/pokreni-test.js --higijena`, 31 provjera.
+3. Postavljena je vlastita domena:
+   `gh api -X PUT repos/neconeven-max/owluv/pages -f cname=owluv.com`.
+   GitHub je odmah krenuo s certifikatom (`authorization_created`), za manje od
+   minute je bio `approved`, a gradnja stranice gotova za desetak minuta.
+4. Uključen je Enforce HTTPS:
+   `gh api -X PUT repos/neconeven-max/owluv/pages -F https_enforced=true`.
+   Preusmjeravanje s `http://owluv.com` na `https` proradilo je nekoliko minuta
+   nakon toga; odmah nakon uključivanja `http` je još vraćao 200.
+5. Provjereno kako piše gore.
 
-- Regica ne nudi uređivanje zapisa, a Iskon zonu nije stvorio; treba netko tko
-  zonu stvarno poslužuje. Cloudflare to radi besplatno.
-- Preusmjeravanje druge domene se kod Cloudflarea rješava pravilom, bez posebne
-  usluge kod registrara.
-- Ništa se ne mijenja na strani GitHuba: Pages i dalje očekuje ista četiri `A`
-  zapisa i `CNAME` za `www`, kako piše u README-u.
+**Što treba znati za ubuduće.** GitHubov API za certifikat ne prolazi kroz
+stanje `issued`; `approved` uz `expires_at` je konačno stanje i HTTPS već radi.
+Petlja koja čeka na `issued` čeka zauvijek.
 
-**Ovo ne mijenja registrara.** Domene ostaju kupljene na Regici; mijenjaju se
-samo poslužitelji imena koje Regica prijavljuje registru.
+---
+
+## Zašto DNS prije nije radio, sad riješeno
+
+Domene `owluv.com` i `hiddentextscanner.com` registrirane su 19.08.2026. preko
+registrara **Regica** i u registru su bile delegirane na `dns.iskon.hr` i
+`dns2.iskon.hr`. Ti poslužitelji zonu nisu posluživali (`REFUSED`), pa je svaki
+upit završavao sa `SERVFAIL`. Regica nudi samo polja za upis poslužitelja imena,
+bez uređivanja zapisa, pa se `A` zapisi ondje nisu mogli upisati.
+
+**Rješenje je bio Cloudflare kao DNS**, besplatan plan. Registrar se nije
+mijenjao, samo poslužitelji imena. To je za `owluv.com` napravljeno i radi.
+Isti put vrijedi i za `hiddentextscanner.com`, koja još nije prebačena.
 
 ---
 
 ## Sljedeći koraci, redom
 
-1. **Provjeriti popis "Moje domene" na Regici.** Zabilježiti **točno** koje
-   domene ondje stoje. Moguće je da uz `owluv.com` i `hiddentextscanner.com`
-   postoji i **`owluv.hr`**. Ako postoji, odlučiti ide li i ona na Cloudflare i
-   preusmjerava li se na `owluv.com`.
-2. **Otvoriti besplatan račun na Cloudflareu**, ako već ne postoji.
-3. **Dodati domene** u Cloudflare, jednu po jednu. Cloudflare pri dodavanju sam
-   ponudi svoj par poslužitelja imena, oblika `nesto.ns.cloudflare.com`.
-   **Zabilježiti ih točno onako kako ih Cloudflare ispiše**, jer je svaki račun
-   dobiva svoj par.
-4. **Upisati Cloudflareove poslužitelje na Regici.** Ovo je korak na kojem se
-   najlakše pogriješi:
-
-   > Poslužitelji se upisuju na stranici **KONKRETNE domene**, a **ne** na
-   > stranici sa zadanim postavkama za buduće domene. Zadane postavke vrijede
-   > samo za domene koje će se tek kupiti i **ne mijenjaju ništa** za domene
-   > koje već postoje.
-
-   Iskonove poslužitelje pritom **zamijeniti**, ne dodati uz njih.
-5. **Pričekati proširenje.** Cloudflare javi kad preuzme domenu; obično kroz
-   nekoliko sati, ponekad dulje. Provjera s bilo kojeg računala:
-
-   ```
-   dig +short owluv.com NS
-   ```
-
-   Kad ispiše Cloudflareove poslužitelje umjesto Iskonovih, može se dalje.
-6. **Upisati zapise u Cloudflareu** za `owluv.com`: četiri `A` zapisa na
-   GitHubove adrese i `CNAME` za `www`. Točne vrijednosti su u README-u,
-   odjeljak *Postavljanje stranice*. Ako Cloudflare nudi narančasti oblačić za
-   posredovanje prometa (proxy), za GitHub Pages ga **isključiti** (siva
-   strelica, "DNS only"), inače provjera domene na GitHubu zna zapeti.
-7. **Vratiti `CNAME`** u repozitorij; postupak je gore.
-8. **Uključiti vlastitu domenu i HTTPS** na GitHubu; postupak je gore.
-9. **Postaviti preusmjeravanje** `hiddentextscanner.com` na `https://owluv.com`
-   u Cloudflareu, trajno (301).
-10. **Provjeriti sve:** stranica radi na `https://owluv.com`, certifikat vrijedi,
-    `www.owluv.com` vodi na isto, a `hiddentextscanner.com` preusmjerava na nju.
-    Nakon toga **ažurirati ovaj dokument**.
+1. **`hiddentextscanner.com` na Cloudflare.** Dodati domenu u Cloudflare,
+   zabilježiti par poslužitelja imena koji Cloudflare ponudi (za svaku domenu
+   može biti drugi par), pa ih na Regici upisati **na stranici te konkretne
+   domene**, umjesto Iskonovih. Provjera: `dig +short hiddentextscanner.com NS`.
+2. **Preusmjeravanje** `hiddentextscanner.com` i `www.hiddentextscanner.com` na
+   `https://owluv.com`, trajno (301), pravilom u Cloudflareu. Postupak s točnim
+   vrijednostima je u README-u, odjeljak *Postavljanje stranice*, točka 3.
+3. **Provjeriti** da `hiddentextscanner.com` preusmjerava, pa **ažurirati ovaj
+   dokument**.
+4. Provjeriti popis "Moje domene" na Regici i zabilježiti postoji li i
+   **`owluv.hr`**. Ako postoji, odlučiti preusmjerava li se i ona na `owluv.com`.
+5. Tek nakon toga: **poznati bugovi iz testiranja v6.3**, popis niže.
 
 ---
 
