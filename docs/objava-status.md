@@ -198,6 +198,50 @@ ponašanje servisnog radnika opisano u `CLAUDE.md`, nije kvar.
 `index.html` ili `js/i18n.js` pokrenuti `node test/napravi-jezicne-stranice.js`;
 higijena pada ako se `en.html` i ostale ne slažu s generatorom.
 
+### Search Console javio "Blokirano datotekom robots.txt", 12.09.2026.
+
+Nakon dodavanja `owluv.com` u Search Console, Google je za `https://owluv.com/`
+javio da nije indeksiran jer je "Blokirano datotekom robots.txt" i da Googlebot
+ne može dohvatiti ni naslovnicu.
+
+**Provjereno na živoj stranici, bajt po bajt:** `https://owluv.com/robots.txt`
+je identičan onome u repozitoriju, vraća 200 i Googlebotu, nema `X-Robots-Tag`
+zaglavlja, nijedna jezična stranica nema `noindex`. Googleovo tumačenje
+(najdulje pravilo koje se podudara) dopušta naslovnicu i sve jezične stranice,
+a zabranjuje samo `/test/`.
+
+**Uzrok je na Googleovoj strani, ne u datoteci.** "Ne može dohvatiti ni
+naslovnicu" je Googleova formulacija kad mu je `robots.txt` bio **nedostupan**
+(DNS ili TLS greška, ne 404): tada cijelu stranicu privremeno tretira kao
+zabranjenu i to pamti. `owluv.com` stoji u javnom README-u na GitHubu od
+22.08., a do jutros se nije mogao razriješiti; `robots.txt` s 200 postoji tek
+od 10:39 danas. Google `robots.txt` dohvaća iznova otprilike jednom dnevno, pa
+se to samo od sebe ispravi kroz najviše dan; može se i požuriti (koraci niže).
+
+**Što je svejedno popravljeno.** Iz `robots.txt` je maknut `Allow: /`. Za
+Google je bio suvišan, ali parseri koji uzimaju prvo pravilo koje se podudara
+(npr. Pythonov `robotparser`) bi zbog njega propustili i `/test/`. Sadašnji
+oblik, `Disallow: /test/` i ništa više, znači "sve osim `/test/`" po svakom
+tumačenju. Doslovno:
+
+```
+# OwlUV: trazilice smiju sve osim testnih datoteka.
+# Nema "Allow: /": to je i tako zadano, a parseri koji uzimaju prvo
+# podudaranje bi zbog njega propustili i /test/.
+User-agent: *
+Disallow: /test/
+
+Sitemap: https://owluv.com/sitemap.xml
+```
+
+**Test koji to čuva.** Higijena sada `robots.txt` ne gleda po izgledu nego ga
+**tumači**, i to na oba načina (Googleovo najdulje podudaranje i naivno prvo
+podudaranje), za `*`, Googlebot i bingbot posebno: naslovnica, svih 6 jezičnih
+stranica, sitemap i sve što alat učitava moraju biti dopušteni, `/test/`
+zabranjen, sitemap punom adresom, i nigdje `noindex`, `nofollow` ni `<meta
+name="robots">`. Provjereno da pada na `Disallow: /`, na zabrani `/en`, na
+staroj dvosmislenoj verziji, na zabrani samo za Googlebot i na `noindex`.
+
 **Što tražilice još ne znaju.** Google indeksira sam od sebe, ali sporo i bez
 povratne informacije. Da se ubrza i da se vidi što Google stvarno vidi, treba
 **Google Search Console**, a to traži prijavu Googleovim računom, dakle Nevenov
@@ -209,7 +253,12 @@ klik:
    **Cloudflare** (DNS, Add record, Type TXT, Name `@`, Content ono što Google
    ispiše), pa natrag u Search Consoleu "Verify".
 3. U Search Consoleu "Sitemaps", upisati `https://owluv.com/sitemap.xml`.
-4. Po želji "URL inspection" za `https://owluv.com/` i "Request indexing".
+4. **Ako piše "Blokirano datotekom robots.txt":** Settings (Postavke) ->
+   Crawling -> `robots.txt` -> Open report. Ondje se vidi koju je kopiju Google
+   zadnji put dohvatio i kada. Tri točkice uz `https://owluv.com/robots.txt`
+   -> **Request a recrawl**. Zatim URL inspection za `https://owluv.com/` ->
+   **Test live URL**: mora pisati da je URL dostupan Googleu. Tek onda
+   **Request indexing**.
 
 Isto vrijedi i za Bing (Bing Webmaster Tools zna uvesti postavke iz Search
 Consolea jednim klikom). Nakon toga u ovaj dokument zapisati da je napravljeno.

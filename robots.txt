@@ -1,5 +1,7 @@
+# OwlUV: trazilice smiju sve osim testnih datoteka.
+# Nema "Allow: /": to je i tako zadano, a parseri koji uzimaju prvo
+# podudaranje bi zbog njega propustili i /test/.
 User-agent: *
-Allow: /
 Disallow: /test/
 
 Sitemap: https://owluv.com/sitemap.xml

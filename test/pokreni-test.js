@@ -238,9 +238,59 @@ function higijena(){
              new RegExp('class="lang active" data-lang="'+L+'"').test(h),
              [naslov,opis.length,podnaslov,uvod.length].join(' | '));
   }
+  // --- robots.txt: naslovnica i jezicne stranice NIKAD ne smiju biti zabranjene ---
+  // Datoteka se ne provjerava po izgledu nego po tumacenju, i to na dva nacina:
+  // kako je cita Google (vrijedi najdulje pravilo koje se podudara) i kako je
+  // citaju naivni parseri (vrijedi prvo pravilo). Oba moraju dati isti odgovor,
+  // inace je datoteka dvosmislena. Provjerava se za "*" i za Googlebot posebno.
   const robots=fs.existsSync(path.join(KORIJEN,'robots.txt'))?fs.readFileSync(path.join(KORIJEN,'robots.txt'),'utf8'):'';
-  provjera('robots.txt dopusta indeksiranje i pokazuje na sitemap',
-           /Allow: \//.test(robots)&&/Sitemap: https:\/\/owluv\.com\/sitemap\.xml/.test(robots));
+  function robotsPravila(txt,agent){
+    // vraca pravila skupine koja vrijedi za agenta: njegova ako postoji, inace "*"
+    const skupine=[]; let tekuca=null;
+    for(const r of txt.split(/\r?\n/)){
+      const linija=r.replace(/#.*/,'').trim(); if(!linija) continue;
+      const m=/^([a-z-]+)\s*:\s*(.*)$/i.exec(linija); if(!m) continue;
+      const polje=m[1].toLowerCase(), vr=m[2].trim();
+      if(polje==='user-agent'){
+        if(!tekuca||tekuca.pravila.length) { tekuca={agenti:[],pravila:[]}; skupine.push(tekuca); }
+        tekuca.agenti.push(vr.toLowerCase());
+      } else if((polje==='allow'||polje==='disallow')&&tekuca){
+        tekuca.pravila.push({dopusta:polje==='allow',put:vr});
+      }
+    }
+    const svoja=skupine.find(g=>g.agenti.some(a=>a!=='*'&&agent.toLowerCase().includes(a)));
+    const opca=skupine.find(g=>g.agenti.includes('*'));
+    return (svoja||opca||{pravila:[]}).pravila;
+  }
+  const smijeGoogle=(txt,agent,put)=>{           // najdulje podudaranje, Allow pobjeduje pri istoj duljini
+    let naj=null;
+    for(const p of robotsPravila(txt,agent)){
+      if(p.put===''||!put.startsWith(p.put)) continue;
+      if(!naj||p.put.length>naj.put.length||(p.put.length===naj.put.length&&p.dopusta)) naj=p;
+    }
+    return !naj||naj.dopusta;
+  };
+  const smijeNaivno=(txt,agent,put)=>{           // prvo podudaranje
+    const p=robotsPravila(txt,agent).find(p=>p.put!==''&&put.startsWith(p.put));
+    return !p||p.dopusta;
+  };
+  const javniPutevi=['/',...jezicne.JEZICI.filter(L=>L!=='hr').map(L=>'/'+L),
+    ...jezicne.JEZICI.map(L=>'/'+jezicne.datoteka(L)),'/sitemap.xml','/js/app.js','/js/i18n.js',
+    '/vendor/pdfjs/pdf.min.js','/assets/sovaweb_favicon_512.png','/manifest.webmanifest','/sw.js'];
+  for(const agent of ['*','Googlebot','bingbot']){
+    const zabranjeni=javniPutevi.filter(p=>!smijeGoogle(robots,agent,p)||!smijeNaivno(robots,agent,p));
+    provjera('robots.txt dopusta '+agent+' na naslovnicu, sve jezicne stranice i sve sto alat ucitava',
+             robots.length>0&&zabranjeni.length===0, zabranjeni.join(' ')||'(prazan robots.txt)');
+  }
+  provjera('robots.txt zabranjuje /test/ i to jednako po oba tumacenja',
+           !smijeGoogle(robots,'*','/test/test-runner.html')&&!smijeNaivno(robots,'*','/test/test-runner.html'));
+  provjera('robots.txt nigdje nema "Disallow: /" koji bi zabranio sve',
+           !/^\s*Disallow\s*:\s*\/\s*$/mi.test(robots));
+  provjera('robots.txt navodi sitemap punom adresom',
+           /^Sitemap: https:\/\/owluv\.com\/sitemap\.xml$/m.test(robots));
+  // nijedna stranica ne smije nositi noindex ni nofollow, ni u meta oznaci ni kao rijec
+  const noindex=stranice.filter(f=>/noindex|nofollow|<meta[^>]+name="robots"/i.test(fs.readFileSync(path.join(KORIJEN,f),'utf8')));
+  provjera('nijedna jezicna stranica nema noindex, nofollow ni meta robots', noindex.length===0, noindex.join(' '));
   const sm=fs.existsSync(path.join(KORIJEN,'sitemap.xml'))?fs.readFileSync(path.join(KORIJEN,'sitemap.xml'),'utf8'):'';
   provjera('sitemap.xml ima svih 6 jezicnih stranica, svaku s hreflang alternativama',
            jezicne.JEZICI.every(L=>sm.includes('<loc>'+jezicne.adresa(L)+'</loc>'))&&

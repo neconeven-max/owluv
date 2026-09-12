@@ -434,11 +434,11 @@ jer se puni test vrti dvaput.
 
 | Prolaz | Rezultat |
 |---|---|
-| Higijena repozitorija | 42 provjere, sve prošle |
+| Higijena repozitorija | 48 provjera, sve prošle |
 | Alat iz mape (`file://`) | 380 provjera, sve prošle |
 | Alat poslužen preko http | 380 provjera, sve prošle |
 | Usporedba dvaju načina | 3 provjere, identično |
-| **Ukupno** | **805 provjera, sve prošle** |
+| **Ukupno** | **811 provjera, sve prošle** |
 
 Što je pokriveno, ukratko: svaka vrsta zamke u Wordu i u PDF-u, svaka sa svojom
 testnom datotekom; sve četiri presude; svih 6 jezika bez ijednog ključa koji

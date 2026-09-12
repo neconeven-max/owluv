@@ -437,11 +437,11 @@ takes about ten minutes, because the full suite runs twice.
 
 | Pass | Result |
 |---|---|
-| Repository hygiene | 42 checks, all passed |
+| Repository hygiene | 48 checks, all passed |
 | Tool from a folder (`file://`) | 380 checks, all passed |
 | Tool served over http | 380 checks, all passed |
 | Comparison of the two | 3 checks, identical |
-| **Total** | **805 checks, all passed** |
+| **Total** | **811 checks, all passed** |
 
 What is covered, in short: every kind of trap in Word and in PDF, each with its
 own fixture file; the four verdicts; all 6 languages with no missing key and no
