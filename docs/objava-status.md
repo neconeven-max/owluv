@@ -177,7 +177,22 @@ detaljno je u README-u (povijest izmjena, v6.4) i u `CLAUDE.md` (odjeljak
 
 **Nula vanjskih zahtjeva ostaje nula.** Adrese u canonicalu, hreflangu i
 JSON-LD-u su tekst koji tražilica čita, ne zahtjevi. Test to provjerava na tri
-razine, a na živoj stranici je izmjereno rukom (tablica ispod).
+razine, a na živoj stranici je izmjereno rukom:
+
+| Provjera, `https://owluv.com/en`, 12.09.2026. | Rezultat |
+|---|---|
+| `/`, `/en`, `/de`, `/fr`, `/es`, `/it`, `/sitemap.xml`, `/robots.txt` | svi 200, svaka stranica sa svojim `lang` i naslovom |
+| Naslov kartice, `lang`, opis, aktivan gumb | engleski, od prvog trenutka |
+| canonical, 7 hreflang, Open Graph, Twitter card | prisutni u HTML-u, na engleskom |
+| JSON-LD | parsabilan: WebApplication, OwlUV, SOVA VID j.d.o.o., besplatno |
+| "Try an example" | crvena presuda, 4 nalaza |
+| Servisni radnik | ostava `owluv-v6.4`, novi `app.js` u njoj |
+| **Zahtjevi izvan `owluv.com`** | **nijedan** (15 zahtjeva) |
+
+Napomena za onoga tko provjerava ponovno: preglednik koji je stranicu već imao
+s v6.3 pri **prvom** učitavanju još izvrši stari `app.js` iz stare ostave
+(naslov i opis u starom obliku), a od drugog učitavanja radi novi. To je
+ponašanje servisnog radnika opisano u `CLAUDE.md`, nije kvar.
 
 **Kako se ovo održava.** `index.html` je jedini izvor. Nakon svake promjene
 `index.html` ili `js/i18n.js` pokrenuti `node test/napravi-jezicne-stranice.js`;
