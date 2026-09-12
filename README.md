@@ -263,7 +263,11 @@ OwlUV is made by **SOVA VID j.d.o.o.**, Croatia, under the **SOVA WEB** brand -
 ## Repository layout
 
 ```
-index.html                 the tool itself, one page
+index.html                 the tool itself, one page, Croatian
+en.html, de.html, fr.html, es.html, it.html
+                           the same page with another starting language, for search
+                           engines; written by a generator, never edited by hand
+sitemap.xml, robots.txt    the language pages listed for search engines; the sitemap is generated
 manifest.webmanifest       data for adding it to a phone home screen
 sw.js                      offline support on the phone
 CNAME, .nojekyll           serving the page from GitHub Pages
@@ -282,7 +286,7 @@ assets/                    logo, owl and icons
 vendor/fflate/             ZIP unpacking (MIT)
 vendor/pdfjs/              pdf.js (Apache-2.0), loaded only when a PDF arrives
 standalone/                frozen v3.3, a single file for sending by e-mail
-test/                      fixture generators and the automated test
+test/                      fixture generators, the language page generator and the automated test
 ```
 
 ---
@@ -429,15 +433,15 @@ Passes 2 and 3 must produce **identical** results. That is what proves the tool
 works the same as a page on a website and as a folder on disk. The whole thing
 takes about ten minutes, because the full suite runs twice.
 
-### Result of the last run: 23.08.2026.
+### Result of the last run: 12.09.2026.
 
 | Pass | Result |
 |---|---|
-| Repository hygiene | 32 checks, all passed |
+| Repository hygiene | 42 checks, all passed |
 | Tool from a folder (`file://`) | 380 checks, all passed |
 | Tool served over http | 380 checks, all passed |
 | Comparison of the two | 3 checks, identical |
-| **Total** | **795 checks, all passed** |
+| **Total** | **805 checks, all passed** |
 
 What is covered, in short: every kind of trap in Word and in PDF, each with its
 own fixture file; the four verdicts; all 6 languages with no missing key and no
@@ -583,6 +587,32 @@ which is worse for search engines.
 ---
 
 ## Change history
+
+### 12.09.2026. - v6.4, the page is visible to search engines, in 6 languages
+
+Until now the tool was a single page that switches language in the browser, so
+a search engine saw only Croatian, and only after JS had written the text. Now
+each of the 6 languages has its own page in the root (`owluv.com/`,
+`owluv.com/en`, `/de`, `/fr`, `/es`, `/it`): the same tool, the same code, only
+with the title, description and header text written **into the HTML itself** in
+that language, plus `hreflang` for all 6 languages, `canonical`, Open Graph and
+Twitter card (a shared link shows the name, the description and the owl) and
+JSON-LD (free web application, author SOVA VID j.d.o.o., runs locally in the
+browser). Also `sitemap.xml` and `robots.txt`. The language buttons work as
+before, without reloading the page.
+
+Those five pages and the sitemap are **written by a generator**,
+`test/napravi-jezicne-stranice.js`, from `index.html` and the translations; the
+hygiene check fails if they disagree with it, so they cannot drift. The new key
+`seoDesc` is a one-sentence description per language; the English tagline is
+now "Hidden text and AI trap scanner". The service worker cache was bumped to
+v6.4 so phones pick up the new code.
+
+**Still nothing is fetched from outside.** The addresses in `canonical`,
+`hreflang` and JSON-LD are text a search engine reads, not requests; the test
+checks that on all three levels (every address in the code, every loading tag,
+and the measurement in the browser). Detection was not touched. Asian languages
+were deliberately not added: SEO must not promise more than the tool delivers.
 
 ### 23.08.2026. - v6.3, the verdict now matches what was actually found
 

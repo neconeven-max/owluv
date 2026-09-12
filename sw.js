@@ -11,12 +11,18 @@
    Datoteke korisnika ne prolaze kroz radnika: citaju se u pregledniku iz
    memorije i nikad ne odlaze u mrezni sloj. */
 
-const OSTAVA = 'owluv-v6.3';
+const OSTAVA = 'owluv-v6.4';
 
 // Sve sto alat treba za rad. Test i standalone inacica namjerno nisu tu.
 const DATOTEKE = [
   '.',
   'index.html',
+  // ista stranica na ostalim jezicima, za trazilice (test/napravi-jezicne-stranice.js)
+  'en.html',
+  'de.html',
+  'fr.html',
+  'es.html',
+  'it.html',
   'manifest.webmanifest',
   'js/i18n.js',
   'js/detect.js',

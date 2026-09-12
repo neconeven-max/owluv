@@ -23,7 +23,10 @@
   const D = OwlUV.detect, F = OwlUV.files, I18N = OwlUV.I18N;
   const {INVISIBLE,isTag,isVariation,DASHES,esc,PHRASES,hiddenReasons,build} = D;
 
-  let LANG='hr';
+  // Pocetni jezik cita se iz <html lang>: index.html je hrvatski, a en.html,
+  // de.html itd. su iste stranice s drugim pocetnim jezikom (radi trazilica,
+  // vidi test/napravi-jezicne-stranice.js). Gumbi i dalje prebacuju odmah.
+  let LANG=I18N[document.documentElement.lang]?document.documentElement.lang:'hr';
   const T=()=>I18N[LANG];
 
   const $=id=>document.getElementById(id);
@@ -962,7 +965,7 @@
     charCount.textContent=t.chars([...(input.textContent||'')].length);
     // naslov kartice i opis stranice - to trazilica cita, pa idu s jezikom
     document.title='OwlUV - '+t.tagline;
-    if(metaDesc) metaDesc.setAttribute('content',t.tagline+'. '+t.intro);
+    if(metaDesc) metaDesc.setAttribute('content',t.seoDesc);
     if(prog&&prog.shown) progRender();
     // poruka o gresci se ne racuna ponovno kroz skeniranje, pa se prevodi ovdje
     if(lastError) setVerdict('v-err',t[lastError.bigKey],t[lastError.msgKey]);
@@ -1220,6 +1223,7 @@
     }; }
   };
 
+  document.querySelectorAll('.lang').forEach(x=>x.classList.toggle('active',x.getAttribute('data-lang')===LANG));
   applyLang();
   owlSweep();   // jednom pri otvaranju stranice
 })();

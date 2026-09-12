@@ -57,7 +57,11 @@ Serveru uz `INFRASTRUKTURA.md`.
 ## Struktura
 
 ```
-index.html                 glavni alat
+index.html                 glavni alat, hrvatski; IZVOR za jezične stranice
+en.html, de.html, fr.html, es.html, it.html
+                           ista stranica s drugim početnim jezikom, za tražilice;
+                           GENERIRANE, ne uređuju se rukom
+sitemap.xml, robots.txt    za tražilice; sitemap je generiran
 js/i18n.js                 prijevodi, 6 jezika, isti ključevi u svakom
 js/detect.js               detekcijska jezgra (iz v3.3)
 js/docx.js                 čitač .docx datoteka, izravno iz XML-a
@@ -70,7 +74,7 @@ assets/                    logo, sova i ikone SOVA WEB
 vendor/fflate/             raspakiravanje ZIP-a (MIT), vendorirano
 vendor/pdfjs/              pdf.js (Apache-2.0), vendoriran, učitava se tek na PDF
 standalone/                zamrznuta v3.3, jedna datoteka za slanje mailom
-test/                      generatori testnih datoteka i automatski test
+test/                      generatori testnih datoteka i jezičnih stranica, automatski test
 sw.js                      rad bez interneta na telefonu
 manifest.webmanifest       podaci za dodavanje na početni zaslon
 CNAME, .nojekyll           posluživanje stranice s GitHuba
@@ -718,6 +722,29 @@ ogranak, mijenja ime i grafiku u `assets/`.
 
 Tekst u `LICENSE` je **doslovan službeni tekst GPL-3.0** (otisak MD5
 `1ebbd3e34237af26da5dc08a4e440464`). Ne prepisuje se i ne skraćuje.
+
+### Jezične stranice piše generator, nikad ruka
+
+Tražilica čita HTML kakav stigne, prije JS-a. Zato za svaki od 6 jezika postoji
+vlastita stranica u korijenu: `index.html` (hr), `en.html`, `de.html`,
+`fr.html`, `es.html`, `it.html`, javno `owluv.com/`, `owluv.com/en` itd. To je
+**ista stranica** s drugim `<html lang>`, naslovom, opisom, tekstom zaglavlja
+upisanim u HTML, aktivnim gumbom jezika i vlastitim SEO blokom (canonical,
+hreflang, Open Graph, Twitter, JSON-LD).
+
+- **`index.html` je jedini izvor.** Izgled i sučelje se mijenjaju samo u njemu.
+- Nakon svake promjene `index.html` ili `js/i18n.js` pokrenuti
+  `node test/napravi-jezicne-stranice.js`. Higijena pada ako se stranice ili
+  `sitemap.xml` ne slažu s generatorom.
+- SEO blok u `index.html` (između `SEO:start` i `SEO:end`), `<title>` i
+  `<meta name="description">` piše generator; ručna izmjena se pregazi.
+- Naslov kartice je `OwlUV - ` + `tagline`, opis je `seoDesc`, oboje po jeziku.
+- **Jezici u hreflangu su točno oni koje sučelje ima.** SEO ne obećava više
+  nego što alat isporučuje; azijski jezici se ne dodaju.
+- Gumbi za jezik i dalje prebacuju u pregledniku, bez učitavanja; početni jezik
+  `js/app.js` čita iz `<html lang>`.
+- Adrese u canonicalu, hreflangu i JSON-LD-u su tekst, ne zahtjevi. Ništa se ne
+  dohvaća izvana, i to test provjerava na tri razine.
 
 ### Sova uz naziv se ne crta iznova
 

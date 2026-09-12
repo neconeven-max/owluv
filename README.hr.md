@@ -261,7 +261,11 @@ OwlUV radi **SOVA VID j.d.o.o.**, Hrvatska, pod robnom markom **SOVA WEB** -
 ## Struktura repozitorija
 
 ```
-index.html                 sam alat, jedna stranica
+index.html                 sam alat, jedna stranica, hrvatski
+en.html, de.html, fr.html, es.html, it.html
+                           ista stranica s drugim početnim jezikom, za tražilice;
+                           piše ih generator, ne uređuju se rukom
+sitemap.xml, robots.txt    popis jezičnih stranica za tražilice; sitemap piše generator
 manifest.webmanifest       podaci za dodavanje na početni zaslon telefona
 sw.js                      rad bez interneta na telefonu
 CNAME, .nojekyll           posluživanje stranice s GitHub Pagesa
@@ -280,7 +284,7 @@ assets/                    logo, sova i ikone
 vendor/fflate/             raspakiravanje ZIP-a (MIT)
 vendor/pdfjs/              pdf.js (Apache-2.0), učitava se tek kad stigne PDF
 standalone/                zamrznuta v3.3, jedna datoteka za slanje mailom
-test/                      generatori testnih datoteka i automatski test
+test/                      generatori testnih datoteka, generator jezičnih stranica i automatski test
 ```
 
 ---
@@ -426,15 +430,15 @@ Prolazi 2 i 3 moraju dati **identičan** rezultat. Time je dokazano da alat radi
 jednako kao stranica na webu i kao mapa na disku. Cijelo traje oko deset minuta,
 jer se puni test vrti dvaput.
 
-### Rezultat zadnjeg pokretanja: 23.08.2026.
+### Rezultat zadnjeg pokretanja: 12.09.2026.
 
 | Prolaz | Rezultat |
 |---|---|
-| Higijena repozitorija | 32 provjere, sve prošle |
+| Higijena repozitorija | 42 provjere, sve prošle |
 | Alat iz mape (`file://`) | 380 provjera, sve prošle |
 | Alat poslužen preko http | 380 provjera, sve prošle |
 | Usporedba dvaju načina | 3 provjere, identično |
-| **Ukupno** | **795 provjera, sve prošle** |
+| **Ukupno** | **805 provjera, sve prošle** |
 
 Što je pokriveno, ukratko: svaka vrsta zamke u Wordu i u PDF-u, svaka sa svojom
 testnom datotekom; sve četiri presude; svih 6 jezika bez ijednog ključa koji
@@ -580,6 +584,30 @@ lošije za tražilice.
 ---
 
 ## Povijest izmjena
+
+### 12.09.2026. - v6.4, stranica je vidljiva tražilicama, na 6 jezika
+
+Alat je do sada bio jedna stranica koja jezik mijenja u pregledniku, pa je
+tražilica vidjela samo hrvatski, i to tek nakon što JS upiše tekst. Sada za
+svaki od 6 jezika postoji vlastita stranica u korijenu (`owluv.com/`,
+`owluv.com/en`, `/de`, `/fr`, `/es`, `/it`): isti alat, isti kod, samo s
+naslovom, opisom i tekstom zaglavlja upisanim **u sam HTML** na tom jeziku, uz
+`hreflang` na svih 6 jezika, `canonical`, Open Graph i Twitter card (link kod
+dijeljenja pokazuje ime, opis i sovu) i JSON-LD (besplatna web aplikacija,
+autor SOVA VID j.d.o.o., radi lokalno u pregledniku). Uz to `sitemap.xml` i
+`robots.txt`. Gumbi za jezik rade kao i prije, bez učitavanja stranice.
+
+Tih pet stranica i sitemap **piše generator** `test/napravi-jezicne-stranice.js`
+iz `index.html` i prijevoda; higijena pada ako se ne slažu s njim, pa se ne mogu
+razići. Novi ključ `seoDesc` je jedna rečenica opisa po jeziku; engleski
+podnaslov je sada "Hidden text and AI trap scanner". Ostava servisnog radnika
+podignuta je na v6.4, da telefoni preuzmu novi kod.
+
+**Ništa se ne dohvaća izvana ni dalje.** Adrese u `canonical`, `hreflang` i
+JSON-LD su tekst koji tražilica čita, ne zahtjevi; test to provjerava na sve
+tri razine (svaka adresa u kodu, svaka oznaka koja učitava, i mjerenje u
+pregledniku). Detekcija nije dirana. Azijski jezici namjerno nisu dodani: SEO
+ne smije obećati više nego što alat isporučuje.
 
 ### 23.08.2026. - v6.3, presuda odgovara onome što je stvarno nađeno
 

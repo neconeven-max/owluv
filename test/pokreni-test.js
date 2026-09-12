@@ -194,14 +194,62 @@ function higijena(){
     .concat(html.match(/(?:src|href)="file:[^"]*"/g)||[]);
   provjera('nijedna putanja u index.html ne pocinje kosom crtom ni s file:',
            apsolutne.length===0, apsolutne.slice(0,3).join(' | '));
+  // Dopustene adrese su samo tekst koji trazilica cita (canonical, hreflang,
+  // JSON-LD, imenski prostori XML-a) ili poveznica u podnozju; nista od toga
+  // stranica ne dohvaca. Svaka druga adresa je greska.
+  const jezicne=require('./napravi-jezicne-stranice.js');
+  const stranice=jezicne.JEZICI.map(jezicne.datoteka);
   const svePutanje=[];
-  for(const f of ['index.html','sw.js','js/pdfread.js']){
+  for(const f of [...stranice,'sw.js','js/pdfread.js']){
     const t=fs.readFileSync(path.join(KORIJEN,f),'utf8');
     for(const m of t.match(/https?:\/\/[^\s"')]+/g)||[]) svePutanje.push(f+': '+m);
   }
-  const vanjske=svePutanje.filter(x=>!/schemas\.|purl\.org|w3\.org|sovaweb\.net/.test(x));
+  const vanjske=svePutanje.filter(x=>!/schemas\.|schema\.org|purl\.org|w3\.org|sovaweb\.net|owluv\.com|gnu\.org\/licenses/.test(x));
   provjera('kod ne dohvaca nista s vanjskih posluzitelja', vanjske.length===0,
            vanjske.slice(0,3).join(' | '));
+  // canonical i hreflang su <link> koje preglednik ne dohvaca; svaki drugi
+  // <link>, <script>, <img>, <iframe> i slicno s vanjskom adresom je greska
+  const ucitavaIzvana=h=>{
+    const oznake=h.match(/<(?:script|img|iframe|video|audio|source|embed|object|link)\b[^>]*>/g)||[];
+    return oznake.filter(o=>/(?:src|href|data)="https?:\/\//.test(o)&&!/rel="(?:canonical|alternate)"/.test(o));
+  };
+  const vanjskeOznake=stranice.flatMap(f=>ucitavaIzvana(fs.readFileSync(path.join(KORIJEN,f),'utf8')).map(o=>f+': '+o));
+  provjera('nijedna stranica ne ucitava skriptu, stil, sliku ni okvir izvana',
+           vanjskeOznake.length===0, vanjskeOznake.slice(0,2).join(' | '));
+
+  // --- trazilice: sto trazilica procita prije nego JS krene ---
+  // Jezicne stranice i sitemap pise generator; rucna izmjena ili zaboravljeno
+  // pokretanje nakon promjene index.html ili prijevoda ovdje pada.
+  provjera('jezicne stranice i sitemap.xml se slazu s generatorom',
+           jezicne.provjeri().length===0, 'pokreni: node test/napravi-jezicne-stranice.js');
+  for(const L of jezicne.JEZICI){
+    const f=jezicne.datoteka(L), h=fs.readFileSync(path.join(KORIJEN,f),'utf8');
+    const naslov=(/<title>([^<]+)<\/title>/.exec(h)||[])[1]||'';
+    const opis=(/<meta name="description" content="([^"]+)">/.exec(h)||[])[1]||'';
+    const podnaslov=(/data-i18n="tagline">([^<]+)</.exec(h)||[])[1]||'';
+    const uvod=(/data-i18n="intro">([^<]+)</.exec(h)||[])[1]||'';
+    provjera(f+': naslov, opis, podnaslov i uvod stoje u samom HTML-u, na jeziku '+L,
+             new RegExp('lang="'+L+'"').test(h)&&naslov.startsWith('OwlUV - ')&&naslov.length>12&&
+             opis.length>60&&opis.length<220&&podnaslov.length>10&&uvod.length>60&&
+             new RegExp('rel="canonical" href="'+jezicne.adresa(L).replace(/[.\/]/g,'\\$&')+'"').test(h)&&
+             (h.match(/hreflang="/g)||[]).length===jezicne.JEZICI.length+1&&
+             /property="og:image"/.test(h)&&/name="twitter:card"/.test(h)&&
+             /application\/ld\+json/.test(h)&&/SOVA VID j\.d\.o\.o\./.test(h)&&
+             new RegExp('class="lang active" data-lang="'+L+'"').test(h),
+             [naslov,opis.length,podnaslov,uvod.length].join(' | '));
+  }
+  const robots=fs.existsSync(path.join(KORIJEN,'robots.txt'))?fs.readFileSync(path.join(KORIJEN,'robots.txt'),'utf8'):'';
+  provjera('robots.txt dopusta indeksiranje i pokazuje na sitemap',
+           /Allow: \//.test(robots)&&/Sitemap: https:\/\/owluv\.com\/sitemap\.xml/.test(robots));
+  const sm=fs.existsSync(path.join(KORIJEN,'sitemap.xml'))?fs.readFileSync(path.join(KORIJEN,'sitemap.xml'),'utf8'):'';
+  provjera('sitemap.xml ima svih 6 jezicnih stranica, svaku s hreflang alternativama',
+           jezicne.JEZICI.every(L=>sm.includes('<loc>'+jezicne.adresa(L)+'</loc>'))&&
+           (sm.match(/<url>/g)||[]).length===jezicne.JEZICI.length&&
+           (sm.match(/hreflang="/g)||[]).length===jezicne.JEZICI.length*(jezicne.JEZICI.length+1));
+  // SEO ne smije obecati vise nego sto alat isporucuje: tocno 6 jezika
+  provjera('hreflang nudi tocno jezike koje sucelje ima, bez ijednog vise',
+           new Set((fs.readFileSync(path.join(KORIJEN,'index.html'),'utf8').match(/hreflang="([a-z-]+)"/g)||[])
+             .map(x=>x.slice(10,-1)).filter(x=>x!=='x-default')).size===6);
 }
 
 /* ==================== 2. i 3. ALAT U PREGLEDNIKU ==================== */

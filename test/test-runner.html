@@ -1404,8 +1404,10 @@ window.addEventListener('load',async()=>{
             st.tagline.length>8&&!/tagline/.test(st.tagline), st.tagline);
       check(L+': naslov kartice preglednika nosi podnaslov',
             /^OwlUV - /.test(st.docTitle)&&st.docTitle.indexOf(st.tagline)>0, st.docTitle);
-      check(L+': opis stranice nosi podnaslov',
-            st.docDesc.indexOf(st.tagline)===0&&st.docDesc.length>60, st.docDesc.slice(0,70));
+      // od v6.4 opis je jedna recenica za trazilice (seoDesc), ne podnaslov+uvod
+      check(L+': opis stranice je seoDesc, jedna recenica na ovom jeziku',
+            st.docDesc===w.OwlUV.I18N[L].seoDesc&&st.docDesc.length>60&&st.docDesc.length<220&&
+            (st.docDesc.match(/[.!?](\s|$)/g)||[]).length===1, st.docDesc.slice(0,70));
       const R=w.OwlUV.I18N[L].r;
       check(L+': razlozi skrivenosti prevedeni na ovaj jezik',
             txt.includes(R.wvanish)&&txt.includes(R.white)&&txt.includes(R.wtextbox)&&
@@ -1416,8 +1418,10 @@ window.addEventListener('load',async()=>{
     const tags=['hr','en','de','fr','es','it'].map(L=>{w.OwlUV.app.setLang(L);return w.OwlUV.app.state().tagline;});
     check('podnaslov je razlicit na svakom jeziku', new Set(tags).size===6, tags.join(' | '));
     w.OwlUV.app.setLang('en');
-    check('engleski podnaslov sadrzi "hidden text scanner"',
-          /hidden text scanner/i.test(w.OwlUV.app.state().tagline), w.OwlUV.app.state().tagline);
+    // od v6.4 engleski podnaslov je "Hidden text and AI trap scanner", pa je
+    // naslov kartice tocno "OwlUV - Hidden text and AI trap scanner"
+    check('engleski naslov kartice je "OwlUV - Hidden text and AI trap scanner"',
+          w.document.title==='OwlUV - Hidden text and AI trap scanner', w.document.title);
     w.OwlUV.app.setLang('hr');
 
     // ============ 6b. USKI ZASLON ============

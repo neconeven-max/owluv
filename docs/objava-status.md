@@ -4,7 +4,7 @@
 napravljeno, gdje smo stali i što je sljedeće. Napisano je tako da ga može
 pročitati netko tko o projektu ne zna ništa i nastaviti bez ijednog pitanja.
 
-Zadnja izmjena: **12.09.2026.**
+Zadnja izmjena: **12.09.2026.**, dva puta: domena ujutro, SEO poslije
 
 Upute korak po korak za GitHub i DNS stoje u [README.md](../README.md), odjeljak
 *Setting up the website*, odnosno u [README.hr.md](../README.hr.md), odjeljak
@@ -36,6 +36,9 @@ certifikatom. Sve ostale adrese vode na nju trajnim preusmjeravanjem (301):
 | `owluv.com` kao vlastita domena na GitHubu | **gotovo** |
 | Certifikat i Enforce HTTPS | **gotovo**, certifikat vrijedi do 10.12.2026. |
 | Stranica provjerena na `https://owluv.com` | **gotovo**, 380 provjera, sve prošle |
+| SEO: jezične stranice, hreflang, OG, JSON-LD, sitemap, robots | **gotovo**, v6.4, 12.09.2026. |
+| GitHub: polje Website i opis repozitorija | **gotovo** |
+| Google Search Console: vlasništvo i sitemap | **čeka Nevena**, vidi niže |
 | Preusmjeravanje `hiddentextscanner.com` | **nije napravljeno**, vidi sljedeće korake |
 
 ---
@@ -154,20 +157,65 @@ Isti put vrijedi i za `hiddentextscanner.com`, koja još nije prebačena.
 
 ---
 
+## SEO, stanje na 12.09.2026. (v6.4)
+
+Cilj: tko upiše "owluv" dobije `owluv.com` s opisom koji odmah kaže što alat
+radi, a tko traži "skener skrivenog teksta", "hidden text scanner", "AI prompt
+injection cv" i slično nađe ga na jeziku koji alat ima. Što je napravljeno,
+detaljno je u README-u (povijest izmjena, v6.4) i u `CLAUDE.md` (odjeljak
+"Jezične stranice piše generator, nikad ruka"). Ukratko:
+
+| Što | Gdje |
+|---|---|
+| Stranica po jeziku, s tekstom u samom HTML-u | `owluv.com/` (HR), `/en`, `/de`, `/fr`, `/es`, `/it` |
+| Naslov EN | `OwlUV - Hidden text and AI trap scanner` |
+| Opis, jedna rečenica po jeziku | ključ `seoDesc` u `js/i18n.js` |
+| canonical, hreflang (6 + x-default na EN), Open Graph, Twitter card, JSON-LD | SEO blok u svakoj stranici, piše ga generator |
+| Slika kod dijeljenja | `assets/sovaweb_favicon_512.png`, sova |
+| `sitemap.xml`, `robots.txt` | korijen; robots ne pušta tražilicu u `/test/` |
+| GitHub: Website `https://owluv.com`, opis usklađen s naslovom, teme | postavljeno preko `gh repo edit` |
+
+**Nula vanjskih zahtjeva ostaje nula.** Adrese u canonicalu, hreflangu i
+JSON-LD-u su tekst koji tražilica čita, ne zahtjevi. Test to provjerava na tri
+razine, a na živoj stranici je izmjereno rukom (tablica ispod).
+
+**Kako se ovo održava.** `index.html` je jedini izvor. Nakon svake promjene
+`index.html` ili `js/i18n.js` pokrenuti `node test/napravi-jezicne-stranice.js`;
+higijena pada ako se `en.html` i ostale ne slažu s generatorom.
+
+**Što tražilice još ne znaju.** Google indeksira sam od sebe, ali sporo i bez
+povratne informacije. Da se ubrza i da se vidi što Google stvarno vidi, treba
+**Google Search Console**, a to traži prijavu Googleovim računom, dakle Nevenov
+klik:
+
+1. `https://search.google.com/search-console`, "Add property", vrsta
+   **Domain**, upisati `owluv.com`.
+2. Google ponudi TXT zapis za potvrdu vlasništva. Taj zapis se upiše u
+   **Cloudflare** (DNS, Add record, Type TXT, Name `@`, Content ono što Google
+   ispiše), pa natrag u Search Consoleu "Verify".
+3. U Search Consoleu "Sitemaps", upisati `https://owluv.com/sitemap.xml`.
+4. Po želji "URL inspection" za `https://owluv.com/` i "Request indexing".
+
+Isto vrijedi i za Bing (Bing Webmaster Tools zna uvesti postavke iz Search
+Consolea jednim klikom). Nakon toga u ovaj dokument zapisati da je napravljeno.
+
+---
+
 ## Sljedeći koraci, redom
 
-1. **`hiddentextscanner.com` na Cloudflare.** Dodati domenu u Cloudflare,
+1. **Google Search Console** za `owluv.com`, koraci su gore.
+2. **`hiddentextscanner.com` na Cloudflare.** Dodati domenu u Cloudflare,
    zabilježiti par poslužitelja imena koji Cloudflare ponudi (za svaku domenu
    može biti drugi par), pa ih na Regici upisati **na stranici te konkretne
    domene**, umjesto Iskonovih. Provjera: `dig +short hiddentextscanner.com NS`.
-2. **Preusmjeravanje** `hiddentextscanner.com` i `www.hiddentextscanner.com` na
+3. **Preusmjeravanje** `hiddentextscanner.com` i `www.hiddentextscanner.com` na
    `https://owluv.com`, trajno (301), pravilom u Cloudflareu. Postupak s točnim
    vrijednostima je u README-u, odjeljak *Postavljanje stranice*, točka 3.
-3. **Provjeriti** da `hiddentextscanner.com` preusmjerava, pa **ažurirati ovaj
+4. **Provjeriti** da `hiddentextscanner.com` preusmjerava, pa **ažurirati ovaj
    dokument**.
-4. Provjeriti popis "Moje domene" na Regici i zabilježiti postoji li i
+5. Provjeriti popis "Moje domene" na Regici i zabilježiti postoji li i
    **`owluv.hr`**. Ako postoji, odlučiti preusmjerava li se i ona na `owluv.com`.
-5. Tek nakon toga: **poznati bugovi iz testiranja v6.3**, popis niže.
+6. Tek nakon toga: **poznati bugovi iz testiranja v6.3**, popis niže.
 
 ---
 
