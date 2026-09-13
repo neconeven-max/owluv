@@ -585,6 +585,16 @@ lošije za tražilice.
 
 ## Povijest izmjena
 
+### 13.09.2026. - v6.5, Pro blok, mobilni gumbi za jezik, analitika preko proxyja
+
+U zaglavlju, ispod gumba za jezik, stoji mali okvir "Pro" s kontaktom za
+skupnu obradu cijele mape (`info@sovavid.hr`), na 6 jezika; bez cijene, datuma
+i obećanja. Usput je popravljen stariji bug: pravila za veće gumbe za jezik na
+telefonu stajala su ispred osnovnih pa se nikad nisu primjenjivala. Brojanje
+posjeta riješeno je Cloudflareovim proxyjem na rubu, pa u kodu i dalje nema
+nijedne vanjske skripte i stranica ne šalje nijedan zahtjev izvan `owluv.com`.
+Ostava servisnog radnika podignuta je na v6.5.
+
 ### 12.09.2026. - v6.4, stranica je vidljiva tražilicama, na 6 jezika
 
 Alat je do sada bio jedna stranica koja jezik mijenja u pregledniku, pa je

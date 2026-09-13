@@ -588,6 +588,16 @@ which is worse for search engines.
 
 ## Change history
 
+### 13.09.2026. - v6.5, Pro block, mobile language buttons, analytics via proxy
+
+The header, below the language buttons, now has a small "Pro" box with a
+contact for batch processing of a whole folder (`info@sovavid.hr`), in 6
+languages; no price, date or promise. An older bug was fixed on the way: the
+rules for larger language buttons on phones came before the base rules, so
+they never applied. Visit counting is handled by the Cloudflare proxy at the
+edge, so the code still loads no external script and the page still sends no
+request outside `owluv.com`. The service worker cache was bumped to v6.5.
+
 ### 12.09.2026. - v6.4, the page is visible to search engines, in 6 languages
 
 Until now the tool was a single page that switches language in the browser, so

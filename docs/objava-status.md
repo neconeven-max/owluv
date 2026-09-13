@@ -42,6 +42,7 @@ certifikatom. Sve ostale adrese vode na nju trajnim preusmjeravanjem (301):
 | Preusmjeravanje `hiddentextscanner.com` na `owluv.com` | **ZAVRŠENO**, 13.09.2026., 301 na sve varijante |
 | Pro blok u zaglavlju s kontaktom `info@sovavid.hr` | **gotovo**, 13.09.2026., 6 jezika |
 | Analitika posjeta | **gotovo**, 13.09.2026., Cloudflare proxy, bez ijedne skripte u kodu |
+| Verzija v6.5, ostava servisnog radnika podignuta | **gotovo**, 13.09.2026. |
 
 ---
 
@@ -204,6 +205,15 @@ repozitoriju, Cloudflare ništa ne ubacuje.
    `info@sovavid.hr`, pa je u `index.html` omotan Cloudflareovim oznakama
    `<!--email_off-->` i `<!--/email_off-->`, koje to isključuju za taj dio.
    Provjera nakon svake objave: živi HTML ne smije sadržavati `cdn-cgi`.
+
+### v6.5 (13.09.2026.)
+
+Sadržaj verzije: Pro blok u zaglavlju s kontaktom za skupnu obradu, popravak
+mobilnih gumba za jezik, analitika posjeta preko Cloudflare proxyja bez ijedne
+skripte u kodu. Verzija je podignuta u podnožju na 6 jezika i u ostavi
+servisnog radnika (`owluv-v6.5` u `sw.js`), po pravilu iz `CLAUDE.md`: bez
+toga bi tko je stranicu već imao otvorenu i dalje gledao staru inačicu iz
+ostave i ne bi vidio Pro blok. Kod verzije `f12817d` i ove izmjene su isto.
 
 ### Pro blok u zaglavlju (13.09.2026.)
 
