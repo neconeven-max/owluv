@@ -14,7 +14,8 @@ Tipični slučajevi: profesor sakrije zamku u zadaću da otkrije tko je slijepo
 kopirao u chat; kandidat sakrije u životopis uputu da ga AI izabere kao
 najboljeg.
 
-Repozitorij: `github.com/neconeven-max/owluv` (javan). Stranica: `owluv.com`.
+Repozitorij: `github.com/neconeven-max/owluv` (javan). Stranica: `https://owluv.com`
+(primarna, živa). `hiddentextscanner.com` je parkirana i 301 preusmjerena na nju.
 
 Privatna bilješka o projektu, koja namjerno nije u repozitoriju, stoji na iMac
 Serveru uz `INFRASTRUKTURA.md`.
@@ -758,6 +759,16 @@ Repozitorij je javan, kod je pod GPL-3.0 (`LICENSE`), a ime "OwlUV" i logo
 SOVA WEB nisu njome obuhvaćeni (`NOTICE.md`). Stranicu poslužuje GitHub Pages s
 grane `main`.
 
+### Status domena, stanje na 13.09.2026.
+
+| Domena | Uloga | Stanje |
+|---|---|---|
+| `owluv.com` | **primarna** | **živa**, HTTPS, GitHub Pages, DNS na Cloudflareu (DNS only); `www` i `github.io` adresa preusmjeravaju na nju |
+| `hiddentextscanner.com` | parkirana | **301 na `https://owluv.com`**, sve varijante (apex, `www`, http, https), uz čuvanje putanje i upita; Cloudflare Redirect Rule `hiddentextscanner -> owluv` |
+
+Obje su kupljene na Regici, DNS im poslužuje isti Cloudflareov račun. Točne
+vrijednosti, što je testirano i kada, stoje u `docs/objava-status.md`.
+
 ### PRAVILO: objava i domene idu isključivo preko docs/objava-status.md
 
 **Prije bilo kakvog rada na objavi, GitHub Pagesu ili domenama pročitaj
@@ -782,3 +793,30 @@ datoteke na disk radi, i da potvrda o kopiranju iskoči.
 ## Namjerno izostavljeno
 
 Stari `.doc` (poruka korisniku da spremi kao `.docx`), `.odt`, `.rtf`.
+
+## Sljedeći korak, stanje na 13.09.2026.
+
+Objava je gotova: domena živi, SEO je postavljen, druga domena preusmjerava.
+Sljedeći posao su **tri otvorena kozmetička buga iz testiranja v6.3**, nađena
+na pravim poslovnim dokumentima. Nijedan ne izmišlja nalaz ni ne prešućuje
+zamku; sva tri su u prikazu i etiketiranju, ne u detekciji. Detalji, primjeri i
+gdje tražiti uzrok su u `docs/objava-status.md`, odjeljak "Poznati bugovi".
+
+1. **Proturječje oko stranice kojoj vidljivost nije izmjerena.** Alat za istu
+   stranicu kaže "vidljivost nije izmjerena" i ujedno za elemente s te stranice
+   "nije vidljivo na nacrtanoj stranici". Nalazi o skrivenom tekstu trebaju
+   nositi broj stranice (`rez.lines` kroz `js/pdfread.js` do prikaza), pa da se
+   s neizmjerenih stranica ne izriče tvrdnja o vidljivosti.
+2. **Krive etikete uz sumnjive fraze na bezopasnim dokumentima.** Uz frazu
+   piše razlog koji ne odgovara stvarnosti ("zapovjedni ton" na rečenici o
+   limitu računa, "na drugom jeziku" na istom jeziku). Kad je zamka stvarna,
+   etikete su točne; problem su zamjenske etikete za granične slučajeve. Gledati
+   izbor `n:` uz stavku nalaza u `js/app.js` i `langScore()` u `js/signals.js`.
+3. **Spojene riječi pri čitanju PDF-a.** Kad PDF razmake crta pomicanjem, a ne
+   znakom, riječi se spoje ("Nazivracuna"). Gledati kako `js/pdfread.js` slaže
+   retke iz stavki čitača teksta: razmak umetnuti kad je vodoravni razmak
+   između dvije stavke veći od širine znaka.
+
+Redoslijed nije obvezan. Svaki popravak: test prije prijave, unos u README
+(EN i HR), podizanje verzije i ostave u `sw.js`, pa ažurirati ovaj odjeljak i
+`docs/objava-status.md`.

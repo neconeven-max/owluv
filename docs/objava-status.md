@@ -4,7 +4,7 @@
 napravljeno, gdje smo stali i što je sljedeće. Napisano je tako da ga može
 pročitati netko tko o projektu ne zna ništa i nastaviti bez ijednog pitanja.
 
-Zadnja izmjena: **12.09.2026.**, dva puta: domena ujutro, SEO poslije
+Zadnja izmjena: **13.09.2026.**, preusmjeravanje `hiddentextscanner.com`
 
 Upute korak po korak za GitHub i DNS stoje u [README.md](../README.md), odjeljak
 *Setting up the website*, odnosno u [README.hr.md](../README.hr.md), odjeljak
@@ -39,7 +39,7 @@ certifikatom. Sve ostale adrese vode na nju trajnim preusmjeravanjem (301):
 | SEO: jezične stranice, hreflang, OG, JSON-LD, sitemap, robots | **gotovo**, v6.4, 12.09.2026. |
 | GitHub: polje Website i opis repozitorija | **gotovo** |
 | Google Search Console: vlasništvo i sitemap | **čeka Nevena**, vidi niže |
-| Preusmjeravanje `hiddentextscanner.com` | **nije napravljeno**, vidi sljedeće korake |
+| Preusmjeravanje `hiddentextscanner.com` na `owluv.com` | **ZAVRŠENO**, 13.09.2026., 301 na sve varijante |
 
 ---
 
@@ -114,6 +114,52 @@ dig +short owluv.com A       # četiri GitHubove adrese
 dig +short www.owluv.com     # neconeven-max.github.io.
 ```
 
+### hiddentextscanner.com: parkirana, 301 na owluv.com (13.09.2026.)
+
+Druga domena ne poslužuje ništa svoje. Sve što na nju stigne Cloudflare na
+rubu trajno preusmjeri na `owluv.com`, uz čuvanje putanje i upita. Isti
+Cloudflareov račun kao `owluv.com`, isti par poslužitelja imena, upisan na
+Regici na stranici te domene.
+
+| Što | Vrijednost |
+|---|---|
+| `A` zapis za `hiddentextscanner.com` | `192.0.2.1`, **Proxied** (narančasti oblačić) |
+| `A` zapis za `www` | `192.0.2.1`, **Proxied** |
+| Redirect Rule, naziv | `hiddentextscanner -> owluv` |
+| When incoming requests match | **All incoming requests** |
+| Then, URL redirect, Type | **Dynamic** |
+| Expression | `concat("https://owluv.com", http.request.uri.path)` |
+| Status code | **301** |
+| Preserve query string | **uključeno** |
+
+Adresa `192.0.2.1` je namjerno lažna (rezervirani TEST-NET raspon): zapis
+postoji samo da bi domena bila aktivna i prošla kroz proxy, a do te adrese
+promet nikad ne stiže jer pravilo odgovori prije. Bez pravila bi Cloudflare
+vraćao 522; to je bilo izmjereno prije nego je pravilo postavljeno.
+
+**Testirano 13.09.2026.:**
+
+| Zahtjev | Odgovor |
+|---|---|
+| `http://hiddentextscanner.com/` | 301 na `https://owluv.com/` |
+| `https://hiddentextscanner.com/` | 301 na `https://owluv.com/` |
+| `http://www.hiddentextscanner.com/` | 301 na `https://owluv.com/` |
+| `https://www.hiddentextscanner.com/` | 301 na `https://owluv.com/` |
+| `https://hiddentextscanner.com/en?x=1&y=2` | 301 na `https://owluv.com/en?x=1&y=2` |
+| `http://www.hiddentextscanner.com/de` | 301 na `https://owluv.com/de` |
+| Certifikat za `www.hiddentextscanner.com` | Let's Encrypt, preko Cloudflarea, valjan |
+
+Neven je uz to provjerio apex i www u pregledniku, preko mobilnih podataka:
+oboje radi.
+
+**Napomena o prvom testu.** Prvi test `www` s Maca javio je
+`ERR_NAME_NOT_RESOLVED`. To je bio zaostali lokalni DNS cache na tom računalu
+iz vremena prije nego je `www` zapis postojao, ne greška u konfiguraciji;
+preko mobilnih podataka je isti trenutak radilo. Ako se ponovi, na Macu:
+`sudo dscacheutil -flushcache; sudo killall -HUP mDNSResponder`.
+
+**Status: ZAVRŠENO.**
+
 ---
 
 ## Kako je domena proradila, 12.09.2026.
@@ -152,8 +198,8 @@ upit završavao sa `SERVFAIL`. Regica nudi samo polja za upis poslužitelja imen
 bez uređivanja zapisa, pa se `A` zapisi ondje nisu mogli upisati.
 
 **Rješenje je bio Cloudflare kao DNS**, besplatan plan. Registrar se nije
-mijenjao, samo poslužitelji imena. To je za `owluv.com` napravljeno i radi.
-Isti put vrijedi i za `hiddentextscanner.com`, koja još nije prebačena.
+mijenjao, samo poslužitelji imena. Za `owluv.com` napravljeno 12.09.2026., za
+`hiddentextscanner.com` 13.09.2026.; obje rade.
 
 ---
 
@@ -267,29 +313,33 @@ Consolea jednim klikom). Nakon toga u ovaj dokument zapisati da je napravljeno.
 
 ## Sljedeći koraci, redom
 
-1. **Google Search Console** za `owluv.com`, koraci su gore.
-2. **`hiddentextscanner.com` na Cloudflare.** Dodati domenu u Cloudflare,
-   zabilježiti par poslužitelja imena koji Cloudflare ponudi (za svaku domenu
-   može biti drugi par), pa ih na Regici upisati **na stranici te konkretne
-   domene**, umjesto Iskonovih. Provjera: `dig +short hiddentextscanner.com NS`.
-3. **Preusmjeravanje** `hiddentextscanner.com` i `www.hiddentextscanner.com` na
-   `https://owluv.com`, trajno (301), pravilom u Cloudflareu. Postupak s točnim
-   vrijednostima je u README-u, odjeljak *Postavljanje stranice*, točka 3.
-4. **Provjeriti** da `hiddentextscanner.com` preusmjerava, pa **ažurirati ovaj
-   dokument**.
-5. Provjeriti popis "Moje domene" na Regici i zabilježiti postoji li i
-   **`owluv.hr`**. Ako postoji, odlučiti preusmjerava li se i ona na `owluv.com`.
-6. Tek nakon toga: **poznati bugovi iz testiranja v6.3**, popis niže.
+1. **Google Search Console** za `owluv.com`: potvrditi da je robots.txt
+   ponovno dohvaćen i naslovnica indeksirana, koraci su gore.
+2. Provjeriti popis "Moje domene" na Regici i zabilježiti postoji li i
+   **`owluv.hr`**. Ako postoji, odlučiti preusmjerava li se i ona na `owluv.com`
+   (isti recept kao za `hiddentextscanner.com`, gore).
+3. **Tri otvorena buga iz testiranja v6.3**, popis niže. Objava je gotova, pa
+   su oni sada glavni posao.
+
+Preusmjeravanje `hiddentextscanner.com` je **završeno** 13.09.2026. i više nije
+na popisu.
 
 ---
 
-## Poznati bugovi iz testiranja v6.3
+## Poznati bugovi iz testiranja v6.3: sva tri OTVORENA
 
-Nađeni su na pravim poslovnim dokumentima. **Ne rješavaju se prije nego domena
-proradi** - ovo je popis za poslije, da se ne izgubi.
+Nađeni su na pravim poslovnim dokumentima. Domena je proradila, pa je ovo sada
+sljedeći posao. Stanje na 13.09.2026.: **nijedan od tri nije riješen.**
+
+| Bug | Stanje | Ukratko |
+|---|---|---|
+| 1. Proturječje oko stranice kojoj vidljivost nije izmjerena | **otvoren** | alat za istu stranicu kaže i "nije izmjereno" i "nije vidljivo" |
+| 2. Krive etikete uz sumnjive fraze na bezopasnim dokumentima | **otvoren** | razlog uz frazu ne odgovara stvarnosti, samo na graničnim slučajevima |
+| 3. Spojene riječi pri čitanju PDF-a | **otvoren** | razmaci crtani pomicanjem se gube, "Nazivracuna" |
 
 Nijedan od njih ne izmišlja nalaz i nijedan ne prešućuje pravu zamku. Sva tri su
-greške u **prikazu i etiketiranju**, ne u detekciji.
+kozmetičke greške u **prikazu i etiketiranju**, ne u detekciji. Detalji i gdje
+tražiti uzrok su niže.
 
 ### Bug 1: proturječje oko stranice koja nije izmjerena
 
