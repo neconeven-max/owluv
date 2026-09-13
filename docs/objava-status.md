@@ -43,6 +43,7 @@ certifikatom. Sve ostale adrese vode na nju trajnim preusmjeravanjem (301):
 | Pro blok u zaglavlju s kontaktom `info@sovavid.hr` | **gotovo**, 13.09.2026., 6 jezika |
 | Analitika posjeta | **gotovo**, 13.09.2026., Cloudflare proxy, bez ijedne skripte u kodu |
 | Verzija v6.5, ostava servisnog radnika podignuta | **gotovo**, 13.09.2026. |
+| Verzija v6.6: zlatni Pro blok s proširenim tekstom, zlatno podnožje | **gotovo**, 13.09.2026. |
 
 ---
 
@@ -205,6 +206,30 @@ repozitoriju, Cloudflare ništa ne ubacuje.
    `info@sovavid.hr`, pa je u `index.html` omotan Cloudflareovim oznakama
    `<!--email_off-->` i `<!--/email_off-->`, koje to isključuju za taj dio.
    Provjera nakon svake objave: živi HTML ne smije sadržavati `cdn-cgi`.
+
+### v6.6 (13.09.2026.)
+
+Dorada dvaju elemenata, ostatak dizajna netaknut.
+
+**Pro blok u zaglavlju.** Desni stupac zaglavlja proširen s 220 na 300 px.
+Rub bloka zlatan (`#C9A24A`), lokot i naslov "PRO" zlatni (`#E6C36A`), velikim
+slovima, 13 px. Ispod naslova tri retka: "Skupna obrada cijele mape" (svijetli
+tekst, 12 px), novi redak "Imate 10, 50 ili 200 datoteka i ne želite da ih itko
+vidi?" (sivi tekst, 11 px; ključ `proAsk`, na 6 jezika; pitanje o korisniku, ne
+tvrdnja o proizvodu) i link "Javite se" zlatan, podcrtan, isti `mailto`. Mono
+font kao gumbi za jezik, gumbi netaknuti, `email_off` oznake zadržane. Na
+uskom zaslonu sve raste za 1 px kao i prije. Izmjereno na 320, 375, 560 i
+768 px: bez prelijevanja, blok ispod gumba, puna širina do 560 px.
+
+**Podnožje.** Isti tekst, u dva stila: "OwlUV v6.6 · open source alat"
+podebljano (ključ `footer`), "radi potpuno lokalno, bez slanja podataka" u
+tamnom zlatu `#8A6A14` (novi ključ `footerLocal`). Kontrast tamnog zlata na
+podlozi podnožja je 4,8:1, iznad praga 4,5:1 za mali tekst; svijetlo zlato iz
+zaglavlja bi dalo ispod 2:1 i zato nije upotrijebljeno. Srednja točka između
+dijelova crta se CSS-om uz drugi dio, pa pri prelamanju na mobitelu ide s njim.
+
+Verzija podignuta u podnožju na 6 jezika i u ostavi servisnog radnika
+(`owluv-v6.6`).
 
 ### v6.5 (13.09.2026.)
 

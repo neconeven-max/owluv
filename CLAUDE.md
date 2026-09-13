@@ -749,10 +749,20 @@ hreflang, Open Graph, Twitter, JSON-LD).
 
 ### Pro blok u zaglavlju je samo kontakt
 
-Od 13.09.2026. u zaglavlju, ispod gumba za jezik, stoji okvir "Pro": lokot,
-naslov, redak "Skupna obrada cijele mape" i link "Javite se" na
-`mailto:info@sovavid.hr?subject=OwlUV%20Pro%20upit`. Ključevi `proTitle`,
-`proLine`, `proLink` u `js/i18n.js`, na 6 jezika. **U repozitorij ne ide ništa
+Od 13.09.2026. u zaglavlju, ispod gumba za jezik, stoji okvir "PRO" (v6.6):
+zlatan rub `#C9A24A`, lokot i naslov zlatni `#E6C36A` velikim slovima 13 px,
+pa tri retka: "Skupna obrada cijele mape" (svijetlo, 12 px), pitanje "Imate 10,
+50 ili 200 datoteka i ne želite da ih itko vidi?" (sivo, 11 px; pitanje o
+korisniku, ne tvrdnja o proizvodu) i zlatan podcrtan link "Javite se" na
+`mailto:info@sovavid.hr?subject=OwlUV%20Pro%20upit`. Desni stupac zaglavlja
+(`.head-right`) širok je 300 px. Ključevi `proTitle`, `proLine`, `proAsk`,
+`proLink` u `js/i18n.js`, na 6 jezika. Ostatak teksta ostaje u postojećoj
+paleti; gumbi za jezik se ne diraju.
+
+Podnožje je od v6.6 u dva dijela s istim tekstom: `footer` (podebljano) i
+`footerLocal` (tamno zlato `#8A6A14`, jer je podloga svijetla; svijetlo zlato
+iz zaglavlja se tu ne čita). Srednja točka između njih je CSS `::before` na
+drugom dijelu, da pri prelamanju ide s njim. **U repozitorij ne ide ništa
 više od toga**: ni cijena, ni rok, ni obećanje, ni poslovni model; higijena i
 dalje pada na riječi o cijeni, plaćanju i poslovnom planu. Adresa
 `info@sovavid.hr` je jedina stvarna e-mail adresa koju higijena dopušta.

@@ -585,6 +585,16 @@ lošije za tražilice.
 
 ## Povijest izmjena
 
+### 13.09.2026. - v6.6, zlatni Pro blok s proširenim tekstom, zlatno podnožje
+
+Pro blok u zaglavlju dobio je zlatan rub i zlatan naslov "PRO", stupac je
+proširen na 300 px, a ispod naslova su tri retka: skupna obrada cijele mape,
+pitanje "Imate 10, 50 ili 200 datoteka i ne želite da ih itko vidi?" (na 6
+jezika) i zlatan link "Javite se". Redak podnožja je isti, ali u dva stila:
+naziv i verzija podebljano, "radi potpuno lokalno, bez slanja podataka" u
+tamnom zlatu, čitljivom na svijetloj podlozi (kontrast 4,8:1). Ništa drugo u
+dizajnu nije dirano; ostava servisnog radnika je na v6.6.
+
 ### 13.09.2026. - v6.5, Pro blok, mobilni gumbi za jezik, analitika preko proxyja
 
 U zaglavlju, ispod gumba za jezik, stoji mali okvir "Pro" s kontaktom za

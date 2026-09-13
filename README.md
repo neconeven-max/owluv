@@ -588,6 +588,17 @@ which is worse for search engines.
 
 ## Change history
 
+### 13.09.2026. - v6.6, golden Pro block with more text, golden footer
+
+The Pro block in the header got a golden border and a golden "PRO" title, the
+column was widened to 300 px, and below the title there are three lines: batch
+processing of a whole folder, the question "Have 10, 50 or 200 files and don't
+want anyone to see them?" (in 6 languages) and a golden "Contact us" link. The
+footer line is the same text in two styles: name and version in bold, "runs
+fully locally, no data sent" in a dark gold that stays readable on the light
+background (contrast 4.8:1). Nothing else in the design was touched; the
+service worker cache is at v6.6.
+
 ### 13.09.2026. - v6.5, Pro block, mobile language buttons, analytics via proxy
 
 The header, below the language buttons, now has a small "Pro" box with a

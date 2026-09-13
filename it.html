@@ -115,19 +115,23 @@
      pravila stoje ISPRED mobilnog bloka nize, jer pri istoj specificnosti
      pobjeduje kasnije pravilo. Do 13.09.2026. su .langs i .lang stajali IZA
      njega, pa se veci gumbi za jezik na telefonu nikad nisu primjenjivali. */
-  .head-right{display:flex;flex-direction:column;gap:8px;max-width:220px}
+  .head-right{display:flex;flex-direction:column;gap:8px;max-width:300px}
   .langs{display:flex;gap:5px;flex-wrap:wrap}
   .lang{font-family:var(--mono);font-size:11px;font-weight:700;letter-spacing:.06em;padding:6px 10px;border-radius:6px;border:1px solid #35505F;background:transparent;color:#A9BFCF;cursor:pointer}
   .lang:hover{border-color:#5C7A8C;color:#D5E3EC}
   .lang.active{background:#EAF1F7;color:var(--dark);border-color:#EAF1F7}
-  /* Pro blok: isti font, rub i boje kao gumbi za jezik, samo kao mali okvir.
-     Samo kontakt za skupnu obradu; nema cijene ni datuma. */
+  /* Pro blok: isti mono font kao gumbi za jezik, u malom okviru. Rub i naslov
+     su zlatni, ostatak teksta u postojecoj paleti. Samo kontakt za skupnu
+     obradu; nema cijene ni datuma. */
   .pro{font-family:var(--mono);font-size:11px;letter-spacing:.03em;color:#A9BFCF;
-       border:1px solid #35505F;border-radius:6px;padding:7px 10px;line-height:1.45}
-  .pro .pro-t{display:flex;align-items:center;gap:6px;font-weight:700;letter-spacing:.06em;color:#D5E3EC}
-  .pro .pro-t svg{width:11px;height:11px;flex:none}
-  .pro a{color:#D5E3EC;text-decoration:underline;text-underline-offset:2px}
-  .pro a:hover{color:#FFFFFF}
+       border:1px solid #C9A24A;border-radius:6px;padding:8px 11px;line-height:1.45}
+  .pro .pro-t{display:flex;align-items:center;gap:6px;font-weight:700;font-size:13px;
+              letter-spacing:.08em;text-transform:uppercase;color:#E6C36A}
+  .pro .pro-t svg{width:13px;height:13px;flex:none}
+  .pro .pro-l{font-size:12px;color:#D5E3EC;margin-top:2px}
+  .pro .pro-q{font-size:11px;color:#A9BFCF}
+  .pro a{color:#E6C36A;text-decoration:underline;text-underline-offset:2px}
+  .pro a:hover{color:#F3D98A}
   /* Mobitel: prstom se ne pogada isto sto i misem. Na uskom zaslonu svi gumbi
      dobivaju vecu povrsinu za dodir, rubovi stranice se stanjuju da tekst dobije
      sirinu, a paneli se snize da se do drugog panela ne mora dugo listati.
@@ -141,7 +145,10 @@
     .btn.sm{padding:10px 14px;font-size:12px}
     .lang{padding:9px 13px;font-size:12px}
     .head-right{max-width:none}
-    .pro{font-size:12px;padding:9px 12px}
+    .pro{padding:10px 12px}
+    .pro .pro-t{font-size:14px}
+    .pro .pro-l{font-size:13px}
+    .pro .pro-q{font-size:12px}
     .hitbtn{padding:8px 14px;font-size:15px}
     .panel-h{padding:12px}
   }
@@ -310,6 +317,12 @@
   footer .by img{height:70px;width:auto;display:block;opacity:.95}
   footer .by a{color:var(--muted);text-decoration:underline;text-underline-offset:2px}
   footer .by a:hover{color:var(--uv)}
+  /* Podnozje: prvi dio podebljan, obecanje o lokalnom radu u tamnom zlatu
+     (#8A6A14 na svijetloj podlozi daje 4,8:1; svijetlo zlato iz zaglavlja se
+     ovdje ne bi citalo). Tekst je isti kao prije, samo je u dva dijela. */
+  footer .fl strong{color:var(--ink)}
+  footer .fl .local{color:#8A6A14;white-space:nowrap}
+  footer .fl .local::before{content:"\00B7  ";color:var(--muted);white-space:pre}
   @media(max-width:520px){footer .by{padding-left:0;border-left:0;width:100%}}
 
   /* ---- tanke, nenametljive oznake: duga crtica i pomijesana pisma ----
@@ -423,7 +436,8 @@
         </div>
         <!--email_off--><div class="pro">
           <div class="pro-t"><svg viewBox="0 0 12 12" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.4"><rect x="2" y="5.2" width="8" height="5.8" rx="1.2"/><path d="M3.8 5.2V3.6a2.2 2.2 0 0 1 4.4 0v1.6"/></svg><span data-i18n="proTitle">Pro</span></div>
-          <div data-i18n="proLine">Elaborazione in blocco di un'intera cartella</div>
+          <div class="pro-l" data-i18n="proLine">Elaborazione in blocco di un'intera cartella</div>
+          <div class="pro-q" data-i18n="proAsk">Avete 10, 50 o 200 file e non volete che nessuno li veda?</div>
           <a href="mailto:info@sovavid.hr?subject=OwlUV%20Pro%20upit" data-i18n="proLink">Contattaci</a>
         </div><!--/email_off-->
       </div>
@@ -481,7 +495,7 @@
 </main>
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 <footer><div class="wrap">
-  <span data-i18n="footer">OwlUV v6.5 · strumento open source · funziona interamente in locale, nessun dato inviato</span>
+  <span class="fl"><strong data-i18n="footer">OwlUV v6.6 · strumento open source</strong> <span class="local" data-i18n="footerLocal">funziona interamente in locale, nessun dato inviato</span></span>
   <span class="by">
     <img src="assets/sovaweb_logo.svg" alt="SOVA WEB">
     <span data-i18n="footerBy">Uno strumento SOVA WEB</span>
