@@ -111,6 +111,23 @@
     .fhead{flex-wrap:wrap}
     footer .by img{height:54px}
   }
+  /* Desni stupac zaglavlja: gumbi za jezik i ispod njih Pro blok. Sva osnovna
+     pravila stoje ISPRED mobilnog bloka nize, jer pri istoj specificnosti
+     pobjeduje kasnije pravilo. Do 13.09.2026. su .langs i .lang stajali IZA
+     njega, pa se veci gumbi za jezik na telefonu nikad nisu primjenjivali. */
+  .head-right{display:flex;flex-direction:column;gap:8px;max-width:220px}
+  .langs{display:flex;gap:5px;flex-wrap:wrap}
+  .lang{font-family:var(--mono);font-size:11px;font-weight:700;letter-spacing:.06em;padding:6px 10px;border-radius:6px;border:1px solid #35505F;background:transparent;color:#A9BFCF;cursor:pointer}
+  .lang:hover{border-color:#5C7A8C;color:#D5E3EC}
+  .lang.active{background:#EAF1F7;color:var(--dark);border-color:#EAF1F7}
+  /* Pro blok: isti font, rub i boje kao gumbi za jezik, samo kao mali okvir.
+     Samo kontakt za skupnu obradu; nema cijene ni datuma. */
+  .pro{font-family:var(--mono);font-size:11px;letter-spacing:.03em;color:#A9BFCF;
+       border:1px solid #35505F;border-radius:6px;padding:7px 10px;line-height:1.45}
+  .pro .pro-t{display:flex;align-items:center;gap:6px;font-weight:700;letter-spacing:.06em;color:#D5E3EC}
+  .pro .pro-t svg{width:11px;height:11px;flex:none}
+  .pro a{color:#D5E3EC;text-decoration:underline;text-underline-offset:2px}
+  .pro a:hover{color:#FFFFFF}
   /* Mobitel: prstom se ne pogada isto sto i misem. Na uskom zaslonu svi gumbi
      dobivaju vecu povrsinu za dodir, rubovi stranice se stanjuju da tekst dobije
      sirinu, a paneli se snize da se do drugog panela ne mora dugo listati.
@@ -123,14 +140,11 @@
     .btn{padding:12px 18px;font-size:13px}
     .btn.sm{padding:10px 14px;font-size:12px}
     .lang{padding:9px 13px;font-size:12px}
-    .langs{max-width:none}
+    .head-right{max-width:none}
+    .pro{font-size:12px;padding:9px 12px}
     .hitbtn{padding:8px 14px;font-size:15px}
     .panel-h{padding:12px}
   }
-  .langs{display:flex;gap:5px;flex-wrap:wrap;max-width:220px}
-  .lang{font-family:var(--mono);font-size:11px;font-weight:700;letter-spacing:.06em;padding:6px 10px;border-radius:6px;border:1px solid #35505F;background:transparent;color:#A9BFCF;cursor:pointer}
-  .lang:hover{border-color:#5C7A8C;color:#D5E3EC}
-  .lang.active{background:#EAF1F7;color:var(--dark);border-color:#EAF1F7}
   main{padding:22px 24px 60px}
   /* Oba panela su uvijek jednako visoka i rastu zajedno: mreza ih razvlaci, a
      prazan prostor u svakom panelu upija njegovo podrucje prikaza teksta. */
@@ -398,13 +412,20 @@
         <h2 class="tagline" data-i18n="tagline">Scanner für versteckten Text und KI-Fallen</h2>
         <p data-i18n="intro">Text einfügen oder Datei ablegen: Aufgabe, Stellenbeschreibung oder Lebenslauf. Der Scanner zeigt unsichtbare Zeichen, per Farbe oder Schriftgröße versteckten Text und Phrasen, die eine KI in die Irre führen sollen. Alles läuft im Browser, nichts wird gesendet.</p>
       </div>
-      <div class="langs">
-        <button class="lang" data-lang="hr">HR</button>
-        <button class="lang" data-lang="en">EN</button>
-        <button class="lang active" data-lang="de">DE</button>
-        <button class="lang" data-lang="fr">FR</button>
-        <button class="lang" data-lang="es">ES</button>
-        <button class="lang" data-lang="it">IT</button>
+      <div class="head-right">
+        <div class="langs">
+          <button class="lang" data-lang="hr">HR</button>
+          <button class="lang" data-lang="en">EN</button>
+          <button class="lang active" data-lang="de">DE</button>
+          <button class="lang" data-lang="fr">FR</button>
+          <button class="lang" data-lang="es">ES</button>
+          <button class="lang" data-lang="it">IT</button>
+        </div>
+        <!--email_off--><div class="pro">
+          <div class="pro-t"><svg viewBox="0 0 12 12" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.4"><rect x="2" y="5.2" width="8" height="5.8" rx="1.2"/><path d="M3.8 5.2V3.6a2.2 2.2 0 0 1 4.4 0v1.6"/></svg><span data-i18n="proTitle">Pro</span></div>
+          <div data-i18n="proLine">Stapelverarbeitung eines ganzen Ordners</div>
+          <a href="mailto:info@sovavid.hr?subject=OwlUV%20Pro%20upit" data-i18n="proLink">Kontakt aufnehmen</a>
+        </div><!--/email_off-->
       </div>
     </div>
   </div>

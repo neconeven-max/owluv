@@ -40,6 +40,8 @@ certifikatom. Sve ostale adrese vode na nju trajnim preusmjeravanjem (301):
 | GitHub: polje Website i opis repozitorija | **gotovo** |
 | Google Search Console: vlasništvo i sitemap | **čeka Nevena**, vidi niže |
 | Preusmjeravanje `hiddentextscanner.com` na `owluv.com` | **ZAVRŠENO**, 13.09.2026., 301 na sve varijante |
+| Pro blok u zaglavlju s kontaktom `info@sovavid.hr` | **gotovo**, 13.09.2026., 6 jezika |
+| Analitika posjeta | **gotovo**, 13.09.2026., Cloudflare proxy, bez ijedne skripte u kodu |
 
 ---
 
@@ -103,7 +105,8 @@ Cloudflareove poslužitelje imena, a zonu poslužuje Cloudflare (besplatan plan)
 | Poslužitelji imena (na Regici) | `lilyana.ns.cloudflare.com`, `matteo.ns.cloudflare.com` |
 | `A` zapisi za `owluv.com` | `185.199.108.153`, `185.199.109.153`, `185.199.110.153`, `185.199.111.153` |
 | `CNAME` za `www` | `neconeven-max.github.io` |
-| Proxy (narančasti oblačić) | **isključen** na svim zapisima, "DNS only" |
+| Proxy (narančasti oblačić) | **uključen** od 13.09.2026. (do tada DNS only), vidi "Analitika" niže |
+| SSL/TLS mode | **Full (strict)** |
 
 Iskonovi poslužitelji imena su obrisani s Regice. Provjera s bilo kojeg
 računala:
@@ -159,6 +162,70 @@ preko mobilnih podataka je isti trenutak radilo. Ako se ponovi, na Macu:
 `sudo dscacheutil -flushcache; sudo killall -HUP mDNSResponder`.
 
 **Status: ZAVRŠENO.**
+
+### Analitika posjeta: Cloudflare proxy, bez skripte (13.09.2026.)
+
+Tražilo se brojanje posjeta. Ponuđeni **Cloudflare Web Analytics JS snippet je
+odbijen**, iz dva razloga: pravilo 1 u `CLAUDE.md` (nikakvo pozivanje vanjskih
+poslužitelja, nikakva analitika, nula vanjskih zahtjeva) i obećanje u samom
+sučelju, "Sve se obrađuje u tvom pregledniku, ništa se nikamo ne šalje".
+Snippet bi učitavao skriptu s `static.cloudflareinsights.com` i pri svakom
+otvaranju slao beacon; skenirani sadržaj ne bi išao nikamo, ali rečenica bi
+prestala biti doslovno istinita, a tri provjere higijene i mjerenje u
+pregledniku bi pale.
+
+**Umjesto toga**: na zapisima `owluv.com` uključen je Cloudflareov **proxy**
+(narančasti oblačić) uz SSL/TLS mode **Full (strict)**. Cloudflare broji
+zahtjeve i posjete na svom rubu, prije nego išta stigne do GitHuba. U kod nije
+ušlo ništa, stranica i dalje ne šalje nijedan zahtjev izvan `owluv.com`.
+
+**Gdje se brojke gledaju:** Cloudflare, domena `owluv.com`, **Analytics &
+Logs, Traffic** (zahtjevi, posjete, po zemlji, po putanji). **Web Analytics
+site u Cloudflareu je namjerno na Disable** i tako ostaje; JS snippet se ne
+ugrađuje bez razgovora.
+
+**Provjereno kroz proxy, 13.09.2026.:** odgovor nosi `server: cloudflare` i
+`cf-ray`; HTTPS valjan (Let's Encrypt, provjera 0); bez petlje
+preusmjeravanja (`http://www.owluv.com/en` do `https://owluv.com/en` u jednom
+skoku); `www` i `github.io` adresa i dalje 301 na `owluv.com`; svih 6
+jezičnih stranica, `sitemap.xml` i `robots.txt` 200; živi HTML identičan
+repozitoriju, Cloudflare ništa ne ubacuje.
+
+**Dvije stvari koje proxy donosi, a treba ih znati:**
+
+1. **Keš na rubu.** Cloudflare kešira `js/`, `assets/` i slično 4 sata
+   (`cache-control: max-age=14400`), HTML ne (`cf-cache-status: DYNAMIC`).
+   Ako se nakon slanja na GitHub nova verzija skripte ne vidi, u Cloudflareu:
+   `owluv.com`, Caching, Configuration, **Purge Everything**. Ostava servisnog
+   radnika u pregledniku je zasebna stvar i rješava se podizanjem verzije u
+   `sw.js`, kao i prije.
+2. **Email Address Obfuscation.** Cloudflare po zadanom u svaku stranicu koja
+   sadrži e-mail adresu ubaci svoju skriptu i prepiše `mailto`. Pro blok sadrži
+   `info@sovavid.hr`, pa je u `index.html` omotan Cloudflareovim oznakama
+   `<!--email_off-->` i `<!--/email_off-->`, koje to isključuju za taj dio.
+   Provjera nakon svake objave: živi HTML ne smije sadržavati `cdn-cgi`.
+
+### Pro blok u zaglavlju (13.09.2026.)
+
+U tamnom zaglavlju, desno, ispod gumba za jezik, stoji mali okvir "Pro" s
+lokotom, jednim retkom ("Skupna obrada cijele mape") i linkom "Javite se" koji
+otvara `mailto:info@sovavid.hr` s predmetom "OwlUV Pro upit". Tekst je na svih
+6 jezika (ključevi `proTitle`, `proLine`, `proLink` u `js/i18n.js`), stil je
+iz palete gumba za jezik, lokot je inline SVG. Bez cijene, datuma i obećanja;
+u repozitoriju stoji samo činjenica da za skupnu obradu postoji kontakt.
+
+Provjereno: nema prelijevanja na 320, 375, 560 i 768 px; na uskom zaslonu blok
+ide ispod gumba i širi se na punu širinu.
+
+**Usput popravljen stariji bug mobilnog CSS-a.** Pravila za veće gumbe za
+jezik na telefonu (`.lang{padding:9px 13px;font-size:12px}` u `@media
+(max-width:560px)`) stajala su ispred osnovnih pravila `.lang`, pa su ih
+osnovna pregazila i nikad se nisu primijenila. Osnovna pravila `.langs`,
+`.lang`, `.head-right` i `.pro` sada stoje ispred mobilnog bloka. Izmjereno:
+do 560 px gumbi su 34 px visoki s fontom 12 px (prije 27 px i 11 px), od 768 px
+naviše nepromijenjeno. Higijena je zbog toga dopustila
+adresu `info@sovavid.hr` i prestala zabranjivati frazu "skupna obrada";
+zabrane riječi o cijeni, plaćanju i poslovnom planu ostaju.
 
 ---
 
@@ -336,6 +403,7 @@ sljedeći posao. Stanje na 13.09.2026.: **nijedan od tri nije riješen.**
 | 1. Proturječje oko stranice kojoj vidljivost nije izmjerena | **otvoren** | alat za istu stranicu kaže i "nije izmjereno" i "nije vidljivo" |
 | 2. Krive etikete uz sumnjive fraze na bezopasnim dokumentima | **otvoren** | razlog uz frazu ne odgovara stvarnosti, samo na graničnim slučajevima |
 | 3. Spojene riječi pri čitanju PDF-a | **otvoren** | razmaci crtani pomicanjem se gube, "Nazivracuna" |
+| 4. Puni test u Chromeu bez sučelja ne stane u rok od 600 s | **otvoren** | prolaz završi bez retka UKUPNO, dok isti test prolazi; utvrditi je li test usporen ili rok premalen |
 
 Nijedan od njih ne izmišlja nalaz i nijedan ne prešućuje pravu zamku. Sva tri su
 kozmetičke greške u **prikazu i etiketiranju**, ne u detekciji. Detalji i gdje
@@ -377,6 +445,21 @@ detekcija radi, ali prikaz izgleda neuredno i može omesti prepoznavanje fraza.
 Gledati kako `js/pdfread.js` slaže retke iz stavki čitača teksta: razmak treba
 umetnuti kad je vodoravni razmak između dvije stavke veći od širine znaka.
 
+
+### Bug 4: puni test u Chromeu bez sučelja ne završi unutar roka od 600 s
+
+Nađen 13.09.2026. `test/pokreni-test.js` svaki prolaz u pregledniku bez
+sučelja gasi tvrdim rokom od 600 s; Chrome bez sučelja u praksi i ne izlazi
+sam nego tek na taj rok. Tog dana je nasumično jedan od dva prolaza (jednom iz
+mape, drugi put s poslužitelja) ostajao bez vremena usred testa, pa je završio
+bez retka UKUPNO i test je prijavio pad, dok je drugi prolaz iste vrtnje prošao
+380/380. Isti test u pravom Chromeu traje ispod pet minuta i prolazi.
+
+Treba utvrditi je li test usporen (što se od jučer promijenilo u onome što
+Chrome bez sučelja radi) ili je rok od 600 s jednostavno premalen za ovaj
+stroj, pa ga podići. Rok je `600000` na dva mjesta u `uPregledniku()`.
+Kod alata ovime nije doveden u pitanje: higijena 47/47, prolaz s poslužitelja
+380/380.
 ---
 
 ## Nastavak rada

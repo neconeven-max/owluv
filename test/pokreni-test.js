@@ -34,8 +34,10 @@ function provjera(naziv,uvjet,dodatak){
 
 // Sto je namjerno u repozitoriju i smije proci.
 const DOPUSTENO_MAIL=[
-  'marko.horvat@example.com'   // izmisljena osoba u testnom zivotopisu;
-];                             // example.com je sluzbeno rezerviran za primjere
+  'marko.horvat@example.com',  // izmisljena osoba u testnom zivotopisu;
+                               // example.com je sluzbeno rezerviran za primjere
+  'info@sovavid.hr'            // javni kontakt u Pro bloku zaglavlja, od 13.09.2026.
+];
 const DOPUSTEN_TELEFON='+385 91 000 0000';   // ocito lazan broj u istom zivotopisu
 
 // Dvije datoteke se ne pretrazuju, jer bi same sebe prijavile:
@@ -68,8 +70,10 @@ const NE_SMIJE_BITI=[
   // datoteke i u opisu. Naplatu pouzdano hvataju naplata, pretplata i
   // monetizacija; zabrana obicne rijeci bila je lazna uzbuna ovog popisa.
   {re:/naplat\w*|napla[ćc]uj\w*|pretplat\w*|monetiz\w*/gi, opis:'naplata'},
-  {re:/\bpricing\b|\bsubscription\b|\bpaid plan\b|\bper seat\b|\brevenue\b/gi, opis:'naplata'},
-  {re:/skupna obrada|skupnu obradu|\bbatch processing\b/gi, opis:'skupna obrada'}
+  {re:/\bpricing\b|\bsubscription\b|\bpaid plan\b|\bper seat\b|\brevenue\b/gi, opis:'naplata'}
+  // "skupna obrada" je od 13.09.2026. javna: Pro blok u zaglavlju kaze da za nju
+  // postoji kontakt. Sam poslovni model (cijena, uvjeti, rokovi) i dalje ne
+  // ulazi u repozitorij, a to cuvaju pravila o naplati i poslovnom planu gore.
 ];
 
 const BINARNO=/\.(png|ico|jpg|jpeg|gif|ttf|pfb|otf|woff2?|zip|docx|xlsx)$/i;
@@ -136,8 +140,7 @@ function higijena(){
   // pravilima normalno raspravlja: commit koji objasnjava zasto je neka rijec na
   // popisu nuzno tu rijec i sadrzi. Zato se ovdje traze samo izrazi koji
   // pripadaju privatnoj biljesci, a ne pojedinacne rijeci.
-  const uPorukama=[/poslovni plan|business plan/i,
-                   /skupna obrada|skupnu obradu|batch processing/i]
+  const uPorukama=[/poslovni plan|business plan/i]
     .filter(re=>re.test(log));
   provjera('poruke uz commitove ne spominju poslovni plan ni naplatu',
            uPorukama.length===0, String(uPorukama[0]||''));

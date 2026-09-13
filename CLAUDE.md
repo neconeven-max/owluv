@@ -747,6 +747,38 @@ hreflang, Open Graph, Twitter, JSON-LD).
 - Adrese u canonicalu, hreflangu i JSON-LD-u su tekst, ne zahtjevi. Ništa se ne
   dohvaća izvana, i to test provjerava na tri razine.
 
+### Pro blok u zaglavlju je samo kontakt
+
+Od 13.09.2026. u zaglavlju, ispod gumba za jezik, stoji okvir "Pro": lokot,
+naslov, redak "Skupna obrada cijele mape" i link "Javite se" na
+`mailto:info@sovavid.hr?subject=OwlUV%20Pro%20upit`. Ključevi `proTitle`,
+`proLine`, `proLink` u `js/i18n.js`, na 6 jezika. **U repozitorij ne ide ništa
+više od toga**: ni cijena, ni rok, ni obećanje, ni poslovni model; higijena i
+dalje pada na riječi o cijeni, plaćanju i poslovnom planu. Adresa
+`info@sovavid.hr` je jedina stvarna e-mail adresa koju higijena dopušta.
+
+Osnovna CSS pravila `.head-right`, `.langs`, `.lang` i `.pro` stoje **ispred**
+mobilnog `@media` bloka, jer pri istoj specifičnosti pobjeđuje kasnije
+pravilo. Do 13.09.2026. su `.langs` i `.lang` stajali iza njega, pa se veći
+gumbi za jezik na telefonu nikad nisu primjenjivali; popravljeno i izmjereno
+(do 560 px gumbi 34 px, od 768 px 27 px kao prije). Pravilo za dalje: novo
+osnovno pravilo za zaglavlje ide iznad mobilnog bloka, ne ispod.
+
+Pro blok je omotan Cloudflareovim oznakama `<!--email_off-->` i
+`<!--/email_off-->`, jer bi Cloudflareov proxy inače u stranicu s e-mail
+adresom ubacio svoju skriptu. Ne uklanjati.
+
+### Analitika: Cloudflare proxy, nikad JS snippet
+
+Brojke posjeta daje Cloudflareov proxy na rubu (od 13.09.2026. zapisi
+`owluv.com` su Proxied, SSL/TLS Full (strict)); gledaju se u Cloudflareu,
+`owluv.com`, Analytics & Logs, Traffic. U kodu nema ničega. **Cloudflare Web
+Analytics JS snippet je odbijen i ne smije se ugraditi bez razgovora**: krši
+pravilo 1 i rečenicu "ništa se nikamo ne šalje"; Web Analytics site u
+Cloudflareu je namjerno na Disable. Proxy kešira `js/` 4 sata: ako se nova
+verzija ne vidi nakon slanja, Caching, Purge Everything. Detalji u
+`docs/objava-status.md`.
+
 ### Sova uz naziv se ne crta iznova
 
 Glava sove izrezana je iz postojećeg logotipa SOVA WEB skriptom

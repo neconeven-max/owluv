@@ -75,6 +75,8 @@
       tagline:'Skener skrivenog teksta i AI zamki',
       // jedna recenica za trazilice i dijeljenje linka: meta description, Open Graph, JSON-LD
       seoDesc:"Pronalazi tekst skriven od ljudi, a čitljiv AI-ju, u tekstu, Wordu i PDF-u: bijela ili sitna slova, nevidljive znakove i AI injekcije, sve u tvom pregledniku.",
+      // Pro blok u zaglavlju: samo kontakt za skupnu obradu, bez cijene i obecanja
+      proTitle:'Pro', proLine:"Skupna obrada cijele mape", proLink:"Javite se",
       hitPrev:'Prethodna pojava',
       hitNext:'Sljedeća pojava',
       hitOf:(i,n)=>'Pojava '+i+' od '+n+'. Klik na nalaz vodi na sljedeću.',
@@ -224,6 +226,8 @@
       tagline:'Hidden text and AI trap scanner',
       // jedna recenica za trazilice i dijeljenje linka: meta description, Open Graph, JSON-LD
       seoDesc:"Finds text hidden from people but read by AI in text, Word and PDF files: white or tiny letters, invisible characters and prompt injections, all in your browser.",
+      // Pro blok u zaglavlju: samo kontakt za skupnu obradu, bez cijene i obecanja
+      proTitle:'Pro', proLine:"Batch processing of a whole folder", proLink:"Contact us",
       hitPrev:'Previous occurrence',
       hitNext:'Next occurrence',
       hitOf:(i,n)=>'Occurrence '+i+' of '+n+'. Clicking the finding moves to the next one.',
@@ -367,6 +371,8 @@
       tagline:'Scanner für versteckten Text und KI-Fallen',
       // jedna recenica za trazilice i dijeljenje linka: meta description, Open Graph, JSON-LD
       seoDesc:"Findet Text, den Menschen nicht sehen, KI aber liest, in Text, Word- und PDF-Dateien: weiße oder winzige Schrift, unsichtbare Zeichen und Prompt-Injektionen, alles im Browser.",
+      // Pro blok u zaglavlju: samo kontakt za skupnu obradu, bez cijene i obecanja
+      proTitle:'Pro', proLine:"Stapelverarbeitung eines ganzen Ordners", proLink:"Kontakt aufnehmen",
       hitPrev:'Vorheriges Vorkommen',
       hitNext:'Nächstes Vorkommen',
       hitOf:(i,n)=>'Vorkommen '+i+' von '+n+'. Ein Klick auf den Befund springt zum nächsten.',
@@ -510,6 +516,8 @@
       tagline:'Scanner de texte masqué et de pièges pour IA',
       // jedna recenica za trazilice i dijeljenje linka: meta description, Open Graph, JSON-LD
       seoDesc:"Détecte le texte invisible pour l'humain mais lu par l'IA dans un texte, un Word ou un PDF : lettres blanches ou minuscules, caractères invisibles et injections de prompt, dans votre navigateur.",
+      // Pro blok u zaglavlju: samo kontakt za skupnu obradu, bez cijene i obecanja
+      proTitle:'Pro', proLine:"Traitement groupé d'un dossier entier", proLink:"Contactez-nous",
       hitPrev:'Occurrence précédente',
       hitNext:'Occurrence suivante',
       hitOf:(i,n)=>'Occurrence '+i+' sur '+n+'. Un clic sur le résultat passe à la suivante.',
@@ -653,6 +661,8 @@
       tagline:'Escáner de texto oculto y trampas para IA',
       // jedna recenica za trazilice i dijeljenje linka: meta description, Open Graph, JSON-LD
       seoDesc:"Detecta texto invisible para las personas pero leído por la IA en texto, Word y PDF: letras blancas o diminutas, caracteres invisibles e inyecciones de prompt, todo en tu navegador.",
+      // Pro blok u zaglavlju: samo kontakt za skupnu obradu, bez cijene i obecanja
+      proTitle:'Pro', proLine:"Procesamiento por lotes de una carpeta entera", proLink:"Contáctenos",
       hitPrev:'Aparición anterior',
       hitNext:'Aparición siguiente',
       hitOf:(i,n)=>'Aparición '+i+' de '+n+'. Al hacer clic en el resultado se pasa a la siguiente.',
@@ -796,6 +806,8 @@
       tagline:'Scanner di testo nascosto e trappole per IA',
       // jedna recenica za trazilice i dijeljenje linka: meta description, Open Graph, JSON-LD
       seoDesc:"Trova il testo invisibile alle persone ma letto dall'IA in testo, Word e PDF: lettere bianche o minuscole, caratteri invisibili e prompt injection, tutto nel tuo browser.",
+      // Pro blok u zaglavlju: samo kontakt za skupnu obradu, bez cijene i obecanja
+      proTitle:'Pro', proLine:"Elaborazione in blocco di un'intera cartella", proLink:"Contattaci",
       hitPrev:'Occorrenza precedente',
       hitNext:'Occorrenza successiva',
       hitOf:(i,n)=>'Occorrenza '+i+' di '+n+'. Un clic sul risultato passa alla successiva.',
